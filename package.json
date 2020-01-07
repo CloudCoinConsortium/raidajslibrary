@@ -2,7 +2,7 @@
   "name": "raidajs",
   "version": "0.3.1",
   "description": "RAIDA JavaScript Library",
-  "main": "index.js",
+  "main": "lib/raidajs.js",
   "scripts": {
     "dev": "webpack --watch --mode=development --env.production=dev --env.web=node",
     "prod": "webpack --mode=production --env.production=prod --env.web=node",
