@@ -134,7 +134,7 @@ class RaidaJS {
 				rqdata[i].sns.push(coin.sn)					
 				rqdata[i].nns.push(coin.nn)
 				rqdata[i].ans.push(coin.an[i])
-				rqdata[i].pans.push(coin.an[i])
+				rqdata[i].pans.push(coin.pan[i])
 				rqdata[i].denomination.push(this.getDenomination(coin.sn))
 			}
 		}
@@ -374,6 +374,16 @@ class RaidaJS {
 
 		if (typeof(coin.an) != 'object' || !Array.isArray(coin.an)) 
 			return false
+
+		if ('pan' in coin) {
+			if (typeof(coin.pan) != 'object' || !Array.isArray(coin.pan)) 
+				return false
+			
+			if (coin.pan.length != coin.an.length)
+				return false
+		} else {
+			coin.pan = [...coin.an]
+		}
 
 		if (coin.an.length != this._totalServers)
 			return false;
