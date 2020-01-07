@@ -301,8 +301,6 @@ class RaidaJS {
 	_launchRequests(url, params = null, method = 'POST', cb = null) {
 		if (params == null)
 			params = {}
-			console.log("params0")
-			console.log(params)
 
 		let pms = []
 		for (let i = 0; i < this._totalServers; i++) {
@@ -319,8 +317,6 @@ class RaidaJS {
 			else
 				rparams = params
 
-			console.log("params1")
-			console.log(rparams)
 			if (method == 'GET') {
 				options.params = rparams
 				pm = this._axInstance.get(rq, options)
@@ -335,9 +331,9 @@ class RaidaJS {
 				return response.data
 			}).catch(error => {
 				if (error.response) {
-					console.log("Invalid server response from RAIDA" + i + ": " + error.response.status)
+					console.error("Invalid server response from RAIDA" + i + ": " + error.response.status)
 				} else {
-					console.log("Failed to get a respose from RAIDA" + i)
+					console.error("Failed to get a respose from RAIDA" + i)
 				}
 
 				return null
@@ -360,7 +356,6 @@ class RaidaJS {
 
 	// Generate the array of RAIDA server URLs
 	_generateServers() {
-		console.log(this.options)
 		for (let i = 0; i < this._totalServers; i++)
 			this._raidaServers[i] = this.options.protocol + "://" + this.options.prefix 
 				+ i + "." +this.options.domain
@@ -368,7 +363,6 @@ class RaidaJS {
 
 	// Check if the coin is valid
 	_validateCoin(coin) {
-		console.log(coin)
 		if (typeof(coin) !== 'object')
 			return false;
 
