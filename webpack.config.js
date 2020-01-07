@@ -29,10 +29,10 @@ module.exports = function(options) {
 		resolve: {
 			extensions: ['.js']
 		},
-		devtool: isProd ? null : '#eval-source-map',
+		devtool: isProd ? false : '#eval-source-map',
 		plugins: isProd ? [
 			new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"production"'}}),
-			new UglifyJsPlugin({ minimize: true })
+			new UglifyJsPlugin()
 			// Prod plugins here
 		] : [
 			new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"development"'}})
