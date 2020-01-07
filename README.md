@@ -148,8 +148,8 @@ Output:
 
 ```js
 {
-	onlineServers : <int>,
-	totalServers:	<int>,
+	onlineServers: Number,
+	totalServers: Number,
 	details: []	
 }
 ```
@@ -158,7 +158,8 @@ Output:
 
 Sends multi_detect request to the RAIDA
 
-Input
+Input:
+
 ```js
 // Array of coins. If pan parameter is not set, it will be replicated from an
 let params = [{sn:1,an:[]},{sn:2,an:[]}]
@@ -167,6 +168,42 @@ let params = [{sn:1,an:[]},{sn:2,an:[]}]
 
 r.apiDetect(params)
 r.apiDetect(params, idx => {})
+```
+
+Output:
+
+```js
+{
+	// General Statistics
+	totalNotes: Number,
+	authenticNotes: Number,
+	frackedNotes: Number,
+	counterfeitNotes: Number,
+	errorNotes: Number,
+
+	// Per-coin results
+	result: {
+		coinSN0 : {
+			// Coin Info
+			nn: Number,
+			sn: Number,
+			denomination: Number,
+
+			// Results from the RAIDA servers 
+			authentic: Number,
+			counterfeit: Number,
+			errors: Number,
+
+			// Computed Results
+			pownstring: String,
+			result: String
+		},
+		coinSN1 : {
+			...
+		}
+	}
+
+{
 ```
 
 #### apiTransfer
