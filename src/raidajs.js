@@ -142,11 +142,75 @@ class RaidaJS {
 		// Launch Requests
 		let rqs = this._launchRequests("multi_detect", rqdata, 'POST', cb)
 
+		return this._getGenericMainPromise(rqs, params)	
+	}
+
+	// Transfer
+	apiTransfer(params, cb = null) {
+		let coin = this._getCoinFromParams(params)
+		if (coin == null) 
+			return null
+
+		if (!'sns' in params) {
+			console.error("Invalid params. sns is not defined")
+			return null
+		}
+
+		if (!'to' in params) {
+			console.error("Invalid params. To is not defined")
+			return null
+		}
+
+		let sns = params.sns
+		let nns
+		if ('nns' in params) {
+			nns = params.nns
+			if (nns.length != sns.length) {
+				console.error("Invalid params. sns and nns length mismatch")
+				return null
+			}
+		} else {
+			nns = new Array(sns.length)
+			nns.fill(this.options.defaultCoinNn)
+		}
+
+
+		let memo = 'memo' in params ? params['memo'] : "Transfer from SN#" + coin.sn
+		let rqdata = []
+
+		// Assemble input data for each Raida Server
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sns: sns,
+				nns: nns,
+				an: coin.an[i],
+				pan: coin.pan[i],
+				sn: coin.sn,
+				nn: coin.nn,
+				denomination: this.getDenomination(coin.sn),
+				to_sn: params['to'],
+				tag: memo
+			})
+		}
+
+		// Launch Requests
+		let rqs = this._launchRequests("transfer", rqdata, 'POST', cb)
+	
+		let coins = new Array(sns.length)
+		sns.forEach((value, idx) => { 
+			coins[idx] = { sn: sns[idx], nn: nns[idx] }
+		})
+
+		return this._getGenericMainPromise(rqs, coins)	
+	}
+
+	/*** INTERNAL FUNCTIONS. Use witch caution ***/
+	_getGenericMainPromise(rqs, coins) {
 		// Parse the response from all RAIDA servers
 		let mainPromise = rqs.then(response => {
 			// Return value
 			let rv = {
-				totalNotes: params.length,
+				totalNotes: coins.length,
 				authenticNotes: 0,
 				counterfeitNotes: 0,
 				errorNotes: 0,
@@ -159,10 +223,10 @@ class RaidaJS {
 			let rcoins = {}
 
 			// Setup the return hash value
-			for (let i = 0; i < params.length; i++) {
-				let sn = params[i].sn
+			for (let i = 0; i < coins.length; i++) {
+				let sn = coins[i].sn
 				rcoins[sn] = {
-					nn: params[i].nn,
+					nn: coins[i].nn,
 					sn: sn,
 					denomination: this.getDenomination(sn),
 					errors: 0,
@@ -185,7 +249,7 @@ class RaidaJS {
 
 				// The order in input and output data is the same
 				for (let i = 0; i < serverResponse.length; i++) {
-					let sn = params[i].sn
+					let sn = coins[i].sn
 					let sr = serverResponse[i]
 					if (!'status' in sr) {
 						rcoins[sn].errors++;
@@ -235,8 +299,6 @@ class RaidaJS {
 		return mainPromise
 	}
 
-
-	/*** INTERNAL FUNCTIONS. Use witch caution ***/
 	_gradeCoin(a, f, e) {
 		if (a + f + e != this._totalServers)
 			return this.__errorResult
@@ -253,6 +315,29 @@ class RaidaJS {
 		return this.__authenticResult
 	}
 		
+	_getCoinFromParams(params) {
+		let coin = {
+			sn: 0,
+			nn: this.options.defaultCoinNn,
+			an: []
+		}
+
+		if (typeof(params) !== 'object') {
+			console.error("Invalid input data")
+			return null
+		}
+
+		for (let k in coin) {
+			if (k in params)
+				coin[k] = params[k]
+		}
+
+		if (!this._validateCoin(coin))
+			return null
+
+		return coin
+	}
+
 	_parseMainPromise(response, arrayLength, rv, cb) {
 		for (let i = 0; i < response.length; i++) {
 			let serverResponse
