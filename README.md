@@ -1,14 +1,21 @@
 # class Raida
 
-The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
+The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to a RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
 
-## Functions
 
-[function echo()](README.md#function-echo)
+## Important RAIDA Functions
 
-[Echo](README.md#echo-service)
 
-[Echo](README.md#echo-service)
+[constructor()](README.md#constructor) Initilizes the Raida object. 
+
+[echo()](README.md#function-echo) Echos the RAIDA to make sure you have connection.
+
+[detect()](README.md#function-echo) Changes the ownership of a coin or just check's its authenticity. 
+
+## Important CloudBank Functions
+
+[transfer()](README.md#function-echo) 
+
 
 
 ## function echo()
@@ -32,12 +39,12 @@ Using html:
 
 Browser:
 ```js
-let r = new RaidaJS({ timeout: 20000, debug: false })
-r.apiEcho().then(response => { 
+let raida = new Raida({ timeout: 20000, debug: false })
+raida.echo().then(response => { 
 	console.log("Available servers: " + response.onlineServers) 
 })
 
-let data = [{
+let coinData = [{
 	sn: 20,
 	an: ["01f2b05d74192e31478846f1b7bdd661","02025cf02053edb09b93ef532a37099d",
 	"03518632d60f897d84ae62e75a7059a3","04dfb17c08b6dbc2846fbe8938bece1a",
@@ -54,7 +61,7 @@ let data = [{
 	"2538b4aafd39bd136141a2ac31fc8141"]
 }]
 
-r.apiDetect(data).then(response => {
+raida.detect(coinData).then(response => {
 	console.log("Authentic Notes: " + response.authenticNotes)
 	console.log("Total Notes: " + response.totalNotes)
 	Object.keys(response.result).map(sn => {
@@ -65,13 +72,13 @@ r.apiDetect(data).then(response => {
 
 Node.js ES6
 ```js
-import RaidaJS from "raidajs"
+import Raida from "raida"
 
-let r = new RaidaJS()
-r.apiEcho()
+let raida = new Raida()
+raida.echo()
 ```
 
-## RaidaJS Initialization
+## Constructor
 
 Here are the available config options for making requests. None of them is required.
 
