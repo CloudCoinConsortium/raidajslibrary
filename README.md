@@ -1,6 +1,15 @@
-# RaidaJS
+# class RaidaJS
 
-RAIDA Javascript Library
+The RaidaJS.js file contains the RaidaJS class. The RaidaJS class has functions that allow you to quckkly connect to the CloudCoin RAIDA and the SkyWallet CloudBank and other RAIDAs. 
+
+[function echo()](README.md#function-echo)
+
+[Echo](README.md#echo-service)
+
+[Echo](README.md#echo-service)
+
+
+## function echo()
 
 ## Features
 
