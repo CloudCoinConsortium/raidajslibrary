@@ -1,6 +1,8 @@
-# class RaidaJS
+# class Raida
 
-The RaidaJS.js file contains the RaidaJS class. The RaidaJS class has functions that allow you to quckkly connect to the CloudCoin RAIDA and the SkyWallet CloudBank and other RAIDAs. 
+The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
+
+## Functions
 
 [function echo()](README.md#function-echo)
 
@@ -11,13 +13,6 @@ The RaidaJS.js file contains the RaidaJS class. The RaidaJS class has functions 
 
 ## function echo()
 
-## Features
-
-- Make asynchronuos requests to the RAIDA
-- Accept, analyze, parse and aggregate responses from the RAIDA
-- Supported callbacks and hooks for tracing the progress of each request
-- Debug information and raw-responses can be attached if necessary
-- Supported flexible configuration of the RAIDA parameters
 
 ## Installing
 
