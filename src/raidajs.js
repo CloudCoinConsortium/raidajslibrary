@@ -145,6 +145,58 @@ class RaidaJS {
 		return this._getGenericMainPromise(rqs, params)	
 	}
 
+	// Send
+	apiSend(params, cb = null) {
+		if (!'coins' in params) {
+			console.error("Invalid input data")
+			return null
+		}
+
+		if (!Array.isArray(params['coins'])) {
+			console.error("Invalid input data")
+			return null
+		}
+
+		if (!'to' in params) {
+			console.error("Invalid params. To is not defined")
+			return null
+		}
+		
+		let rqdata = []
+		let memo = 'memo' in params ? params['memo'] : "Send"
+
+		// Assemble input data for each Raida Server
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sns: [],
+				nns: [],
+				ans: [],
+				pans: [],	
+				denomination: [],
+				to_sn: params['to'],
+				tag: memo
+			})
+			for (let j = 0; j < params['coins'].length; j++) {
+				let coin = params['coins'][j]
+				if (!this._validateCoin(coin)) {
+					console.error("Invalid coin. Coin index: " + j)
+					return null
+				}
+
+				rqdata[i].sns.push(coin.sn)					
+				rqdata[i].nns.push(coin.nn)
+				rqdata[i].ans.push(coin.an[i])
+				rqdata[i].pans.push(coin.pan[i])
+				rqdata[i].denomination.push(this.getDenomination(coin.sn))
+			}
+		}
+
+		// Launch Requests
+		let rqs = this._launchRequests("send", rqdata, 'POST', cb)
+
+		return this._getGenericMainPromise(rqs, params['coins'])	
+	}
+
 	// Transfer
 	apiTransfer(params, cb = null) {
 		let coin = this._getCoinFromParams(params)
