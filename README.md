@@ -88,7 +88,7 @@ let options = {
 let raidaJS = new RaidaJS(options)
 ```
 
-## RaidaJS API
+## RaidaJS Api Methods: Methods that contact the RAIDA.
 
 All methods are executed asynchronously and return Javascript Promise Object
 If there is an error with the input data the method returns null
@@ -97,8 +97,8 @@ Each API method has an optional `callback` argument. If defined this function is
 
 ```js
 let progress = 0
-raidaJS.apiDetect(data, idx => {
-	console.log("RAIDA " + idx + " finished")
+raidaJS.apiDetect(data, raidaNumber => {
+	console.log("RAIDA " + raidaNumber + " finished")
 	progress++
 }).then(response => console.log(response))	
 ```
@@ -136,13 +136,14 @@ raidaJS.apiEcho()
 raidaJS.apiEcho(raidaNumber => {})
 ```
 
-Output:
+Data Returned:
 
 ```js
+// The call will return an anonymous object that will have three properties:
 {
-	onlineServers: Number,
-	totalServers: Number,
-	details: []	
+	onlineServers: Number,  // The number of servers (0-25) that responded to the echo request. 
+	totalServers: Number,   // This is always 25 and represents the the number of clouds that are in the RAIDA.
+	details: []		// A string array of all the JSON responses from every RAIDA's echo request. This is not usually needed but handy for trouble shooting
 }
 ```
 
@@ -163,35 +164,36 @@ raidaJS.apiDetect(params)
 raidaJS.apiDetect(params, raidaNumber => {})
 ```
 
-Output:
+Data Returned:
 
 ```js
 {
 	// General Statistics
-	totalNotes: Number,
-	authenticNotes: Number,
-	frackedNotes: Number,
-	counterfeitNotes: Number,
-	errorNotes: Number,
+	totalNotes: Number,		// The number of notes in the initial request
+	authenticNotes: Number,		// The number of authentic notes
+	frackedNotes: Number,		// The number of fracked notes
+	counterfeitNotes: Number,	// The number of counterfeit notes
+	errorNotes: Number,		// The number of notes failed to be authenticated
 
 	// Per-coin results
 	result: {
-		coinSN0 : {
+		coinSN0 : {		// Coin serial number
 			// Coin Info
-			nn: Number,
-			sn: Number,
-			denomination: Number,
+			nn: Number,	// Coin network number
+			sn: Number,	// Coin serial number
+			denomination: Number,	// Denomination. One of (1, 5, 25, 100, 250)
 
 			// Results from the RAIDA servers 
-			authentic: Number,
-			counterfeit: Number,
-			errors: Number,
+			authentic: Number,	// The number of RAIDA servers that think the coin is authentic
+			counterfeit: Number,	// The number of RAIDA servers that think the coin is counterfeit
+			errors: Number,		// The number of RAIDA servers that failed to process the coin
 
 			// Computed Results
-			pownstring: String,
-			result: String
+			pownstring: String,	
+			result: String		// The result. One of the (authentic, counterfeit, fracked, error)
 		},
-		coinSN1 : {
+
+		coinSN1 : {	// Next coin
 			...
 		}
 	}
@@ -238,7 +240,7 @@ raidaJS.apiTransfer(params)
 raidaJS.apiTransfer(params, raidaNumber => {})
 ```
 
-Output:
+Data Returned:
 
 The same as the one for the apiDetect
 
@@ -272,9 +274,8 @@ raidaJS.apiSend(params)
 
 // Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
 raidaJS.apiSend(params, raidaNumber => {})
-
 ```
 
-Output:
+Data Returned:
 
 The same as the one for the apiDetect
