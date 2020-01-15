@@ -2,18 +2,6 @@
 
 The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
 
-## Functions
-
-[function echo()](README.md#function-echo)
-
-[Echo](README.md#echo-service)
-
-[Echo](README.md#echo-service)
-
-
-## function echo()
-
-
 ## Installing
 
 Using npm:
@@ -32,8 +20,8 @@ Using html:
 
 Browser:
 ```js
-let r = new RaidaJS({ timeout: 20000, debug: false })
-r.apiEcho().then(response => { 
+let raidaJS = new RaidaJS({ timeout: 20000, debug: false })
+raidaJS.apiEcho().then(response => { 
 	console.log("Available servers: " + response.onlineServers) 
 })
 
@@ -54,7 +42,7 @@ let data = [{
 	"2538b4aafd39bd136141a2ac31fc8141"]
 }]
 
-r.apiDetect(data).then(response => {
+raidaJS.apiDetect(data).then(response => {
 	console.log("Authentic Notes: " + response.authenticNotes)
 	console.log("Total Notes: " + response.totalNotes)
 	Object.keys(response.result).map(sn => {
@@ -67,8 +55,8 @@ Node.js ES6
 ```js
 import RaidaJS from "raidajs"
 
-let r = new RaidaJS()
-r.apiEcho()
+let raidaJS = new RaidaJS()
+raidaJS.apiEcho()
 ```
 
 ## RaidaJS Initialization
@@ -97,7 +85,7 @@ let options = {
 	debug: false
 }
 
-let r = new RaidaJS(options)
+let raidaJS = new RaidaJS(options)
 ```
 
 ## RaidaJS API
@@ -109,7 +97,7 @@ Each API method has an optional `callback` argument. If defined this function is
 
 ```js
 let progress = 0
-r.apiDetect(data, idx => {
+raidaJS.apiDetect(data, idx => {
 	console.log("RAIDA " + idx + " finished")
 	progress++
 }).then(response => console.log(response))	
@@ -118,18 +106,18 @@ r.apiDetect(data, idx => {
 ### Set functions
 
 ```js
-r.setTimeout(15000)
-r.setProtocol("http")
-r.setDomain("raida.tech")
+raidaJS.setTimeout(15000)
+raidaJS.setProtocol("http")
+raidaJS.setDomain("raida.tech")
 ```
 
 ### Get functions
 ```js
 // Returns the current set of the RAIDA URLs
-r.getServers()
+raidaJS.getServers()
 
 // Returns the denomination of the coin
-r.getDenomination(12500)
+raidaJS.getDenomination(12500)
 ```
 
 ### Api Methods
@@ -143,8 +131,8 @@ Input:
 ```js
 // callback function (optional)
 
-r.apiEcho()
-r.apiEcho(idx => {})
+raidaJS.apiEcho()
+raidaJS.apiEcho(idx => {})
 
 ```
 
@@ -170,8 +158,8 @@ let params = [{sn:1,an:[]},{sn:2,an:[]}]
 
 // callback function (optional)
 
-r.apiDetect(params)
-r.apiDetect(params, idx => {})
+raidaJS.apiDetect(params)
+raidaJS.apiDetect(params, idx => {})
 ```
 
 Output:
@@ -245,8 +233,8 @@ let params = {
 // Callback (optional)
 callback
 
-r.apiTransfer(params)
-r.apiTransfer(params, idx => {})
+raidaJS.apiTransfer(params)
+raidaJS.apiTransfer(params, idx => {})
 ```
 
 Output:
@@ -278,8 +266,8 @@ let params = {
         }]
 }
 
-r.apiSend(params)
-r.apiSend(params, idx => {})
+raidaJS.apiSend(params)
+raidaJS.apiSend(params, idx => {})
 
 ```
 

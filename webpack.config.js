@@ -13,7 +13,7 @@ module.exports = function(options) {
 	let outdir, filename;
 	if (isWeb) {
 		outdir = "dist"
-		filename = 'raidajs.web.js'
+		filename = 'raidajs.min.js'
 	} else {
 		outdir = "lib"
 		filename = 'raidajs.js'

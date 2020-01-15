@@ -82,8 +82,8 @@ class RaidaJS {
 	/*** RAIDA SERVICES API ***/
 
 	// Echo
-	apiEcho(cb = null) {
-		let rqs = this._launchRequests("echo", {}, 'GET', cb)
+	apiEcho(callback = null) {
+		let rqs = this._launchRequests("echo", {}, 'GET', callback)
 		let rv = {
 			onlineServers : 0,
 			totalServers: this._totalServers,
@@ -107,7 +107,7 @@ class RaidaJS {
 	}
 
 	// Detect
-	apiDetect(params, cb = null) {
+	apiDetect(params, callback = null) {
 		if (!Array.isArray(params)) {
 			console.error("Invalid input data")
 			return null
@@ -140,13 +140,13 @@ class RaidaJS {
 		}
 
 		// Launch Requests
-		let rqs = this._launchRequests("multi_detect", rqdata, 'POST', cb)
+		let rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
 
 		return this._getGenericMainPromise(rqs, params)	
 	}
 
 	// Send
-	apiSend(params, cb = null) {
+	apiSend(params, callback = null) {
 		if (!'coins' in params) {
 			console.error("Invalid input data")
 			return null
@@ -192,13 +192,13 @@ class RaidaJS {
 		}
 
 		// Launch Requests
-		let rqs = this._launchRequests("send", rqdata, 'POST', cb)
+		let rqs = this._launchRequests("send", rqdata, 'POST', callback)
 
 		return this._getGenericMainPromise(rqs, params['coins'])	
 	}
 
 	// Transfer
-	apiTransfer(params, cb = null) {
+	apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
 		if (coin == null) 
 			return null
@@ -246,7 +246,7 @@ class RaidaJS {
 		}
 
 		// Launch Requests
-		let rqs = this._launchRequests("transfer", rqdata, 'POST', cb)
+		let rqs = this._launchRequests("transfer", rqdata, 'POST', callback)
 	
 		let coins = new Array(sns.length)
 		sns.forEach((value, idx) => { 
@@ -390,13 +390,13 @@ class RaidaJS {
 		return coin
 	}
 
-	_parseMainPromise(response, arrayLength, rv, cb) {
+	_parseMainPromise(response, arrayLength, rv, callback) {
 		for (let i = 0; i < response.length; i++) {
 			let serverResponse
 
 			if (response[i].status != 'fulfilled') {
 				this._addDetails(rv)
-				cb("error")
+				callback("error")
 				continue
 			}
 
@@ -405,14 +405,14 @@ class RaidaJS {
 				if (!('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
 					this._addDetails(rv)
-					cb("error")
+					callback("error")
 					continue
 				}
 			} else {
 				if (!Array.isArray(serverResponse)) {
 					console.error("Expected array from RAIDA: " + i)
 					this._addDetails(rv)
-					cb("error")
+					callback("error")
 					continue
 				}
 
@@ -420,12 +420,12 @@ class RaidaJS {
 					console.error("Invalid length returned from RAIDA: " + i
 						+ ". Expected: " + arrayLength +", got " + serverResponse.length)
 					this._addDetails(rv)
-					cb("error")
+					callback("error")
 					continue
 				}
 			}
 
-			cb(serverResponse, i)	
+			callback(serverResponse, i)	
 			this._addDetails(rv, serverResponse)
 		}
 	}
@@ -435,7 +435,7 @@ class RaidaJS {
 			rv['details'].push(serverResponse)
 	}
 
-	_launchRequests(url, params = null, method = 'POST', cb = null) {
+	_launchRequests(url, params = null, method = 'POST', callback = null) {
 		if (params == null)
 			params = {}
 
@@ -462,8 +462,8 @@ class RaidaJS {
 			}
 
 			pm.then(response => {
-				if (cb != null)
-					cb(i)
+				if (callback != null)
+					callback(i)
 
 				return response.data
 			}).catch(error => {
