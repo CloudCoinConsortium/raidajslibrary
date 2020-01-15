@@ -129,11 +129,11 @@ Echos RAIDA servers
 Input:
 
 ```js
-// callback function (optional)
-
+// Example call to echo the RAIDA:
 raidaJS.apiEcho()
-raidaJS.apiEcho(idx => {})
 
+// Example call the echo the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiEcho(raidaNumber => {})
 ```
 
 Output:
@@ -156,10 +156,11 @@ Input:
 // Array of coins. If pan parameter is not set, it will be replicated from an
 let params = [{sn:1,an:[]},{sn:2,an:[]}]
 
-// callback function (optional)
-
+// Example call to the RAIDA:
 raidaJS.apiDetect(params)
-raidaJS.apiDetect(params, idx => {})
+
+// Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiDetect(params, raidaNumber => {})
 ```
 
 Output:
@@ -230,11 +231,11 @@ let params = {
 	memo: 'From Mike'
 }
 
-// Callback (optional)
-callback
-
+// Example call to the RAIDA
 raidaJS.apiTransfer(params)
-raidaJS.apiTransfer(params, idx => {})
+
+// Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiTransfer(params, raidaNumber => {})
 ```
 
 Output:
@@ -266,8 +267,11 @@ let params = {
         }]
 }
 
+// Example call to the RAIDA:
 raidaJS.apiSend(params)
-raidaJS.apiSend(params, idx => {})
+
+// Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiSend(params, raidaNumber => {})
 
 ```
 
