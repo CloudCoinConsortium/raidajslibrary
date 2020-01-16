@@ -197,8 +197,7 @@ Data Returned:
 			...
 		}
 	}
-
-{
+}
 ```
 
 #### apiTransfer

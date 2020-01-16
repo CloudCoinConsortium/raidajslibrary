@@ -29,6 +29,8 @@ class RaidaJS {
 		this.__frackedResult = "fracked"
 		this.__counterfeitResult = "counterfeit"
 		this.__errorResult = "error"
+
+		this._initNeighbours()
 	}
 
 
@@ -113,19 +115,86 @@ class RaidaJS {
 			return null
 		}
 		
-		let rqdata = []
+		let rqdata = this._formRequestData(params)
 
-		// Assemble input data for each Raida Server
+		// Launch Requests
+		let rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
+
+		return this._getGenericMainPromise(rqs, params)	
+	}
+
+	// apiGetticket
+	apiGetticket(params, callback = null) {
+		console.log("get ticket")
+		if (!Array.isArray(params)) {
+			console.error("Invalid input data")
+			return null
+		}
+		
+		let rqdata = this._formRequestData(params)
+
+		// Launch Requests
+		let rqs = this._launchRequests("multi_get_ticket", rqdata, 'POST', callback)
+
+		return this._getGenericMainPromise(rqs, params)
+	}
+
+	// FixFracked
+	apiFixfracked(params, callback = null) {
+		let coins = []
+
+		// Filter out fracked coins
+		for (let k in params) {
+			let coin = params[k]
+
+			console.log(coin)
+			if (!('pownstring' in coin))
+				continue
+
+			if (!('result' in coin))
+				continue
+
+			if (coin.result != this.__frackedResult)
+				continue
+
+			coin['an'] = []
+			for (let x = 0; x < this._totalServers; x++)
+				coin['an'][x] = this._generatePan()
+
+			if (!this._validateCoin(coin))
+				return null
+
+			coin.pownArray = coin.pownstring.split("")
+			coins.push(coin)
+		}
+
+		// Round 1
+		for (let i = 0; i < this._totalServers; i++) {
+			this._realFix(0, i, coins, callback)
+		}
+
+		// Round 2
+		for (let i = this._totalServers; i >= 0; i--) {
+			this._realFix(1, i, coins, callback)
+		}
+//		for (let c = 0; c < 4; c++) {
+//			if (!this._fixCoinsInCorner
+//		}
+
+/*
+		let rqdata = []
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
 				sns: [],
 				nns: [],
 				ans: [],
 				pans: [],	
-				denomination: []
+				denomination: [],
+				to_sn: params['to'],
+				tag: memo
 			})
-			for (let j = 0; j < params.length; j++) {
-				let coin = params[j]
+			for (let j = 0; j < params['coins'].length; j++) {
+				let coin = params['coins'][j]
 				if (!this._validateCoin(coin)) {
 					console.error("Invalid coin. Coin index: " + j)
 					return null
@@ -139,10 +208,8 @@ class RaidaJS {
 			}
 		}
 
-		// Launch Requests
-		let rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
-
-		return this._getGenericMainPromise(rqs, params)	
+*/
+		console.log("ssss")
 	}
 
 	// Send
@@ -257,6 +324,64 @@ class RaidaJS {
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
+	_realFix(round, raidaIdx, coins, callback = null) {
+		console.log("Fixing r " + round + " r=" + raidaIdx)
+
+		for (let corner = 0; corner < 4; corner++) {
+			if (this._fixInCorner(round, corner, raidaIdx, coins, callback)) {
+				// syncCoins(raidaIdx, coins)
+				break
+			}
+		}
+		
+	}
+
+	_fixInCorner(round, corner, raidaIdx, coins, callback) {
+		let triad = this._trustedTriads[raidaIdx]
+
+		console.log("ss")
+		console.log(coins)
+		let rqdata = this._formRequestData(coins)
+		for (let i = 0; i < coin.pownArray.length; i++) {
+			if (coin.pownArray[i] != 'f')
+				coin.an[i] = coin.pan[i] = null
+		}
+
+//		let rqs = this._launchRequests("multi_get_ticket", rqdata, 'POST', callback)
+		// Launch Requests
+		console.log("triad")
+		console.log(rqdata)
+	}
+
+	_formRequestData(params) {
+		let rqdata = []
+		// Assemble input data for each Raida Server
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sns: [],
+				nns: [],
+				ans: [],
+				pans: [],	
+				denomination: []
+			})
+			for (let j = 0; j < params.length; j++) {
+				let coin = params[j]
+				if (!this._validateCoin(coin)) {
+					console.error("Invalid coin. Coin index: " + j)
+					return null
+				}
+
+				rqdata[i].sns.push(coin.sn)					
+				rqdata[i].nns.push(coin.nn)
+				rqdata[i].ans.push(coin.an[i])
+				rqdata[i].pans.push(coin.pan[i])
+				rqdata[i].denomination.push(this.getDenomination(coin.sn))
+			}
+		}
+
+		return rqdata
+	}
+
 	_getGenericMainPromise(rqs, coins) {
 		// Parse the response from all RAIDA servers
 		let mainPromise = rqs.then(response => {
@@ -316,8 +441,17 @@ class RaidaJS {
 						rcoins[sn].counterfeit++;
 						rcoins[sn].pownstring += "f"
 					} else {
-						rcoins[sn].errors++;
-						rcoins[sn].pownstring += "e"
+						if (sr.status == 'ticket') {
+							rcoins[sn].authentic++;
+							rcoins[sn].pownstring += "p"
+							if (!('tickets' in rcoins[sn]))
+								rcoins[sn].tickets = []
+
+							rcoins[sn].tickets[raidaIdx] = sr.message
+						} else {
+							rcoins[sn].errors++;
+							rcoins[sn].pownstring += "e"
+						}
 					}
 				}
 			})
@@ -390,6 +524,20 @@ class RaidaJS {
 		return coin
 	}
 
+
+	_generatePan() {
+		let s = ""
+		let rand, i = 0
+
+		while (i < 32) {
+			rand = Math.floor((Math.random() * 16));
+			rand = rand.toString(16)
+			s += rand
+			i++
+		}
+
+		return s
+	}
 	_parseMainPromise(response, arrayLength, rv, callback) {
 		for (let i = 0; i < response.length; i++) {
 			let serverResponse
@@ -674,6 +822,52 @@ class RaidaJS {
 		}
 
 		return output
+	}
+
+	// Neighbour table
+	_getNeighbour(raidaIdx, offset) {
+		let result = raidaIdx + offset
+
+		if (result < 0)
+			result += this._totalServers
+
+		if (result >= this._totalServers)
+			result -= this._totalServers
+
+		return result
+	}
+
+	_initNeighbours() {
+		let sideSize
+
+		sideSize = Math.sqrt(this._totalServers)
+		if (sideSize * sideSize != this._totalServers) {
+			console.error("Invalid RAIDA dimensions")
+			return
+		}
+
+		let trustedServers = Array(this._totalServers)
+		let trustedTriads =  Array(this._totalServers)
+		for (let i = 0; i < this._totalServers; i++) {
+			trustedServers[i] = []
+
+			trustedServers[i][0] = this._getNeighbour(i, -sideSize - 1)
+			trustedServers[i][1] = this._getNeighbour(i, -sideSize)
+			trustedServers[i][2] = this._getNeighbour(i, -sideSize + 1)
+			trustedServers[i][3] = this._getNeighbour(i, -1)
+			trustedServers[i][4] = this._getNeighbour(i, 1)
+			trustedServers[i][5] = this._getNeighbour(i, sideSize - 1)
+			trustedServers[i][6] = this._getNeighbour(i, sideSize)
+			trustedServers[i][7] = this._getNeighbour(i, sideSize + 1)
+
+			trustedTriads[i] = Array(4)
+			trustedTriads[i][0] = [ trustedServers[i][0], trustedServers[i][1], trustedServers[i][3], trustedServers[i][7] ]
+			trustedTriads[i][1] = [ trustedServers[i][1], trustedServers[i][2], trustedServers[i][4], trustedServers[i][5] ]
+			trustedTriads[i][2] = [ trustedServers[i][3], trustedServers[i][5], trustedServers[i][6], trustedServers[i][2] ]
+			trustedTriads[i][3] = [ trustedServers[i][4], trustedServers[i][6], trustedServers[i][7], trustedServers[i][0] ]
+		}
+
+		this._trustedTriads = trustedTriads
 	}
 
 }
