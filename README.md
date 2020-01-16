@@ -188,6 +188,9 @@ Data Returned:
 			counterfeit: Number,	// The number of RAIDA servers that think the coin is counterfeit
 			errors: Number,		// The number of RAIDA servers that failed to process the coin
 
+			// Resulting Authenticity Numbers (if powned or frackfixed)
+			an: [],
+
 			// Computed Results
 			pownstring: String,	
 			result: String		// The result. One of the (authentic, counterfeit, fracked, error)
@@ -278,3 +281,84 @@ raidaJS.apiSend(params, raidaNumber => {})
 Data Returned:
 
 The same as the one for the apiDetect
+
+
+#### apiFixfracked
+
+This service can be used as a standalone call but it is reasonable to call it right after the apiDetect call. 
+The method accepts apiDetect response.result as its input value
+
+Input
+
+```js
+// Per-coin results
+{
+	coinSN0 : {             // Coin serial number
+		// Coin Info
+		nn: Number,     // Coin network number
+		sn: Number,     // Coin serial number
+
+		pownstring: String // PownString 
+        },
+
+	coinSN1 : { //  Next Coin
+		...
+	}
+
+}
+
+// Example call to the RAIDA:
+raidaJS.apiDetect(params).then(response => {
+	console.log("Detect finished. Fixing Fracked coins")
+	raidaJS.apiFixfracked(response.result).then(response => {
+		console.log("Fixing finished. Total coins fixed: " + response.fixedNotes)
+	})
+})
+
+
+// Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiDetect(params, raidaNumber => {
+	console.log("RAIDA " + raidaNumber + " finished detecting")
+}).then(response => {
+	console.log("Detect finished. Fixing Fracked coins")
+	raidaJS.apiFixfracked(response.result, (raidaNumber, operation) => {
+		console.log("RAIDA " + raidaNumber + " finished " + operation)  // 'operation' is either 'multi_fix' or 'multi_get_ticket'
+	}).then(response => {
+		console.log("Fixing finished. Total coins fixed: " + response.fixedNotes)
+	})
+})
+```
+
+Data Returned
+
+```js
+{
+	// General statistics
+	totalNotes: Number,  // The number of notes in the initial request
+	fixedNotes: Number   // The number of successfully fixed notes
+
+	// Per-coin info
+	result: {
+		coinSN0: {
+			// Coin static data
+			nn: Number,
+			sn: Number,
+			denomination: Number,
+
+			// Fix statistics
+			errors: Number,
+			counterfeit: Number,
+			authentic: Number
+
+			// Result of fixing
+			result: String,  // either 'fracked' or 'fixed'
+			pownstring: String,
+			an: [] // The array of ANs after the fixing. It is crucial to save it!
+		},
+		coinSN1: {
+			...
+		}
+	}
+}
+
+```

@@ -123,31 +123,14 @@ class RaidaJS {
 		return this._getGenericMainPromise(rqs, params)	
 	}
 
-	// apiGetticket
-	apiGetticket(params, callback = null) {
-		console.log("get ticket")
-		if (!Array.isArray(params)) {
-			console.error("Invalid input data")
-			return null
-		}
-		
-		let rqdata = this._formRequestData(params)
-
-		// Launch Requests
-		let rqs = this._launchRequests("multi_get_ticket", rqdata, 'POST', callback)
-
-		return this._getGenericMainPromise(rqs, params)
-	}
-
 	// FixFracked
-	apiFixfracked(params, callback = null) {
+	async apiFixfracked(params, callback = null) {
 		let coins = []
 
 		// Filter out fracked coins
 		for (let k in params) {
 			let coin = params[k]
 
-			console.log(coin)
 			if (!('pownstring' in coin))
 				continue
 
@@ -157,59 +140,89 @@ class RaidaJS {
 			if (coin.result != this.__frackedResult)
 				continue
 
-			coin['an'] = []
-			for (let x = 0; x < this._totalServers; x++)
-				coin['an'][x] = this._generatePan()
+		//	coin['an'] = []
+		//	for (let x = 0; x < this._totalServers; x++)
+		//		coin['an'][x] = this._generatePan()
 
 			if (!this._validateCoin(coin))
-				return null
+				continue
 
 			coin.pownArray = coin.pownstring.split("")
+			coin.pownstring = ""
+			for (let x = 0; x < this._totalServers; x++) {
+				if (coin.pownArray[x] != 'p') {
+					coin.an[x] = this._generatePan()
+					coin.pan[x] = coin.an[x]
+				}
+			}
 			coins.push(coin)
 		}
 
 		// Round 1
 		for (let i = 0; i < this._totalServers; i++) {
-			this._realFix(0, i, coins, callback)
-		}
+			let ctfix = []
+			for (let j = 0; j < coins.length; j++) {
+				if (coins[j].pownArray[i] == 'p')
+					continue;
 
-		// Round 2
-		for (let i = this._totalServers; i >= 0; i--) {
-			this._realFix(1, i, coins, callback)
-		}
-//		for (let c = 0; c < 4; c++) {
-//			if (!this._fixCoinsInCorner
-//		}
-
-/*
-		let rqdata = []
-		for (let i = 0; i < this._totalServers; i++) {
-			rqdata.push({
-				sns: [],
-				nns: [],
-				ans: [],
-				pans: [],	
-				denomination: [],
-				to_sn: params['to'],
-				tag: memo
-			})
-			for (let j = 0; j < params['coins'].length; j++) {
-				let coin = params['coins'][j]
-				if (!this._validateCoin(coin)) {
-					console.error("Invalid coin. Coin index: " + j)
-					return null
-				}
-
-				rqdata[i].sns.push(coin.sn)					
-				rqdata[i].nns.push(coin.nn)
-				rqdata[i].ans.push(coin.an[i])
-				rqdata[i].pans.push(coin.pan[i])
-				rqdata[i].denomination.push(this.getDenomination(coin.sn))
+				ctfix.push(coins[j])
+			}
+	
+			if (ctfix.length != 0) {
+				await this._realFix(0, i, ctfix, callback)
 			}
 		}
 
-*/
-		console.log("ssss")
+		// Round 2
+		for (let i = this._totalServers - 1; i >= 0; i--) {
+			let ctfix = []
+			for (let j = 0; j < coins.length; j++) {
+				if (coins[j].pownArray[i] == 'p')
+					continue;
+
+				ctfix.push(coins[j])
+			}
+			if (ctfix.length != 0) {
+				await this._realFix(1, i, coins, callback)
+			}
+		}
+
+		let rv = {
+			totalNotes: coins.length,
+			fixedNotes: 0,
+			result : {},
+		}
+
+		// Form the result after all fixings are done
+		let a, c, e
+		for (let i = 0; i < coins.length; i++) {
+			a = c = e = 0
+			// Go over pownArray
+			for (let j = 0; j < coins[i].pownArray.length; j++) {
+				if (coins[i].pownArray[j] == 'p')
+					a++;
+				else if (coins[i].pownArray[j] == 'f')
+					c++;
+				else 
+					e++;
+
+				coins[i].pownstring += coins[i].pownArray[j]
+				coins[i].errors = e
+				coins[i].authentic = a
+				coins[i].counterfeit = c
+			}
+
+			delete coins[i].pownArray
+			delete coins[i].pan
+			if (c == 0 && e == 0) {
+				coins[i].result = "fixed"
+				rv.fixedNotes++
+			}
+
+			rv.result[coins[i].sn] = coins[i]
+		}
+
+		return rv
 	}
 
 	// Send
@@ -324,34 +337,83 @@ class RaidaJS {
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
-	_realFix(round, raidaIdx, coins, callback = null) {
-		console.log("Fixing r " + round + " r=" + raidaIdx)
-
+	async _realFix(round, raidaIdx, coins, callback = null) {
+		let rqdata, triad, rqs, resultData
 		for (let corner = 0; corner < 4; corner++) {
-			if (this._fixInCorner(round, corner, raidaIdx, coins, callback)) {
-				// syncCoins(raidaIdx, coins)
-				break
+			triad = this._trustedTriads[raidaIdx][corner]
+
+			rqdata = this._formRequestData(coins)
+			rqs = this._launchRequests("multi_get_ticket", rqdata, 'POST', callback, triad)
+			resultData = await this._getGenericMainPromise(rqs, coins, (a, c, e) => {
+				if (a == 4)
+					return this.__authenticResult
+
+				return this.__counterfeitResult
+			})
+
+			rqdata = {
+				nn : coins[0].nn,
+				fromserver1: triad[0],
+				fromserver2: triad[1],
+				fromserver3: triad[2],
+				fromserver4: triad[3],
+				message1: [],
+				message2: [],
+				message3: [],
+				message4: [],
+				pans: []
 			}
-		}
+
+			let i = 0
+			for (let sn in resultData['result']) {
+				let coin = resultData['result'][sn]
+				if (coin.result != this.__authenticResult) {
+					i++
+					continue
+				}
+
+				rqdata.message1.push(coin.tickets[0])
+				rqdata.message2.push(coin.tickets[1])
+				rqdata.message3.push(coin.tickets[2])
+				rqdata.message4.push(coin.tickets[3])
+
+				rqdata.pans.push(coins[i].pan[raidaIdx])
+				i++
+			}
 		
-	}
+			// exec fix fracked
+			rqs = this._launchRequests("multi_fix", rqdata, 'POST', callback, [raidaIdx])
+			resultData = await this._getGenericMainPromise(rqs, coins, (a, c, e) => {
+				if (a == 1 && c == 0 && e == 0)
+					return this.__authenticResult
 
-	_fixInCorner(round, corner, raidaIdx, coins, callback) {
-		let triad = this._trustedTriads[raidaIdx]
+				return this.__counterfeitResult
+			})
 
-		console.log("ss")
-		console.log(coins)
-		let rqdata = this._formRequestData(coins)
-		for (let i = 0; i < coin.pownArray.length; i++) {
-			if (coin.pownArray[i] != 'f')
-				coin.an[i] = coin.pan[i] = null
+			resultData = resultData['result']
+
+			let cfixed = 0
+			for (let i = 0; i < coins.length; i++) {
+				let sn = coins[i].sn
+
+				if (!(sn in resultData))
+					continue
+
+				let coinResult = resultData[sn].result
+				if (coinResult !=  this.__authenticResult)
+					continue
+				
+				coins[i].an[raidaIdx] = coins[i].pan[raidaIdx] = resultData[sn].an[raidaIdx]
+				coins[i].pownArray[raidaIdx] = 'p'
+
+				cfixed++
+			}
+
+			if (cfixed == coins.length)
+				break
 		}
-
-//		let rqs = this._launchRequests("multi_get_ticket", rqdata, 'POST', callback)
-		// Launch Requests
-		console.log("triad")
-		console.log(rqdata)
 	}
+
 
 	_formRequestData(params) {
 		let rqdata = []
@@ -382,7 +444,7 @@ class RaidaJS {
 		return rqdata
 	}
 
-	_getGenericMainPromise(rqs, coins) {
+	_getGenericMainPromise(rqs, coins, gradeFunction = null) {
 		// Parse the response from all RAIDA servers
 		let mainPromise = rqs.then(response => {
 			// Return value
@@ -412,6 +474,9 @@ class RaidaJS {
 					pownstring: "",
 					result: "unknown"
 				}
+
+				if (typeof(coins[i].pan) != 'undefined')
+					rcoins[sn].an = coins[i].pan
 			}
 
 			// Collect responses
@@ -458,8 +523,13 @@ class RaidaJS {
 
 			// Detect the result of each coin
 			Object.keys(rcoins).map(sn => {
-				rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic, 
-					rcoins[sn].counterfeit, rcoins[sn].errors)
+				if (gradeFunction == null) {
+					rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic, 
+						rcoins[sn].counterfeit, rcoins[sn].errors, this)
+				} else {
+					rcoins[sn].result = gradeFunction(rcoins[sn].authentic, 
+						rcoins[sn].counterfeit, rcoins[sn].errors, this)
+				}
 
 				switch(rcoins[sn].result) {
 					case this.__authenticResult:
@@ -583,13 +653,27 @@ class RaidaJS {
 			rv['details'].push(serverResponse)
 	}
 
-	_launchRequests(url, params = null, method = 'POST', callback = null) {
+	_launchRequests(url, params = null, method = 'POST', callback = null, servers = null) {
 		if (params == null)
 			params = {}
 
 		let pms = []
-		for (let i = 0; i < this._totalServers; i++) {
-			let rq = this._raidaServers[i] + "/service/" + url
+
+		let iteratedServers, iteratedServersIdxs
+		if (servers != null) {
+			iteratedServers = []
+			for (let i = 0; i < servers.length; i++) {
+				iteratedServers.push(this._raidaServers[servers[i]])
+			}
+			iteratedServersIdxs = servers
+		} else {
+			iteratedServers = this._raidaServers
+			iteratedServersIdxs = [...Array(this._totalServers).keys()]
+		}
+
+		for (let i = 0; i < iteratedServers.length; i++) {
+			let raidaIdx = iteratedServersIdxs[i]
+			let rq = iteratedServers[i] + "/service/" + url
 
 			let pm
 			let options = {
@@ -598,7 +682,7 @@ class RaidaJS {
 
 			let rparams
 			if (typeof(params) === 'object' && Array.isArray(params))
-				rparams = params[i]
+				rparams = params[raidaIdx]
 			else
 				rparams = params
 
@@ -611,7 +695,7 @@ class RaidaJS {
 
 			pm.then(response => {
 				if (callback != null)
-					callback(i)
+					callback(raidaIdx, url)
 
 				return response.data
 			}).catch(error => {
