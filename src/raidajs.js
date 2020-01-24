@@ -17,6 +17,7 @@ class RaidaJS {
 			timeout: 10000, // ms
 			defaultCoinNn: 1,
 			maxFailedRaidas: 5,
+			changeMakerId: 2,
 			debug: false
 		, ...options}
 
@@ -278,38 +279,55 @@ class RaidaJS {
 	}
 
 	// Transfer
-	apiTransfer(params, callback = null) {
+	async apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
 		if (coin == null) 
 			return null
-
-		if (!'sns' in params) {
-			console.error("Invalid params. sns is not defined")
-			return null
-		}
 
 		if (!'to' in params) {
 			console.error("Invalid params. To is not defined")
 			return null
 		}
 
-		let sns = params.sns
-		let nns
-		if ('nns' in params) {
-			nns = params.nns
-			if (nns.length != sns.length) {
-				console.error("Invalid params. sns and nns length mismatch")
-				return null
-			}
-		} else {
-			nns = new Array(sns.length)
-			nns.fill(this.options.defaultCoinNn)
+		let changeMakerId = this.options._changeMakerId
+		if ('changeMakerId' in params) {
+			changeMakerId = params['changeMakerId']
 		}
 
 
+		if (!('amount' in params)) {
+			console.error("Invalid params. Amount is not defined")
+			return null
+		}
+
 		let memo = 'memo' in params ? params['memo'] : "Transfer from SN#" + coin.sn
+
+		let gcRqs = await this._getCoins(coin, callback)
+		let sns = Object.keys(gcRqs.coins)
+
+		let nns = new Array(sns.length)
+		nns.fill(this.options.defaultCoinNn)
+
+		sns = [ 1, 2,3, 6291450, 16777210, 16777211]
+		if (params.amount > this._calcAmount(sns)) {
+			console.error("Not enought cloudcoins")
+			return null
+		}
+
+		console.log("rq")
+
+		console.log(sns)
+
+
 		let rqdata = []
 
+		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
+
+		let coinsToSend = rvalues.coins
+		let changeCoin = rvalues.extra
+
+		
+		return
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
@@ -337,6 +355,62 @@ class RaidaJS {
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
+	async _getCoins(coin, callback) {
+		let rqdata = []
+
+		// Assemble input data for each Raida Server
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sn: coin.sn,
+				nn: coin.nn,
+				an: coin.an[i],
+				pan: coin.pan[i],
+				denomination: this.getDenomination(coin.sn),
+			})
+		}
+		let rv = {
+			coins: {}
+		}
+		let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
+			this._parseMainPromise(response, 0, rv, response => {
+				if (response.status !== "pass") {
+					return
+				}
+
+				let coins = response.message
+				for (let i = 0; i < coins.length; i++) {
+					let key = coins[i].sn
+
+					if (!(key in rv.coins)) {
+						rv.coins[key] = {
+							passed: 0
+						}
+					}
+
+					rv.coins[key].passed++
+				}
+
+			
+			}) 
+
+			let nrv = {
+				coins: {}
+			}
+			for (let sn in rv.coins) {
+				if (rv.coins[sn].passed >= this._totalServers - this.options.maxFailedRaidas) {
+					nrv.coins[sn] = {
+						denomination: this.getDenomination(sn)
+					}
+				}
+			}
+		
+			return nrv
+		})
+
+		return rqs
+	}
+
+
 	async _realFix(round, raidaIdx, coins, callback = null) {
 		let rqdata, triad, rqs, resultData
 		for (let corner = 0; corner < 4; corner++) {
@@ -608,6 +682,7 @@ class RaidaJS {
 
 		return s
 	}
+
 	_parseMainPromise(response, arrayLength, rv, callback) {
 		for (let i = 0; i < response.length; i++) {
 			let serverResponse
@@ -954,6 +1029,182 @@ class RaidaJS {
 		this._trustedTriads = trustedTriads
 	}
 
+	_calcAmount(sns) {
+		let total = 0
+		for (let i = 0; i < sns.length; i++)
+			total += this.getDenomination(sns[i])
+
+		return total
+	}
+
+	_countCoinsFromArray(coins) {
+	        let totals = new Array(6);
+		totals.fill(0)
+
+        	for (let i = 0; i < coins.length; i++) {
+			let denomination = this.getDenomination(coins[i]);
+			if (denomination == 1)
+				totals[0]++;
+			else if (denomination == 5)
+				totals[1]++;
+			else if (denomination == 25)
+				totals[2]++;
+			else if (denomination == 100)
+				totals[3]++;
+			else if (denomination == 250)
+				totals[4]++
+			else
+				continue;
+
+			totals[5] += denomination;
+		}
+
+	        return totals;
+	}
+
+	_getExpCoins(amount, totals, loose) {
+		let savedAmount = amount;
+   
+		if (amount > totals[6]) {
+			console.error("Not enough coins")
+			return null;
+		}
+
+		if (amount < 0)
+			return null;
+        
+		let exp_1, exp_5, exp_25, exp_100, exp_250
+		exp_1 = exp_5 = exp_25 = exp_100 = exp_250 = 0
+		for (let i = 0; i < 2; i++) {
+			exp_1 = exp_5 = exp_25 = exp_100 = 0
+			if (i == 0 && amount >= 250 && totals[4] > 0) {
+				exp_250 = (Math.floor(amount / 250) < (totals[4])) ? Math.floor(amount / 250) : (totals[4])
+				amount -= (exp_250 * 250);
+			}
+
+			if (amount >= 100 && totals[3] > 0) {
+				exp_100 = (Math.floor(amount / 100) < (totals[3])) ? Math.floor(amount / 100) : (totals[3])
+				amount -= (exp_100 * 100);
+			}
+
+			if (amount >= 25 && totals[2] > 0) {
+				exp_25 = (Math.floor(amount / 25) < (totals[2])) ? Math.floor(amount / 25) : (totals[2])
+				amount -= (exp_25 * 25);
+			}
+
+			if (amount >= 5 && totals[1] > 0) {
+				exp_5 = (Math.floor(amount / 5) < (totals[1])) ? Math.floor(amount / 5) : (totals[1])
+				amount -= (exp_5 * 5);
+			}
+
+			if (amount >= 1 && totals[0] > 0) {
+				exp_1 = (amount < (totals[0])) ? amount : (totals[0])
+				amount -= (exp_1);
+			}
+		    
+			if (amount == 0)
+				break;
+		    
+			if (i == 1 || exp_250 == 0) {
+				if (loose)
+					break;
+			
+				return null;
+			}
+            
+			exp_250--
+			amount = savedAmount - exp_250 * 250
+		}
+       
+        	let rv = new Array(5)
+        
+		rv[0] = exp_1
+		rv[1] = exp_5
+		rv[2] = exp_25
+		rv[3] = exp_100
+		rv[4] = exp_250
+        
+	        return rv
+        
+	}
+
+
+	_pickCoinsAmountFromArrayWithExtra(coins, amount) {
+	        let totals, exps
+		let collected, rest
+		let denomination
+		let coinsPicked = []
+        
+		totals = this._countCoinsFromArray(coins)
+		console.log("t")
+		console.log(totals)
+		exps = this._getExpCoins(amount, totals, true)
+        
+		collected = rest = 0
+		console.log(exps)
+		for (let i = 0; i < coins.length; i++) {
+			denomination = this.getDenomination(coins[i]);
+			console.log("d="+denomination)
+			if (denomination == 1) {
+				if (exps[0]-- > 0) {
+					coinsPicked.push(coins[i])
+					collected += denomination
+				} 
+			} else if (denomination == 5) {
+				if (exps[1]-- > 0) {
+					coinsPicked.push(coins[i])
+					collected += denomination
+				}
+			} else if (denomination == 25) {
+				if (exps[2]-- > 0) {
+					coinsPicked.push(coins[i])
+					collected += denomination
+				} 
+			} else if (denomination == 100) {
+				if (exps[3]-- > 0) {
+					coinsPicked.push(coins[i])
+					collected += denomination
+				} 
+			} else if (denomination == 250) {
+				if (exps[4]-- > 0) {
+					coinsPicked.push(coins[i])
+					collected += denomination
+				} 
+			} 
+		}
+			    
+		let isAdded;
+		rest = amount - collected;
+		let extraSN = 0
+
+		if (rest == 0) {
+			return {coins: coinsPicked, extra: 0};
+		}
+
+		for (let i = 0; i < coins.length; i++) {
+			denomination = this.getDenomination(coins[i])
+			extraSN = coins[i]
+		    
+			if (rest > denomination)
+				continue;
+		    
+			isAdded = false;
+			for (let j = 0; j < coinsPicked.length; j++) {
+				if (coinsPicked[j] == coins[i]) {
+					isAdded = true
+					break
+				}
+			}
+		    
+			if (isAdded) {
+				continue;
+			}
+		    
+			break;
+		}
+
+		return {coins: coinsPicked, extra: extraSN};
+	}
 }
 
 
