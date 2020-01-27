@@ -222,17 +222,17 @@ let params = {
 	// Array of PAN numbrs (optional)
 	pan:["44f2b05d74192e31478846f1b7bdd661","55025cf02053edb09b93ef532a37099d","66518632d60f897d84ae62e75a7059a3","77dfb17c08b6dbc2846fbe8938bece1a","880744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"],
 
-	// Array of the Serial Numbers of the coins to send
-	sns: [1,2,3],
-
-	// Array on the Network Numbers of the coins to send (optional)
-	nns: [1,1,1],
-
-	// The Serial Number of the Destination Wallet
-	to: 103,
+	// The DNS Name of the Destination Wallet
+	to: john.skywallet.cc,
 
 	// Memo (optional)
-	memo: 'From Mike'
+	memo: 'From Mike',
+
+	// Amount to send
+	amount: 300,
+
+	// ID of the Change Maker. Optional. Default is 2
+	changeMakerId: 2
 }
 
 // Example call to the RAIDA
@@ -254,7 +254,7 @@ Input
 
 ```js
 let params = {
-        'to' : 444,
+        'to' : john.skywallet.cc,
         'memo' : "Send",
         'coins' :[{
 		'sn' : '4343',

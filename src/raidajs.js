@@ -227,7 +227,7 @@ class RaidaJS {
 	}
 
 	// Send
-	apiSend(params, callback = null) {
+	async apiSend(params, callback = null) {
 		if (!'coins' in params) {
 			console.error("Invalid input data")
 			return null
@@ -242,6 +242,12 @@ class RaidaJS {
 			console.error("Invalid params. To is not defined")
 			return null
 		}
+
+		let to = await this._resolveDNS(params['to'])
+		if (to == null) {
+			console.error("Failed to resolve DNS name: " + params.to)
+			return null
+		}
 		
 		let rqdata = []
 		let memo = 'memo' in params ? params['memo'] : "Send"
@@ -254,7 +260,7 @@ class RaidaJS {
 				ans: [],
 				pans: [],	
 				denomination: [],
-				to_sn: params['to'],
+				to_sn: to,
 				tag: memo
 			})
 			for (let j = 0; j < params['coins'].length; j++) {
@@ -289,6 +295,12 @@ class RaidaJS {
 			return null
 		}
 
+		let to = await this._resolveDNS(params['to'])
+		if (to == null) {
+			console.error("Failed to resolve DNS name: " + params.to)
+			return null
+		}
+
 		let changeMakerId = this.options._changeMakerId
 		if ('changeMakerId' in params) {
 			changeMakerId = params['changeMakerId']
@@ -304,41 +316,36 @@ class RaidaJS {
 
 		let gcRqs = await this._getCoins(coin, callback)
 		let sns = Object.keys(gcRqs.coins)
-
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
 
-		sns = [ 1, 2,3, 6291450, 16777210, 16777211]
+		sns = [ 1, 2,3, 6291450, 14680060, 16777210, 16777211]
 		if (params.amount > this._calcAmount(sns)) {
 			console.error("Not enought cloudcoins")
 			return null
 		}
 
-		console.log("rq")
-
-		console.log(sns)
-
-
-		let rqdata = []
-
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
-
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
 
+		console.log("rvalues")
+		console.log(rvalues)
+		console.log(coinsToSend)
+		console.log(changeCoin)
 		
-		return
+		let rqdata = []
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
-				sns: sns,
+				sns: coinsToSend,
 				nns: nns,
 				an: coin.an[i],
 				pan: coin.pan[i],
 				sn: coin.sn,
 				nn: coin.nn,
 				denomination: this.getDenomination(coin.sn),
-				to_sn: params['to'],
+				to_sn: to,
 				tag: memo
 			})
 		}
@@ -346,15 +353,261 @@ class RaidaJS {
 		// Launch Requests
 		let rqs = this._launchRequests("transfer", rqdata, 'POST', callback)
 	
-		let coins = new Array(sns.length)
-		sns.forEach((value, idx) => { 
-			coins[idx] = { sn: sns[idx], nn: nns[idx] }
+		let coins = new Array(coinsToSend.length)
+		coinsToSend.forEach((value, idx) => { 
+			coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
 		})
 
-		return this._getGenericMainPromise(rqs, coins)	
+		console.log("coins")
+		console.log(coins)
+		let response = await this._getGenericMainPromise(rqs, coins)
+		response.changeCoinSent = 0
+		response.changeRequired = false
+		
+		console.log("TRANSFER DONE")
+		console.log(response)
+		if (changeCoin === 0)
+			return response
+	
+		// Doing change
+		response.changeRequired = true
+		let scResponse = await this.showChange({ 
+			nn: this.options.defaultCoinNn, 
+			sn: changeMakerId,
+			denomination: this.getDenomination(changeCoin)
+		}, callback)
+
+		let d100s = Object.keys(scResponse.d100)
+		let d25s = Object.keys(scResponse.d25)
+		let d5s = Object.keys(scResponse.d5)
+		let d1s = Object.keys(scResponse.d1)
+
+		let vsns
+		switch (this.getDenomination(changeCoin)) {
+			case 250:
+				vsns = this._get250E(d100s, d25s, d5s, d1s)
+				break;
+			case 100:
+				vsns = this._get100E(d25s, d5s, d1s)
+				break;
+			case 25:
+				vsns = this._get25B(d5s, d1s)
+				break;
+			case 5:
+				vsns = this._getA(d1s)
+				break;
+			default:
+				response.errText = "Can't break denomination"
+				return response
+		}
+
+		console.log("vsns")
+		console.log(vsns)
+		let rest = params.amount - this._calcAmount(coinsToSend)
+
+		let changeCoinsToSend = []
+		let changeCoinsToChange = []
+		let pickedSns = this._pickCoinsAmountFromArrayWithExtra(vsns, rest)
+		let total = 0
+
+		if (pickedSns.extra != 0) {
+			response.errText = "Failed to pick coin for change"
+			return response
+		}
+
+		console.log("picked")
+		console.log(pickedSns)
+		for (let y = 0; y < vsns.length; y++) {
+			let present = false
+			for (let x = 0; x < pickedSns.coins.length;x++) {
+				if (vsns[y] == pickedSns.coins[x]) {
+					present = true;
+					break;
+				}
+			}
+
+			if (present)
+				changeCoinsToSend.push(vsns[y])
+			else
+				changeCoinsToChange.push(vsns[y])
+		}
+
+		console.log("WO")
+		console.log(changeCoinsToSend)
+		console.log(changeCoinsToChange)
+		if (this._calcAmount(changeCoinsToSend) + this._calcAmount(changeCoinsToChange) != this.getDenomination(changeCoin)) {
+			response.errText = "Error in making change. Incorrect calculations"
+			return response
+		}
+
+		console.log("a="+this._calcAmount(changeCoinsToSend))
+		console.log("c="+this._calcAmount(changeCoinsToChange))
+
+		console.log("pick")
+		console.log(pickedSns)
+
+		console.log(params.amount)
+		console.log(this._calcAmount(coinsToSend))
+		console.log(rest)
+		console.log("Changing coin " + changeCoin)
+		rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sns: [ changeCoin ],
+				nns: [ this.options.defaultCoinNn ],
+				an: coin.an[i],
+				pan: coin.pan[i],
+				sn: coin.sn,
+				nn: coin.nn,
+				denomination: this.getDenomination(coin.sn),
+				to_sn: to,
+				payment_envelope: memo,
+				payment_required: rest,
+				public_change_maker: changeMakerId,
+				paysns: changeCoinsToSend,
+				chsns: changeCoinsToChange
+			})
+		}
+
+		response.changeCoinSent = changeCoin
+		response.result[changeCoin] = {}
+		let nrv = response
+		rqs = this._launchRequests("transfer_with_change", rqdata, 'POST', callback)
+		let rvs = await this._getGenericMainPromise(rqs, [{ sn: changeCoin, nn: this.options.defaultCoinNn }]).then(response => {
+			console.log("RESPONSE FROM TWCx")
+			console.log(response)
+
+			nrv.totalNotes += response.totalNotes
+			nrv.authenticNotes += response.authenticNotes
+			nrv.counterfeitNotes += response.counterfeitNotes
+			nrv.errorNotes += response.errorNotes
+			nrv.frackedNotes += response.frackedNotes
+
+			for (let sn in response.result)
+				nrv.result[sn] = response.result[sn]
+
+			for (let i in response.details)
+				nrv.details.push(response.details)
+
+			return nrv
+		})
+
+		return rvs
+	}
+
+	async showChange(params, callback = null) {
+		let { sn, nn, denomination } = params
+		let rqdata = []
+		let seed = this._generatePan().substring(0, 8)
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sn: sn,
+				nn: nn,
+				denomination: denomination,
+				seed: seed
+			})
+		}
+
+		let nrv = { d1 : {}, d5 : {}, d25 : {}, d100 : {}}
+		let rqs = this._launchRequests("show_change", rqdata, 'GET', callback).then(response => {
+			this._parseMainPromise(response, 0, nrv, response => {
+				if (response.status !== "pass") {
+					return
+				}
+
+				if (!('d1' in response) || !('d5' in response) || !('d25' in response) || !('d100' in response)) 
+					return
+
+				let { d1, d5, d25, d100 } = response
+				for (let i = 0; i < d1.length; i++) {
+					if (!(d1[i] in nrv.d1)) nrv.d1[d1[i]] = 0
+					nrv.d1[d1[i]]++
+				}
+
+				for (let i = 0; i < d5.length; i++) {
+					if (!(d5[i] in nrv.d5)) nrv.d5[d5[i]] = 0
+					nrv.d5[d5[i]]++
+				}
+
+				for (let i = 0; i < d25.length; i++) {
+					if (!(d25[i] in nrv.d25)) nrv.d25[d25[i]] = 0
+					nrv.d25[d25[i]]++
+				}
+
+				for (let i = 0; i < d100.length; i++) {
+					if (!(d100[i] in nrv.d100)) nrv.d100[d100[i]] = 0
+					nrv.d100[d100[i]]++
+				}
+			})
+
+			let mnrv = { d1 : {}, d5 : {}, d25 : {}, d100 : {}}
+			for (let sn in nrv.d1) {
+				if (nrv.d1[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+					mnrv.d1[sn] = sn
+			}
+
+			for (let sn in nrv.d5) {
+				if (nrv.d5[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+					mnrv.d5[sn] = sn
+			}
+
+			for (let sn in nrv.d25) {
+				if (nrv.d25[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+					mnrv.d25[sn] = sn
+			}
+
+			for (let sn in nrv.d100) {
+				if (nrv.d100[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+					mnrv.d100[sn] = nrv.d100[sn]
+			}
+
+			return mnrv
+		})
+
+		return rqs
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
+	async _resolveDNS(hostname) {
+		let dnsAx = axios.create()
+
+		let response = await dnsAx.get("https://dns.google/resolve?name=" + hostname)
+		if (!('data' in response)) {
+			console.error("Invalid response from Google DNS")
+			return null
+		}	
+		
+		let data = response.data
+		if (!('Status' in data)) {
+			console.error("Invalid data from Google DNS")
+			return null
+		}
+
+		if (data.Status !== 0) {
+			console.error("Failed to resolve DNS name. Wrong response from Google DNS:" + data.Status)
+			return null
+		}
+			
+		if (!('Answer' in data)) {
+			console.error("Invalid data from Google DNS")
+			return null
+		}
+
+
+		let reply = data.Answer[0]
+		if (reply.type !== 1) {
+			console.error("Wrong response from Google DNS:" + data.Status)
+			return null
+		}
+
+		let arecord = reply.data
+		let parts = arecord.split('.')
+
+		let sn = parts[1] << 16 | parts[2] << 8 | parts[3]
+
+		return sn
+	}
+
 	async _getCoins(coin, callback) {
 		let rqdata = []
 
@@ -368,9 +621,7 @@ class RaidaJS {
 				denomination: this.getDenomination(coin.sn),
 			})
 		}
-		let rv = {
-			coins: {}
-		}
+		let rv = { coins: {} }
 		let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
 			this._parseMainPromise(response, 0, rv, response => {
 				if (response.status !== "pass") {
@@ -380,7 +631,6 @@ class RaidaJS {
 				let coins = response.message
 				for (let i = 0; i < coins.length; i++) {
 					let key = coins[i].sn
-
 					if (!(key in rv.coins)) {
 						rv.coins[key] = {
 							passed: 0
@@ -389,13 +639,9 @@ class RaidaJS {
 
 					rv.coins[key].passed++
 				}
-
-			
 			}) 
 
-			let nrv = {
-				coins: {}
-			}
+			let nrv = { coins: {} }
 			for (let sn in rv.coins) {
 				if (rv.coins[sn].passed >= this._totalServers - this.options.maxFailedRaidas) {
 					nrv.coins[sn] = {
@@ -409,7 +655,6 @@ class RaidaJS {
 
 		return rqs
 	}
-
 
 	async _realFix(round, raidaIdx, coins, callback = null) {
 		let rqdata, triad, rqs, resultData
@@ -1029,6 +1274,105 @@ class RaidaJS {
 		this._trustedTriads = trustedTriads
 	}
 
+	_getA(a, cnt) {
+		let i, j
+		let sns = Array(cnt)
+
+		for (i = 0, j = 0; i < sns.length; i++) {
+			if (a[i] == 0)
+				continue;
+
+			sns[j] = a[i]
+			a[i] = 0
+			j++
+
+			if (j == cnt)
+				break
+		}
+
+		if (j != cnt)
+			return null
+
+		return sns
+	}
+
+	_get25B(sb, ss) {
+		let sns, rsns
+		rsns = Array(9)
+
+		sns = this._getA(sb, 4)
+		if (sns == null)
+			return null
+		for (let i = 0; i < 4; i++)
+			rsns[i] = sns[i]
+
+		sns = this._getA(ss, 5)
+		if (sns == null)
+			return null
+		for (let i = 0; i < 5; i++)
+			rsns[i + 4] = sns[i]
+
+		return rsns	
+	}
+
+	_get100E(sb, ss, sss) {
+		let sns, rsns
+		rsns = Array(12)
+
+		sns = this._getA(sb, 3)
+		if (sns == null)
+			return null
+
+		for (let i = 0; i < 3; i++)
+			rsns[i] = sns[i]
+
+		sns = this._getA(ss, 4)
+		if (sns == null)
+			return null
+
+		for (let i = 0; i < 4; i++)
+			rsns[i + 3] = sns[i]
+
+		sns = this._getA(sss, 5)
+		if (sns == null)
+			return null
+		
+		for (let i = 0; i < 5; i++)
+			rsns[i + 7] = sns[i]
+
+		return rsns
+	}
+
+	_get250E(sb, ss, sss, ssss) {
+		let sns, rsns
+		rsns = new Array(12)
+
+		sns = this._getA(sb, 2)
+		if (sns == null)
+			return null
+		for (let i = 0; i < 2; i++)
+			rsns[i] = sns[i]
+
+		sns = this._getA(ss, 1)
+		if (sns == null)
+			return null
+		rsns[2] = sns[0]
+
+		sns = this._getA(sss, 4)
+		if (sns == null)
+			return null
+		for (let i = 0; i < 4; i++)
+			rsns[i + 3] = sns[i]
+
+		sns = this._getA(ssss, 5)
+		if (sns == null)
+			return null
+		for (let i = 0; i < 5; i++)
+			rsns[i + 7] = sns[i]
+
+		return rsns
+	}
+
 	_calcAmount(sns) {
 		let total = 0
 		for (let i = 0; i < sns.length; i++)
@@ -1038,10 +1382,10 @@ class RaidaJS {
 	}
 
 	_countCoinsFromArray(coins) {
-	        let totals = new Array(6);
+		let totals = new Array(6);
 		totals.fill(0)
 
-        	for (let i = 0; i < coins.length; i++) {
+		for (let i = 0; i < coins.length; i++) {
 			let denomination = this.getDenomination(coins[i]);
 			if (denomination == 1)
 				totals[0]++;
@@ -1059,12 +1403,13 @@ class RaidaJS {
 			totals[5] += denomination;
 		}
 
-	        return totals;
+		return totals;
 	}
 
 	_getExpCoins(amount, totals, loose) {
+		console.log("amount="+amount)
 		let savedAmount = amount;
-   
+	 
 		if (amount > totals[6]) {
 			console.error("Not enough coins")
 			return null;
@@ -1072,10 +1417,11 @@ class RaidaJS {
 
 		if (amount < 0)
 			return null;
-        
+				
 		let exp_1, exp_5, exp_25, exp_100, exp_250
 		exp_1 = exp_5 = exp_25 = exp_100 = exp_250 = 0
 		for (let i = 0; i < 2; i++) {
+			console.log("i="+i)
 			exp_1 = exp_5 = exp_25 = exp_100 = 0
 			if (i == 0 && amount >= 250 && totals[4] > 0) {
 				exp_250 = (Math.floor(amount / 250) < (totals[4])) ? Math.floor(amount / 250) : (totals[4])
@@ -1101,47 +1447,45 @@ class RaidaJS {
 				exp_1 = (amount < (totals[0])) ? amount : (totals[0])
 				amount -= (exp_1);
 			}
-		    
+				
 			if (amount == 0)
 				break;
-		    
+				
 			if (i == 1 || exp_250 == 0) {
+				console.log("here " + loose)
 				if (loose)
 					break;
 			
 				return null;
 			}
-            
+						
 			exp_250--
 			amount = savedAmount - exp_250 * 250
 		}
-       
-        	let rv = new Array(5)
-        
+			 
+		let rv = new Array(5)
 		rv[0] = exp_1
 		rv[1] = exp_5
 		rv[2] = exp_25
 		rv[3] = exp_100
 		rv[4] = exp_250
-        
-	        return rv
-        
+				
+		return rv
 	}
 
 
 	_pickCoinsAmountFromArrayWithExtra(coins, amount) {
-	        let totals, exps
+		let totals, exps
 		let collected, rest
 		let denomination
 		let coinsPicked = []
-        
+				
 		totals = this._countCoinsFromArray(coins)
-		console.log("t")
-		console.log(totals)
 		exps = this._getExpCoins(amount, totals, true)
-        
-		collected = rest = 0
+		console.log(totals)
 		console.log(exps)
+				
+		collected = rest = 0
 		for (let i = 0; i < coins.length; i++) {
 			denomination = this.getDenomination(coins[i]);
 			console.log("d="+denomination)
@@ -1172,7 +1516,8 @@ class RaidaJS {
 				} 
 			} 
 		}
-			    
+		console.log("collected " + collected)
+		console.log(exps)
 		let isAdded;
 		rest = amount - collected;
 		let extraSN = 0
@@ -1184,10 +1529,10 @@ class RaidaJS {
 		for (let i = 0; i < coins.length; i++) {
 			denomination = this.getDenomination(coins[i])
 			extraSN = coins[i]
-		    
+				
 			if (rest > denomination)
 				continue;
-		    
+				
 			isAdded = false;
 			for (let j = 0; j < coinsPicked.length; j++) {
 				if (coinsPicked[j] == coins[i]) {
@@ -1195,11 +1540,11 @@ class RaidaJS {
 					break
 				}
 			}
-		    
+				
 			if (isAdded) {
 				continue;
 			}
-		    
+				
 			break;
 		}
 
