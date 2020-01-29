@@ -76,6 +76,10 @@ class RaidaJS {
 		this._generateServers()
 	}
 
+	// Network number
+	setDefaultNetworkNumber(nn) {
+		this.options.defaultCoinNn = nn
+	}
 
 	// Return the array of raida servers
 	getServers() {
