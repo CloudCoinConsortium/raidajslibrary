@@ -300,12 +300,183 @@ class RaidaJS {
 			changeMakerId = params['changeMakerId']
 		}
 
+
+		let memo = 'memo' in params ? params['memo'] : "Receive from SN#" + coin.sn
+
+		let gcRqs = await this._getCoins(coin, callback)
+		let sns = Object.keys(gcRqs.coins)
+		let nns = new Array(sns.length)
+		nns.fill(this.options.defaultCoinNn)
+
 		if (!('amount' in params)) {
-			console.error("Invalid params. Amount is not defined")
+			params.amount = this._calcAmount(sns)
+		}
+
+		if (params.amount > this._calcAmount(sns)) {
+			console.error("Not enough cloudcoins")
 			return null
 		}
 
-		let memo = 'memo' in params ? params['memo'] : "Receive from SN#" + coin.sn
+		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
+		let coinsToReceive = rvalues.coins
+		let changeCoin = rvalues.extra
+		let rqdata = []
+
+		console.log(rvalues)
+
+		let response
+		if (coinsToReceive.length > 0) {
+			console.log("sss1")
+			// Assemble input data for each Raida Server
+			for (let i = 0; i < this._totalServers; i++) {
+				rqdata.push({
+					sns: coinsToReceive,
+					nns: nns,
+					an: coin.an[i],
+					pan: coin.pan[i],
+					sn: coin.sn,
+					nn: coin.nn,
+					denomination: this.getDenomination(coin.sn)
+				})
+			}
+
+			// Launch Requests
+			let rqs = this._launchRequests("receive", rqdata, 'POST', callback)
+	
+			let coins = new Array(coinsToReceive.length)
+			coinsToReceive.forEach((value, idx) => { 
+				coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
+			})
+
+			response = await this._getGenericMainPromise(rqs, coins)
+			response.changeCoinSent = 0
+			response.changeRequired = false
+			for (let k in response.result) {
+				response.result[k]['an'] = [...response.result[k].message]
+				delete(response.result[k]['message'])
+			}
+
+			console.log("xxxxxxxxxxxx")
+			console.log(response)
+			if (changeCoin === 0)
+				return response
+		} else if (changeCoin === 0) {
+			console.error("No coins to receive")
+			return null
+		} else {
+			response = {
+				totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
+			}
+		}
+
+		response.changeRequired = true
+		let scResponse = await this.showChange({ 
+			nn: this.options.defaultCoinNn, 
+			sn: changeMakerId,
+			denomination: this.getDenomination(changeCoin)
+		}, callback)
+
+		let d100s = Object.keys(scResponse.d100)
+		let d25s = Object.keys(scResponse.d25)
+		let d5s = Object.keys(scResponse.d5)
+		let d1s = Object.keys(scResponse.d1)
+
+		let vsns
+		switch (this.getDenomination(changeCoin)) {
+			case 250:
+				vsns = this._get250E(d100s, d25s, d5s, d1s)
+				break;
+			case 100:
+				vsns = this._get100E(d25s, d5s, d1s)
+				break;
+			case 25:
+				vsns = this._get25B(d5s, d1s)
+				break;
+			case 5:
+				vsns = this._getA(d1s)
+				break;
+			default:
+				response.errText = "Can't break denomination"
+				return response
+		}
+
+		let rest = params.amount - this._calcAmount(coinsToReceive)
+
+		let changeCoinsToReceive = []
+		let changeCoinsToChange = []
+		let pickedSns = this._pickCoinsAmountFromArrayWithExtra(vsns, rest)
+		let total = 0
+
+		if (pickedSns.extra != 0) {
+			response.errText = "Failed to pick coin for change"
+			return response
+		}
+
+
+		for (let y = 0; y < vsns.length; y++) {
+			let present = false
+			for (let x = 0; x < pickedSns.coins.length;x++) {
+				if (vsns[y] == pickedSns.coins[x]) {
+					present = true;
+					break;
+				}
+			}
+
+			if (present)
+				changeCoinsToReceive.push(vsns[y])
+			else
+				changeCoinsToChange.push(vsns[y])
+		}
+
+		if (this._calcAmount(changeCoinsToReceive) + this._calcAmount(changeCoinsToChange) != this.getDenomination(changeCoin)) {
+			response.errText = "Error in making change. Incorrect calculations"
+			return response
+		}
+		console.log("change")
+		console.log(changeCoinsToReceive)
+		console.log(changeCoinsToChange)
+
+		rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sns: [ changeCoin ],
+				nns: [ this.options.defaultCoinNn ],
+				an: coin.an[i],
+				pan: coin.pan[i],
+				sn: coin.sn,
+				nn: coin.nn,
+				denomination: this.getDenomination(coin.sn),
+				withdrawal_required: rest,
+				public_change_maker: changeMakerId,
+				paysns: changeCoinsToReceive,
+				chsns: changeCoinsToChange
+			})
+		}
+
+		response.changeCoinSent = changeCoin
+		response.result[changeCoin] = {}
+		let nrv = response
+			console.log("REC")
+		let rqs = this._launchRequests("receive_with_change", rqdata, 'POST', callback)
+		let rvs = await this._getGenericMainPromise(rqs, [{ sn: changeCoin, nn: this.options.defaultCoinNn }]).then(response => {
+			nrv.totalNotes += response.totalNotes
+			nrv.authenticNotes += response.authenticNotes
+			nrv.counterfeitNotes += response.counterfeitNotes
+			nrv.errorNotes += response.errorNotes
+			nrv.frackedNotes += response.frackedNotes
+
+			for (let sn in response.result)
+				nrv.result[sn] = response.result[sn]
+
+			for (let i in response.details)
+				nrv.details.push(response.details)
+
+			console.log("nrv")
+			console.log(nrv)
+			return nrv
+		})
+			
+		return rvs
 	}
 
 	// Transfer
@@ -342,7 +513,6 @@ class RaidaJS {
 		let sns = Object.keys(gcRqs.coins)
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
-
 		if (params.amount > this._calcAmount(sns)) {
 			console.error("Not enought cloudcoins")
 			return null
@@ -785,7 +955,8 @@ class RaidaJS {
 					counterfeit: 0,
 					authentic: 0,
 					pownstring: "",
-					result: "unknown"
+					result: "unknown",
+					message: []
 				}
 
 				if (typeof(coins[i].pan) != 'undefined')
@@ -815,6 +986,8 @@ class RaidaJS {
 					if (sr.status == 'pass') {
 						rcoins[sn].authentic++;
 						rcoins[sn].pownstring += "p"
+						if ('message' in sr) 
+							rcoins[sn].message[raidaIdx] = sr.message
 					} else if (sr.status == 'fail') {
 						rcoins[sn].counterfeit++;
 						rcoins[sn].pownstring += "f"
@@ -933,6 +1106,7 @@ class RaidaJS {
 			}
 
 			serverResponse = response[i].value.data
+			console.log(serverResponse)
 			if (arrayLength == 0) {
 				if (!('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
