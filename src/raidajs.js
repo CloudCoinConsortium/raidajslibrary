@@ -288,6 +288,26 @@ class RaidaJS {
 		return this._getGenericMainPromise(rqs, params['coins'])	
 	}
 
+
+	// Receive
+	async apiReceive(params, callback = null) {
+		let coin = this._getCoinFromParams(params)
+		if (coin == null) 
+			return null
+
+		let changeMakerId = this.options._changeMakerId
+		if ('changeMakerId' in params) {
+			changeMakerId = params['changeMakerId']
+		}
+
+		if (!('amount' in params)) {
+			console.error("Invalid params. Amount is not defined")
+			return null
+		}
+
+		let memo = 'memo' in params ? params['memo'] : "Receive from SN#" + coin.sn
+	}
+
 	// Transfer
 	async apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
@@ -323,7 +343,6 @@ class RaidaJS {
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
 
-		sns = [ 1, 2,3, 6291450, 14680060, 16777210, 16777211]
 		if (params.amount > this._calcAmount(sns)) {
 			console.error("Not enought cloudcoins")
 			return null
@@ -333,11 +352,6 @@ class RaidaJS {
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
 
-		console.log("rvalues")
-		console.log(rvalues)
-		console.log(coinsToSend)
-		console.log(changeCoin)
-		
 		let rqdata = []
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
@@ -362,14 +376,10 @@ class RaidaJS {
 			coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
 		})
 
-		console.log("coins")
-		console.log(coins)
 		let response = await this._getGenericMainPromise(rqs, coins)
 		response.changeCoinSent = 0
 		response.changeRequired = false
 		
-		console.log("TRANSFER DONE")
-		console.log(response)
 		if (changeCoin === 0)
 			return response
 	
@@ -405,8 +415,6 @@ class RaidaJS {
 				return response
 		}
 
-		console.log("vsns")
-		console.log(vsns)
 		let rest = params.amount - this._calcAmount(coinsToSend)
 
 		let changeCoinsToSend = []
@@ -419,8 +427,6 @@ class RaidaJS {
 			return response
 		}
 
-		console.log("picked")
-		console.log(pickedSns)
 		for (let y = 0; y < vsns.length; y++) {
 			let present = false
 			for (let x = 0; x < pickedSns.coins.length;x++) {
@@ -436,24 +442,11 @@ class RaidaJS {
 				changeCoinsToChange.push(vsns[y])
 		}
 
-		console.log("WO")
-		console.log(changeCoinsToSend)
-		console.log(changeCoinsToChange)
 		if (this._calcAmount(changeCoinsToSend) + this._calcAmount(changeCoinsToChange) != this.getDenomination(changeCoin)) {
 			response.errText = "Error in making change. Incorrect calculations"
 			return response
 		}
 
-		console.log("a="+this._calcAmount(changeCoinsToSend))
-		console.log("c="+this._calcAmount(changeCoinsToChange))
-
-		console.log("pick")
-		console.log(pickedSns)
-
-		console.log(params.amount)
-		console.log(this._calcAmount(coinsToSend))
-		console.log(rest)
-		console.log("Changing coin " + changeCoin)
 		rqdata = []
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
@@ -478,9 +471,6 @@ class RaidaJS {
 		let nrv = response
 		rqs = this._launchRequests("transfer_with_change", rqdata, 'POST', callback)
 		let rvs = await this._getGenericMainPromise(rqs, [{ sn: changeCoin, nn: this.options.defaultCoinNn }]).then(response => {
-			console.log("RESPONSE FROM TWCx")
-			console.log(response)
-
 			nrv.totalNotes += response.totalNotes
 			nrv.authenticNotes += response.authenticNotes
 			nrv.counterfeitNotes += response.counterfeitNotes
@@ -1411,7 +1401,6 @@ class RaidaJS {
 	}
 
 	_getExpCoins(amount, totals, loose) {
-		console.log("amount="+amount)
 		let savedAmount = amount;
 	 
 		if (amount > totals[6]) {
@@ -1425,7 +1414,6 @@ class RaidaJS {
 		let exp_1, exp_5, exp_25, exp_100, exp_250
 		exp_1 = exp_5 = exp_25 = exp_100 = exp_250 = 0
 		for (let i = 0; i < 2; i++) {
-			console.log("i="+i)
 			exp_1 = exp_5 = exp_25 = exp_100 = 0
 			if (i == 0 && amount >= 250 && totals[4] > 0) {
 				exp_250 = (Math.floor(amount / 250) < (totals[4])) ? Math.floor(amount / 250) : (totals[4])
@@ -1456,7 +1444,6 @@ class RaidaJS {
 				break;
 				
 			if (i == 1 || exp_250 == 0) {
-				console.log("here " + loose)
 				if (loose)
 					break;
 			
@@ -1486,13 +1473,10 @@ class RaidaJS {
 				
 		totals = this._countCoinsFromArray(coins)
 		exps = this._getExpCoins(amount, totals, true)
-		console.log(totals)
-		console.log(exps)
 				
 		collected = rest = 0
 		for (let i = 0; i < coins.length; i++) {
 			denomination = this.getDenomination(coins[i]);
-			console.log("d="+denomination)
 			if (denomination == 1) {
 				if (exps[0]-- > 0) {
 					coinsPicked.push(coins[i])
@@ -1520,8 +1504,6 @@ class RaidaJS {
 				} 
 			} 
 		}
-		console.log("collected " + collected)
-		console.log(exps)
 		let isAdded;
 		rest = amount - collected;
 		let extraSN = 0
