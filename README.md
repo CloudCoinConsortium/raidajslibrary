@@ -49,6 +49,7 @@ raidaJS.apiDetect(data).then(response => {
 		console.log("SN: " + sn + " pown: " + response.result[sn].pownstring)
 	})
 })
+
 ```
 
 Node.js ES6
@@ -277,6 +278,12 @@ raidaJS.apiSend(params)
 
 // Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
 raidaJS.apiSend(params, raidaNumber => {})
+
+// Callback example
+raidaJS.apiSend(params, raidaNumber => {
+	console.log("RAIDA " + raidaNumber + " just finished sending")
+})
+
 ```
 
 Data Returned:
