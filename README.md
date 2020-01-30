@@ -11,10 +11,6 @@ The raida.min.js file contains the Raida class and other supporting libraries su
 
 [RaidaJS](README.md#RaidaJS)
 
-[Set functions](README.md#Set functions)
-
-[Get functions](README.md#Get functions)
-
 [apiEcho](README.md#apiEcho)
 
 [apiDetect](README.md#apiDetect)
@@ -86,7 +82,7 @@ let raidaJS = new RaidaJS()
 raidaJS.apiEcho()
 ```
 
-## RaidaJS Initialization
+## RaidaJS
 
 Here are the available config options for making requests. None of them is required.
 
