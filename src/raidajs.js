@@ -305,8 +305,6 @@ class RaidaJS {
 
 		let gcRqs = await this._getCoins(coin, callback)
 		let sns = Object.keys(gcRqs.coins)
-		let nns = new Array(sns.length)
-		nns.fill(this.options.defaultCoinNn)
 
 		if (!('amount' in params)) {
 			params.amount = this._calcAmount(sns)
@@ -322,11 +320,11 @@ class RaidaJS {
 		let changeCoin = rvalues.extra
 		let rqdata = []
 
-		console.log(rvalues)
+		let nns = new Array(coinsToReceive.length)
+		nns.fill(this.options.defaultCoinNn)
 
 		let response
 		if (coinsToReceive.length > 0) {
-			console.log("sss1")
 			// Assemble input data for each Raida Server
 			for (let i = 0; i < this._totalServers; i++) {
 				rqdata.push({
@@ -356,8 +354,6 @@ class RaidaJS {
 				delete(response.result[k]['message'])
 			}
 
-			console.log("xxxxxxxxxxxx")
-			console.log(response)
 			if (changeCoin === 0)
 				return response
 		} else if (changeCoin === 0) {
@@ -432,9 +428,6 @@ class RaidaJS {
 			response.errText = "Error in making change. Incorrect calculations"
 			return response
 		}
-		console.log("change")
-		console.log(changeCoinsToReceive)
-		console.log(changeCoinsToChange)
 
 		rqdata = []
 		for (let i = 0; i < this._totalServers; i++) {
@@ -454,11 +447,19 @@ class RaidaJS {
 		}
 
 		response.changeCoinSent = changeCoin
-		response.result[changeCoin] = {}
 		let nrv = response
-			console.log("REC")
+
+		let coins = []
+		for (let i in changeCoinsToReceive) {
+			coins.push({
+				sn: changeCoinsToReceive[i],
+				nn: this.options.defaultCoinNn
+			})
+		}
+	
+		response.changeCoinSent = changeCoin
 		let rqs = this._launchRequests("receive_with_change", rqdata, 'POST', callback)
-		let rvs = await this._getGenericMainPromise(rqs, [{ sn: changeCoin, nn: this.options.defaultCoinNn }]).then(response => {
+		let rvs = await this._getGenericMainPromise(rqs, coins).then(response => {
 			nrv.totalNotes += response.totalNotes
 			nrv.authenticNotes += response.authenticNotes
 			nrv.counterfeitNotes += response.counterfeitNotes
@@ -471,8 +472,6 @@ class RaidaJS {
 			for (let i in response.details)
 				nrv.details.push(response.details)
 
-			console.log("nrv")
-			console.log(nrv)
 			return nrv
 		})
 			
@@ -1106,7 +1105,6 @@ class RaidaJS {
 			}
 
 			serverResponse = response[i].value.data
-			console.log(serverResponse)
 			if (arrayLength == 0) {
 				if (!('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
