@@ -92,6 +92,7 @@ class RaidaJS {
 	apiEcho(callback = null) {
 		let rqs = this._launchRequests("echo", {}, 'GET', callback)
 		let rv = {
+			status: 'done',
 			onlineServers : 0,
 			totalServers: this._totalServers,
 			details : []
@@ -193,6 +194,7 @@ class RaidaJS {
 		}
 
 		let rv = {
+			status: 'done',
 			totalNotes: coins.length,
 			fixedNotes: 0,
 			result : {},
@@ -233,24 +235,20 @@ class RaidaJS {
 	// Send
 	async apiSend(params, callback = null) {
 		if (!'coins' in params) {
-			console.error("Invalid input data")
-			return null
+			return this._getError("Invalid input data. No coins")
 		}
 
 		if (!Array.isArray(params['coins'])) {
-			console.error("Invalid input data")
-			return null
+			return this._getError("Invalid input data. Coins must be an arry")
 		}
 
 		if (!'to' in params) {
-			console.error("Invalid params. To is not defined")
-			return null
+			return this._getError("Invalid input data. To is not defined")
 		}
 
 		let to = await this._resolveDNS(params['to'])
 		if (to == null) {
-			console.error("Failed to resolve DNS name: " + params.to)
-			return null
+			return this._getError("Failed to resolve DNS name: " + params.to)
 		}
 		
 		let rqdata = []
@@ -293,7 +291,7 @@ class RaidaJS {
 	async apiReceive(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
 		if (coin == null) 
-			return null
+			return this._getError("Failed to parse coin from params")
 
 		let changeMakerId = this.options._changeMakerId
 		if ('changeMakerId' in params) {
@@ -308,8 +306,7 @@ class RaidaJS {
 		}
 
 		if (params.amount > this._calcAmount(sns)) {
-			console.error("Not enough cloudcoins")
-			return null
+			return this._getError("Not enough coins")
 		}
 
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
@@ -354,8 +351,7 @@ class RaidaJS {
 			if (changeCoin === 0)
 				return response
 		} else if (changeCoin === 0) {
-			console.error("No coins to receive")
-			return null
+			return this._getError("No coins to receive")
 		} else {
 			response = {
 				totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
@@ -462,6 +458,7 @@ class RaidaJS {
 			nrv.counterfeitNotes += response.counterfeitNotes
 			nrv.errorNotes += response.errorNotes
 			nrv.frackedNotes += response.frackedNotes
+			nrv.status = response.status
 
 			for (let sn in response.result)
 				nrv.result[sn] = response.result[sn]
@@ -479,17 +476,16 @@ class RaidaJS {
 	async apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
 		if (coin == null) 
-			return null
+			return this._getError("Failed to parse coin from params")
+			
 
 		if (!'to' in params) {
-			console.error("Invalid params. To is not defined")
-			return null
+			return this._getError("Invalid params. To is not defined")
 		}
 
 		let to = await this._resolveDNS(params['to'])
 		if (to == null) {
-			console.error("Failed to resolve DNS name: " + params.to)
-			return null
+			return this._getError("Failed to resolve DNS name: " + params.to)
 		}
 
 		let changeMakerId = this.options._changeMakerId
@@ -499,8 +495,7 @@ class RaidaJS {
 
 
 		if (!('amount' in params)) {
-			console.error("Invalid params. Amount is not defined")
-			return null
+			return this._getError("Invalid params. Amount is not defined")
 		}
 
 		let memo = 'memo' in params ? params['memo'] : "Transfer from SN#" + coin.sn
@@ -510,8 +505,7 @@ class RaidaJS {
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
 		if (params.amount > this._calcAmount(sns)) {
-			console.error("Not enought cloudcoins")
-			return null
+			return  this._getError("Not enought cloudcoins")
 		}
 
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
@@ -642,6 +636,7 @@ class RaidaJS {
 			nrv.counterfeitNotes += response.counterfeitNotes
 			nrv.errorNotes += response.errorNotes
 			nrv.frackedNotes += response.frackedNotes
+			nrv.status = response.status
 
 			for (let sn in response.result)
 				nrv.result[sn] = response.result[sn]
@@ -928,6 +923,7 @@ class RaidaJS {
 		let mainPromise = rqs.then(response => {
 			// Return value
 			let rv = {
+				status: "done",
 				totalNotes: coins.length,
 				authenticNotes: 0,
 				counterfeitNotes: 0,
@@ -1704,6 +1700,14 @@ class RaidaJS {
 		}
 
 		return {coins: coinsPicked, extra: extraSN};
+	}
+
+	// Error return
+	_getError(msg) {
+		return {
+			'status' : 'error',
+			'errorText' : msg
+		}
 	}
 }
 
