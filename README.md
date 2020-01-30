@@ -9,7 +9,7 @@ The raida.min.js file contains the Raida class and other supporting libraries su
 
 [Example](README.md#Example)
 
-[RaidaJS Initialization](README.md#RaidaJS Initialization)
+[RaidaJS](README.md#RaidaJS)
 
 [Set functions](README.md#Set functions)
 
