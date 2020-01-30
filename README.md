@@ -2,6 +2,32 @@
 
 The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
 
+
+## Table of Contents
+
+[Install](README.md#Installing)
+
+[Example](README.md#Example)
+
+[RaidaJS Initialization](README.md#RaidaJS Initialization)
+
+[Set functions](README.md#Set functions)
+
+[Get functions](README.md#Get functions)
+
+[apiEcho](README.md#apiEcho)
+
+[apiDetect](README.md#apiDetect)
+
+[apiSend](README.md#apiSend)
+
+[apiFixFracked](README.md#apiFixFracked)
+
+[apiTransfer](README.md#apiTransfer)
+
+[apiReceive](README.md#apiReceive)
+
+
 ## Installing
 
 Using npm:
@@ -370,3 +396,40 @@ Data Returned
 }
 
 ```
+
+#### apiReceive
+
+Receives coins from a Sky Wallet. (!) It is crucial to save the received Authenticity Numbers from the received coins.
+
+Input:
+
+```js
+// Parameters
+let params = {
+	// Source Wallet Info.
+	// Serial Number
+	sn: 102,
+
+	// Array of AN numbers
+	an:["44f2b05d74192e31478846f1b7bdd661","55025cf02053edb09b93ef532a37099d","66518632d60f897d84ae62e75a7059a3","77dfb17c08b6dbc2846fbe8938bece1a","880744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"],
+
+	// Array of PAN numbrs (optional)
+	pan:["44f2b05d74192e31478846f1b7bdd661","55025cf02053edb09b93ef532a37099d","66518632d60f897d84ae62e75a7059a3","77dfb17c08b6dbc2846fbe8938bece1a","880744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"],
+
+	// Amount to receive
+	amount: 300,
+
+	// ID of the Change Maker. Optional. Default is 2
+	changeMakerId: 2
+}
+
+// Example call to the RAIDA
+raidaJS.apiReceive(params)
+
+// Example call to the RAIDA and execute another function (callback) after each RAIDA server returns the response:
+raidaJS.apiReceive(params, raidaNumber => {})
+```
+
+Data Returned:
+
+The same as the one for the apiDetect

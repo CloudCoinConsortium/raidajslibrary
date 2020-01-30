@@ -300,9 +300,6 @@ class RaidaJS {
 			changeMakerId = params['changeMakerId']
 		}
 
-
-		let memo = 'memo' in params ? params['memo'] : "Receive from SN#" + coin.sn
-
 		let gcRqs = await this._getCoins(coin, callback)
 		let sns = Object.keys(gcRqs.coins)
 
