@@ -32,6 +32,8 @@ class RaidaJS {
 		this.__errorResult = "error"
 
 		this._initNeighbours()
+
+		this._crcTable = null
 	}
 
 
@@ -232,6 +234,99 @@ class RaidaJS {
 		return rv
 	}
 
+	// emb
+	async embedInImage(params) {
+		if (!'template' in params) {
+			return this._getError("Template is not defined")
+		}
+
+		if (!'coins' in params) {
+			return this._getError("Invalid input data. No coins")
+		}
+
+		if (!Array.isArray(params['coins'])) {
+			return this._getError("Invalid input data. Coins must be an array")
+		}
+
+		for (let i in params['coins']) {
+			let coin = params['coins'][i]
+			if (!this._validateCoin(coin)) {
+				return this._getError("Failed to validate coins")
+			}
+			delete params['coins'][i]['pan']
+		}
+		let data = { "cloudcoin" : params['coins'] }
+		data = JSON.stringify(data)
+
+		let isError = false
+		let imgAx = axios.create()
+		let response = await imgAx.get(params['template'], {
+			responseType: 'arraybuffer'
+		}).catch(error => {
+			isError = true
+		})
+		
+		if (isError)
+			return this._getError("Failed to load image")
+
+		if (response.status != 200) 
+			return this._getError("Server returned non-200 HTTP code: " + response.status)
+
+		let arrayBufferData = response.data
+
+		// Check 8-byte signature
+		let imgData = new Uint8Array(arrayBufferData)
+		if (imgData[0] != 0x89 && imgData[1] != 0x50 && imgData[2] != 0x4e && imgData[3] != 0x47 
+			&& imgData[4] != 0x0d && imgData[5] != 0x0a && imgData[6] != 0x1a && imgData[7] != 0x0a) {
+			return this._getError("Invalid PNG signature")
+		}
+		
+		let chunkLength = this._getUint32(imgData, 8)
+		let headerSig = this._getUint32(imgData, 12)
+		if (headerSig != 0x49484452) {
+			return this._getError("Invalid PNG header")
+		}
+
+		let idx = 16 + chunkLength
+		let crcSig = this._getUint32(imgData, idx)
+		let calcCrc = this._crc32(imgData, 12, chunkLength + 4)
+		if (crcSig != calcCrc) {
+			return this._getError("Invalid PNG crc32 checksum")
+		}
+
+		let fu8, lu8, myu8
+		fu8 = imgData.slice(0, idx + 4)
+		lu8 = imgData.slice(idx + 4)
+
+		let ccLength = data.length
+
+		// length + type + crc32 = 12 bytes
+		myu8 = new Uint8Array(ccLength + 12)
+
+		// Length
+		this._setUint32(myu8, 0, ccLength)
+
+		// Chunk type cLDc
+		myu8[4] = 0x63
+		myu8[5] = 0x4c
+		myu8[6] = 0x44
+		myu8[7] = 0x63
+
+		let tBuffer = Buffer.from(data)
+		// Data
+		for (let i = 0; i < ccLength; i++) {
+			myu8[i + 8] = tBuffer.readUInt8(i)
+		}
+
+		// Crc32
+		let crc32 = this._crc32(myu8, 4, ccLength + 4)
+		this._setUint32(myu8, ccLength + 8, crc32)
+
+		let combined = [...fu8, ...myu8, ...lu8]
+
+		return this._base64ArrayBuffer(combined)
+	}
+
 	// Send
 	async apiSend(params, callback = null) {
 		if (!'coins' in params) {
@@ -239,7 +334,7 @@ class RaidaJS {
 		}
 
 		if (!Array.isArray(params['coins'])) {
-			return this._getError("Invalid input data. Coins must be an arry")
+			return this._getError("Invalid input data. Coins must be an array")
 		}
 
 		if (!'to' in params) {
@@ -505,7 +600,7 @@ class RaidaJS {
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
 		if (params.amount > this._calcAmount(sns)) {
-			return  this._getError("Not enought cloudcoins")
+			return	this._getError("Not enought cloudcoins")
 		}
 
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
@@ -1709,6 +1804,95 @@ class RaidaJS {
 			'errorText' : msg
 		}
 	}
+
+	// network byte order
+	_getUint32(data, offset) {
+		return (data[offset] << 24 | data[offset + 1] << 16 |
+			data[offset + 2] << 8 |	data[offset + 3])
+	}
+
+	// network byte order
+	_setUint32(data, offset, value) {
+		data[offset] = (value >> 24) & 0xff
+		data[offset + 1] = (value >> 16) & 0xff
+		data[offset + 2] = (value >> 8) & 0xff
+		data[offset + 3] = (value) & 0xff
+	}
+
+	// initCrc
+	_initCrcTable() {
+		let c
+		this._crcTable = []
+		for (let i = 0; i < 256; i++) {
+			c = i
+			for (let k = 0; k < 8; k++) {
+				c = ((c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1));
+			}
+			this._crcTable[i] = c
+		}
+	}
+
+	// calc crc32
+	_crc32(data, offset, length) {
+		if (this._crcTable == null)
+			this._initCrcTable()
+
+		let crc = 0 ^ (-1)
+		for (let i = 0; i < length; i++) {
+			crc = (crc >>> 8) ^ this._crcTable[(crc ^ data[offset + i]) & 0xff]
+		}
+
+		return (crc ^ (-1)) >>> 0;
+	}
+
+	_base64ArrayBuffer(bytes) {
+		let base64	= ''
+		let encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+
+		let byteLength = bytes.length
+		let byteRemainder = byteLength % 3
+		let mainLength = byteLength - byteRemainder
+
+		let a, b, c, d
+		let chunk
+
+		// Main loop deals with bytes in chunks of 3
+		for (let i = 0; i < mainLength; i = i + 3) {
+			// Combine the three bytes into a single integer
+			chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2]
+
+			// Use bitmasks to extract 6-bit segments from the triplet
+			a = (chunk & 16515072) >> 18 
+			b = (chunk & 258048) >> 12 
+			c = (chunk & 4032) >>  6 
+			d = chunk & 63		
+
+			// Convert the raw binary segments to the appropriate ASCII encoding
+			base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d]
+		}
+
+		// Deal with the remaining bytes and padding
+		if (byteRemainder == 1) {
+			chunk = bytes[mainLength]
+			a = (chunk & 252) >> 2 
+
+			// Set the 4 least significant bits to zero
+			b = (chunk & 3)	<< 4 
+			base64 += encodings[a] + encodings[b] + '=='
+		} else if (byteRemainder == 2) {
+			chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1]
+
+			a = (chunk & 64512) >> 10 
+			b = (chunk & 1008) >> 4
+
+			// Set the 2 least significant bits to zero
+			c = (chunk & 15) << 2 
+			base64 += encodings[a] + encodings[b] + encodings[c] + '='
+		}
+		
+		return base64
+	}
+
 }
 
 
