@@ -23,6 +23,8 @@ The raida.min.js file contains the Raida class and other supporting libraries su
 
 [apiReceive](README.md#apiReceive)
 
+[embedImage](README.md#embedImage)
+
 
 ## Installing
 
