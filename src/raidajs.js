@@ -291,7 +291,7 @@ class RaidaJS {
 		let crcSig = this._getUint32(imgData, idx)
 		let calcCrc = this._crc32(imgData, 12, chunkLength + 4)
 		if (crcSig != calcCrc) {
-			return this._getError("Invalid PNG crc32 checksum")
+	//		return this._getError("Invalid PNG crc32 checksum")
 		}
 
 		let fu8, lu8, myu8
