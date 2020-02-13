@@ -291,7 +291,7 @@ class RaidaJS {
 		let crcSig = this._getUint32(imgData, idx)
 		let calcCrc = this._crc32(imgData, 12, chunkLength + 4)
 		if (crcSig != calcCrc) {
-	//		return this._getError("Invalid PNG crc32 checksum")
+			return this._getError("Invalid PNG crc32 checksum")
 		}
 
 		let fu8, lu8, myu8
@@ -1807,8 +1807,10 @@ class RaidaJS {
 
 	// network byte order
 	_getUint32(data, offset) {
-		return (data[offset] << 24 | data[offset + 1] << 16 |
+		let a = (data[offset] << 24 | data[offset + 1] << 16 |
 			data[offset + 2] << 8 |	data[offset + 3])
+
+		return a >>> 0
 	}
 
 	// network byte order
