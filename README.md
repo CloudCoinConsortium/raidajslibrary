@@ -452,7 +452,11 @@ params = {
 	}],
 
 	// PNG URL. Must be the compatible with CORS policy
+	// The URL can be specified in Base64 format if you prepend 'data:application/octet-binary;base64,' to it
 	"template" : "https://127.0.0.1/image.png"
+
+	// Example (base64)
+	// "template" : "data:application/octet-binary;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACqSURBVDhPYxhwwAilGa7duCkJZZZBaQEovRFEaGmobwDz0AATlCYbILtgPpS5HUrfh9LNUDoDRABd8gDMgwKKXYBsgAIUH4Di81C8A4pVoRgFUOwCFigNAhOhdCeUvggibj15Vw+i1598EAii0QH1YgEGgLEhAmWqgYjOtefYQPSNp+8XgWgg8AMRJ6dlXQDR1HcBLmCeNc0AyswHEUAXJIJoil0w0ICBAQCRzCfuSDyCswAAAABJRU5ErkJggg=="
 }
 
 raidaJS.embedInImage(params).then(response => {
