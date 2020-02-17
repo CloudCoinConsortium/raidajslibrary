@@ -234,7 +234,92 @@ class RaidaJS {
 		return rv
 	}
 
-	// emb
+	// extract stack from PNG
+	async extractStack(params) {
+		if (!'template' in params) {
+			return this._getError("Template is not defined")
+		}
+
+		let isError = false
+		let imgAx = axios.create()
+		let response = await imgAx.get(params['template'], {
+			responseType: 'arraybuffer'
+		}).catch(error => {
+			isError = true
+		})
+		
+		if (isError)
+			return this._getError("Failed to load image")
+
+		if (response.status != 200) 
+			return this._getError("Server returned non-200 HTTP code: " + response.status)
+
+		let arrayBufferData = response.data
+
+		let imgData = new Uint8Array(arrayBufferData)
+		let idx = this._basePngChecks(imgData)
+		if (typeof(idx) == 'string')
+			return this._getError(idx)
+
+		let fu8
+		fu8 = imgData.slice(idx + 4)
+
+		let i = 0
+		let length
+		while (true) {
+			length = this._getUint32(fu8, i)
+			let signature = String.fromCharCode(fu8[i + 4]) +  String.fromCharCode(fu8[i + 5]) 
+				+ String.fromCharCode(fu8[i + 6]) +  String.fromCharCode(fu8[i + 7])
+
+			if (length == 0) {
+				i += 12
+				if (i >= fu8.length) {
+					return this._getError("CloudCoin was not found")
+					break
+				}
+				continue
+			}
+
+			if (signature == 'cLDc') {
+				let crcSig = this._getUint32(fu8, i + 8 + length)
+				let calcCrc = this._crc32(fu8, i + 4, length + 4)
+				if (crcSig != calcCrc) {
+					return this._getError("Corrupted PNG. Invalid Crc32")
+				}
+
+				break
+			}
+
+			// length + type + crc32 = 12 bytes
+			i += length + 12
+			if (i > fu8.length) {
+				return this._getError("CloudCoin was not found")
+				break
+			}
+
+		}
+
+		let data = fu8.slice(i + 8, i + 8 + length)
+		let sdata = ""
+		for (let i = 0; i < data.length; i++)
+			sdata += String.fromCharCode(data[i])
+
+		let o 
+		try {
+			o = JSON.parse(sdata)
+		} catch(e) {
+			return this._getError("Failed to parse CloudCoin JSON")
+		}
+
+		let rv = {
+			'status' : 'done',
+			...o
+		}
+
+		return rv
+	}
+
+	// embed stack into image
 	async embedInImage(params) {
 		if (!'template' in params) {
 			return this._getError("Template is not defined")
@@ -274,25 +359,10 @@ class RaidaJS {
 
 		let arrayBufferData = response.data
 
-		// Check 8-byte signature
 		let imgData = new Uint8Array(arrayBufferData)
-		if (imgData[0] != 0x89 && imgData[1] != 0x50 && imgData[2] != 0x4e && imgData[3] != 0x47 
-			&& imgData[4] != 0x0d && imgData[5] != 0x0a && imgData[6] != 0x1a && imgData[7] != 0x0a) {
-			return this._getError("Invalid PNG signature")
-		}
-		
-		let chunkLength = this._getUint32(imgData, 8)
-		let headerSig = this._getUint32(imgData, 12)
-		if (headerSig != 0x49484452) {
-			return this._getError("Invalid PNG header")
-		}
-
-		let idx = 16 + chunkLength
-		let crcSig = this._getUint32(imgData, idx)
-		let calcCrc = this._crc32(imgData, 12, chunkLength + 4)
-		if (crcSig != calcCrc) {
-			return this._getError("Invalid PNG crc32 checksum")
-		}
+		let idx = this._basePngChecks(imgData)
+		if (typeof(idx) == 'string')
+			return this._getError(idx)
 
 		let fu8, lu8, myu8
 		fu8 = imgData.slice(0, idx + 4)
@@ -1895,6 +1965,28 @@ class RaidaJS {
 		return base64
 	}
 
+	_basePngChecks(imgData) {
+		if (imgData[0] != 0x89 && imgData[1] != 0x50 && imgData[2] != 0x4e && imgData[3] != 0x47 
+			&& imgData[4] != 0x0d && imgData[5] != 0x0a && imgData[6] != 0x1a && imgData[7] != 0x0a) {
+			return "Invalid PNG signature"
+		}
+		
+		let chunkLength = this._getUint32(imgData, 8)
+		let headerSig = this._getUint32(imgData, 12)
+		if (headerSig != 0x49484452) {
+			return "Invalid PNG header"
+		}
+
+		let idx = 16 + chunkLength
+		let crcSig = this._getUint32(imgData, idx)
+		let calcCrc = this._crc32(imgData, 12, chunkLength + 4)
+		if (crcSig != calcCrc) {
+			return "Invalid PNG crc32 checksum"
+		}
+
+		return idx
+
+	}
 }
 
 

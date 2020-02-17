@@ -25,6 +25,8 @@ The raida.min.js file contains the Raida class and other supporting libraries su
 
 [embedImage](README.md#embedImage)
 
+[extractStack](README.md#extractStack)
+
 
 ## Installing
 
@@ -465,8 +467,43 @@ raidaJS.embedInImage(params).then(response => {
 
 ```
 
-Output
+Data returned
 
 ```
 Base64-encoded image
 ```
+
+
+#### extractStack
+
+Extracts a stack file from a PNG image
+
+Input:
+
+```js
+params = {
+	"template": "data:application/octet-binary;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAADlmNMRGN7ImNsb3VkY29pbiI6W3sic24iOiI0MzQzIiwiYW4iOlsiZjlmMmIwNWQ3NDE5MmUzMTQ3ODg0NmYxYjdiZGQ2NjEiLCI3NDAyNWNmMDIwNTNlZGIwOWI5M2VmNTMyYTM3MDk5ZCIsImMzNTE4NjMyZDYwZjg5N2Q4NGFlNjJlNzVhNzA1OWEzIiwiNjZkZmIxN2MwOGI2ZGJjMjg0NmZiZTg5MzhiZWNlMWEiLCIyZjA3NDQ3MzVkOGIxMjRjYzBlMzFhMzQ5NzcwZDFmNCIsImNkMTNmY2MxYTI4MDZhNzUzMjJkNWE5ZmRhMGZlYWE0IiwiZjYxMWE4ZWI5NjhkNGQ0YjBkZDgyZDhhMDViMmQ4ZWIiLCIyM2Y4ZjExOGY0ZTc2ZThjYzE0ODg1MTRlNmJjNjg4MSIsImQzMTg0OWY5NzUyMjNhMDZlNzY1ZDM0MzNkM2U2YTliIiwiNDUwMmQwMDgyNWNjYWU0YzM1MDdjZmUxNzQ5OTgwZDEiLCI2MjkyNTIyNWU0OGE5YjBmZTQ5N2RjZGU2NmRlOTIyNyIsIjU0Njg4ZjFjNDA1NTBkMTEzYjhmNGY1MTNiZjZiOGQ0IiwiOWMyYjM5ZDIyZDBiM2U0MDEyZWI2ZTk2MmU5OWIzMWIiLCIxNTY0ZGFjZDM0YWNlOTRlYjRhYmZlMmYzNzhhYmU4NyIsIjFiODkwYjdmYTM4MDY5NzQ1YzFiN2M3NzI5YjI0MmMxIiwiMjNhMDEyMGRiMTM4NGRhN2ZlZDYyYTkxMDBjMmY1NmYiLCIwNzUwMGUyMGI0OWZkMTRlYTU4ODBhYTI3OTA2MWFlYSIsIjcyYzM1MDQzZTlhMGVhMDZkYzNhMjllMDQwOWFmNmVkIiwiNDE1MTEwZjRkODViMDljZjY2MThhYTEzMTY0ZjZiODciLCI4YmNmOWM4Y2ExNzA1Mjg4OTFiYjllYjRmZmNiYWVjMCIsIjUwNmM3NmY1NDIyZTkyMjk3ZjRkYWE0NTNhMGQxOTViIiwiODYwOGE2ZWRiOTk3ZDBhYmZlYzhmODg3ODJmZjYxYmQiLCI1NmQxNTMxMDg5MDJhYTRiZmU1ZGFiNTVkOTI5ODI1MCIsIjc2M2VjNTc0NzZlMzkyM2ViM2Y0ZDkzMDljNTY1MWQ2IiwiNjkzOGI0YWFmZDM5YmQxMzYxNDFhMmFjMzFmYzgxNDEiXSwibm4iOjF9XX2ZQ07KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAACqSURBVDhPYxhwwAilGa7duCkJZZZBaQEovRFEaGmobwDz0AATlCYbILtgPpS5HUrfh9LNUDoDRABd8gDMgwKKXYBsgAIUH4Di81C8A4pVoRgFUOwCFigNAhOhdCeUvggibj15Vw+i1598EAii0QH1YgEGgLEhAmWqgYjOtefYQPSNp+8XgWgg8AMRJ6dlXQDR1HcBLmCeNc0AyswHEUAXJIJoil0w0ICBAQCRzCfuSDyCswAAAABJRU5ErkJggg=="
+}
+
+r.extractStack(params).then(response => {
+	console.log(response)
+})
+
+
+```
+
+Data returned
+
+```js
+{
+	// Status of the request
+	status: String,			// 'done' or 'error'
+
+	// CloudCoin Stack
+	cloudcoin: {
+		...
+	}
+
+}
+```
+
