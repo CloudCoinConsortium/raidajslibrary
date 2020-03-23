@@ -131,6 +131,46 @@ class RaidaJS {
 		return this._getGenericMainPromise(rqs, params)	
 	}
 
+	// Get Ticket (no multi)
+	async apiGetticket(params, callback = null) {
+		let coin = params
+		if (!this._validateCoin(coin)) {
+			return this._getError("Failed to validate params")
+		}
+
+		let rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sn: coin.sn,
+				nn: coin.nn,
+				an: coin.an[i],
+				pan: coin.pan[i],
+				denomination: this.getDenomination(coin.sn),
+			})
+		}
+
+		let rqs = this._launchRequests("get_ticket", rqdata, 'GET', callback)
+		let rv = {
+			'status' : 'done',
+			'tickets' : []
+		}
+		let mainPromise = rqs.then(response => {
+			this._parseMainPromise(response, 0, rv, serverResponse => {
+				console.log(serverResponse)
+
+				if (serverResponse.status == 'ticket') {
+					rv.tickets.push(serverResponse.message)
+				} else {
+					rv.tickets.push("error")
+				}
+			})
+
+			return rv
+		})
+		
+		return mainPromise
+	}
+
 	// FixFracked
 	async apiFixfracked(params, callback = null) {
 		let coins = []
@@ -928,6 +968,14 @@ class RaidaJS {
 		return sn
 	}
 
+	async apiShowBalance(coin, callback) {
+		if (!this._validateCoin(coin)) {
+			return this._getError("Failed to validate params")
+		}
+
+		return this._getCoins(coin, callback)
+	}
+
 	async _getCoins(coin, callback) {
 		let rqdata = []
 
@@ -937,7 +985,7 @@ class RaidaJS {
 				sn: coin.sn,
 				nn: coin.nn,
 				an: coin.an[i],
-				pan: coin.pan[i],
+				pan: coin.an[i],
 				denomination: this.getDenomination(coin.sn),
 			})
 		}
