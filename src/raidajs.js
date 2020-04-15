@@ -18,7 +18,9 @@ class RaidaJS {
 			defaultCoinNn: 1,
 			maxFailedRaidas: 5,
 			changeMakerId: 2,
-			debug: false
+			debug: false,
+			defaultRaidaForQuery: 7,
+			ddnsServer: "ddns.cloudcoin.global"
 		, ...options}
 
 		this._raidaServers = []
@@ -60,6 +62,11 @@ class RaidaJS {
 		return 0
 	}
 	
+	// RAIDA to query for SkyWallet creation
+	setDefaultRAIDA(raidaNum) {
+		this.options.defaultRaidaForQuery = raidaNum
+	}
+
 	// Timeout for requests in milliseconds
 	setTimeout(timeout) {
 		this.options.timeout = timeout
@@ -131,6 +138,60 @@ class RaidaJS {
 		return this._getGenericMainPromise(rqs, params)	
 	}
 
+	// Register DNS
+	async apiRegisterSkyWallet(params, callback = null) {
+		if (!('name' in params) || !('coin' in params))
+			return this._getError("Invalid params")
+
+		let coin = params['coin']
+		if (!this._validateCoin(coin)) {
+			return this._getError("Failed to validate coin")
+		}
+
+		let name = await this._resolveDNS(params['name'])
+		if (name != null) 
+			return this._getError("DNS name already exists")
+
+		name = params['name']
+		let response = await this.apiGetticket(params['coin'], callback)
+		if (response.status != "done")
+			return this._getError("Failed to get tickets")
+
+		if (callback != null)
+			callback(0, "register_dns")
+
+		let rquery = this.options.defaultRaidaForQuery
+		let ticket = response.tickets[rquery]
+		if (ticket == 'error')
+			return this._getError("Failed to get ticket from RAIDA" + rquery)
+	
+
+		let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
+		url += "sn=" + coin.sn + "&username=" + name + "&ticket=" + ticket + "&raidanumber=" + rquery
+		response = await this._axInstance.get(url)
+		if (response.status != 200)
+			return this._getError("DNSService returned wrong code: " + response.status)
+
+		let data = response.data
+		if (!('status' in data)) 
+			return this._getError("DNSService returned wrong data. No status found")
+
+		if (data.status != 'success') {
+			let msg = data.status
+			if ('errors' in data) {
+				if (data.errors.length != 0) {
+					msg += " " + data.errors[0]['message']
+				}
+			}
+			return this._getError("DNSService returned incorrect status: " + msg)
+		}
+
+		return {
+			'status' : 'done',
+			'message' : 'SkyWallet has been successfully registered'
+		}
+	}
+
 	// Get Ticket (no multi)
 	async apiGetticket(params, callback = null) {
 		let coin = params
@@ -156,8 +217,6 @@ class RaidaJS {
 		}
 		let mainPromise = rqs.then(response => {
 			this._parseMainPromise(response, 0, rv, serverResponse => {
-				console.log(serverResponse)
-
 				if (serverResponse.status == 'ticket') {
 					rv.tickets.push(serverResponse.message)
 				} else {

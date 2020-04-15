@@ -31,6 +31,8 @@ The raida.min.js file contains the Raida class and other supporting libraries su
 
 [apiShowBalance](README.md#apiShowBalance)
 
+[apiRegisterSkyWallet](README.md#apiRegisterSkyWallet)
+
 
 ## Installing
 
@@ -113,7 +115,13 @@ let options = {
 
 	// Debug. If set, an additional 'details' field will be set in the response data.
 	// The field contains a raw response from the RAIDA server
-	debug: false
+	debug: false,
+
+	// RAIDA to query when we create SkywWallets
+	defaultRaidaForQuery: 7,
+
+	// DDNS service for SkyWallets
+	ddnsServer: "ddns.cloudcoin.global"
 }
 
 let raidaJS = new RaidaJS(options)
@@ -141,6 +149,7 @@ raidaJS.setTimeout(15000)
 raidaJS.setProtocol("http")
 raidaJS.setDomain("raida.tech")
 raidaJS.setDefaultNetworkNumber(2)
+raidaJS.setDefaultRAIDA(7)
 ```
 
 ### Get functions
@@ -554,7 +563,8 @@ Input:
 
 ```
 params = {
-	"sn" : "4343",                                                                                                                                                               "an" :  ["f9f2b05d74192e31478846f1b7bdd661","74025cf02053edb09b93ef532a37099d","c3518632d60f897d84ae62e75a7059a3","66dfb17c08b6dbc2846fbe8938bece1a","2f0744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"]
+	"sn" : "4343",
+	"an" :  ["f9f2b05d74192e31478846f1b7bdd661","74025cf02053edb09b93ef532a37099d","c3518632d60f897d84ae62e75a7059a3","66dfb17c08b6dbc2846fbe8938bece1a","2f0744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"]
 }
 
 r.apiShowBalance(params).then(reponse => {
@@ -567,5 +577,31 @@ Data returned
 ```
 {
 	coins: {}	// Hashmap with coins. Can be empty if the skywallet balance is zero
+}
+```
+
+
+#### apiRegisterSkyWallet
+
+This method creates a SkyWallet for the specified CloudCoin. Method accepts name of the wallet and the coin itself
+
+Input:
+
+```js
+params = {
+	"name" : "mywallet",
+	"coin" : {
+		"sn" : "4343",
+		"an" :  ["f9f2b05d74192e31478846f1b7bdd661","74025cf02053edb09b93ef532a37099d","c3518632d60f897d84ae62e75a7059a3","66dfb17c08b6dbc2846fbe8938bece1a","2f0744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"]
+	}
+}
+```
+
+Data returned
+
+```js
+{
+	status : "done"  // "done" or "error"
+	message : ""     // Information
 }
 ```
