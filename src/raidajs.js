@@ -510,9 +510,14 @@ class RaidaJS {
 			return this._getError("Invalid input data. To is not defined")
 		}
 
-		let to = await this._resolveDNS(params['to'])
-		if (to == null) {
-			return this._getError("Failed to resolve DNS name: " + params.to)
+		let to = params['to'] + ""
+		if (to.match(/^\d+$/) && (to > 0 || to < 16777216)) {
+			
+		} else {
+			to = await this._resolveDNS(params['to'])
+			if (to == null) {
+				return this._getError("Failed to resolve DNS name: " + params.to)
+			}
 		}
 		
 		let rqdata = []
