@@ -94,8 +94,9 @@ raidaJS.apiEcho()
 
 Node.js ES5
 ```js
-let raidaJS = require('raidajs').default
+let RaidaJS = require('raidajs').default
 
+let raidaJS = new RaidaJS()
 raidaJS.apiEcho()
 ```
 
