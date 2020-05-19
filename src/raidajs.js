@@ -1,6 +1,9 @@
 import axios from 'axios'
 import qs from 'qs'
 
+
+import allSettled from 'promise.allsettled'
+
 let _isBrowser = false
 if (typeof(process.browser) !== 'undefined' && process.browser) {
 	_isBrowser = true
@@ -1467,7 +1470,11 @@ class RaidaJS {
 			pms.push(pm)
 		}
 		
-		return Promise.allSettled(pms)
+		//pms = pms.map(p => p.catch(e => e))
+
+		//return Promise.allSettled(pms)
+		return allSettled(pms)
+		//return Promise.all(pms)
 	}
 
 	_initAxios() {

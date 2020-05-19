@@ -1,5 +1,7 @@
 // webpack.config.js
 var webpack = require('webpack')
+
+
 var path = require( 'path' );
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
@@ -19,6 +21,16 @@ module.exports = function(options) {
 		filename = 'raidajs.js'
 	}
 
+	let xplugins
+	if (isProd) {
+		xplugins = [new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"production"'}})]
+		if (isWeb) {
+			xplugins.push(new UglifyJsPlugin())
+		}
+	} else {
+		xplugins = [new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"development"'}})]
+	}
+
 	let config = {
 		context: __dirname,
 		entry: path.join(__dirname, "src/raidajs.js"),
@@ -30,14 +42,7 @@ module.exports = function(options) {
 			extensions: ['.js']
 		},
 		devtool: isProd ? false : '#eval-source-map',
-		plugins: isProd ? [
-			new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"production"'}}),
-			new UglifyJsPlugin()
-			// Prod plugins here
-		] : [
-			new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"development"'}})
-			// Dev plugins here
-		],
+		plugins: xplugins,
 		module: {
 			rules: [
 				{

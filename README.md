@@ -92,6 +92,14 @@ let raidaJS = new RaidaJS()
 raidaJS.apiEcho()
 ```
 
+
+Node.js ES5
+```js
+let raidaJS = require('raidajs').default
+
+raidaJS.apiEcho()
+```
+
 ## RaidaJS
 
 Here are the available config options for making requests. None of them is required.

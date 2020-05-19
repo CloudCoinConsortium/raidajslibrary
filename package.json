@@ -1,6 +1,6 @@
 {
   "name": "raidajs",
-  "version": "0.3.6",
+  "version": "0.3.8",
   "description": "RAIDA JavaScript Library",
   "main": "lib/raidajs.js",
   "scripts": {
@@ -32,26 +32,28 @@
     "axios": "^0.19.0",
     "babel-cli": "^6.26.0",
     "babel-polyfill": "^6.26.0",
+    "kind-of": "^6.0.3",
+    "promise.allsettled": "^1.0.2",
     "qs": "^6.9.1"
   },
   "homepage": "https://github.com/CloudCoinConsortium/raidajslibrary#readme",
   "devDependencies": {
     "@babel/core": "^7.7.7",
     "@babel/preset-env": "^7.7.7",
+    "acorn": ">=6.4.1",
     "babel-core": "^7.0.0-bridge.0",
     "babel-eslint": "^10.0.3",
-    "babel-loader": "^8.0.6",
+    "babel-loader": "^8.1.0",
     "clean-webpack-plugin": "^3.0.0",
     "eslint": "^6.8.0",
-    "eslint-loader": "^3.0.3",
+    "eslint-loader": "^4.0.2",
+    "kind-of": "^6.0.3",
+    "minimist": ">=1.2.2",
     "object-assign": "^4.1.1",
     "path": "^0.12.7",
     "uglifyjs-webpack-plugin": "^2.2.0",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10",
-    "acorn": ">=6.4.1",
-    "minimist": ">=1.2.2",
-    "kind-of": ">=6.0.3"
+    "webpack": "^4.43.0",
+    "webpack-cli": "^3.3.10"
   },
   "library": {
     "name": "raidajs",
