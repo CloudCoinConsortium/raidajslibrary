@@ -1,6 +1,5 @@
-# class Raida
-
-The raida.min.js file contains the Raida class and other supporting libraries such as Axios. The Raida class has functions that allow you to quickly connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet. The Raida class uses the latest callback, tracing and debug techniques available today.
+class Raida
+The raida.min.js file contains the Raida class and other supporting libraries, such as Axios. The Raida class has functions that allow you to connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet quickly. The Raida class uses the latest callback, tracing, and debug techniques available today.
 
 
 ## Table of Contents
