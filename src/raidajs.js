@@ -195,6 +195,82 @@ class RaidaJS {
 		}
 	}
 
+	// View receipt
+	async apiViewreceipt(params, callback = null) {
+		let coin = params
+		if (!'account' in params || !'tag' in params) {
+			return this._getError("Account and Tag required")
+		}
+
+		if (params.account < 1 || params.account > 16777216)
+			return this._getError("Invalid Account")
+
+			
+		if (!params.tag.match(/^[a-fA-F0-9]{32}$/))
+			return this._getError("Invalid Tag UUID")
+		
+		let rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				account: params.account,
+				tag: params.tag,
+			})
+		}
+
+		let rqs = this._launchRequests("view_receipt", rqdata, 'GET', callback)
+		let rv = {
+			'status' : 'done',
+			'sns' : {},
+			'details' : [],
+			'total' : 0
+		}
+		let mainPromise = rqs.then(response => {
+			console.log(response)
+			for (let i = 0; i < response.length; i++) {
+				if (typeof(response[i].value) == 'undefined')
+					continue
+
+				if (typeof(response[i].value.data) != 'object')
+					continue
+
+				response[i].value.data.status = "pass"
+			}
+
+			this._parseMainPromise(response, 0, rv, serverResponse => {
+				console.log("push")
+
+				if (typeof(serverResponse) != 'object')
+					return
+
+				console.log(serverResponse)
+				if ('serial_numbers' in serverResponse) {
+					let sns = serverResponse['serial_numbers'].split(',')
+					console.log(sns)
+					for (let i = 0; i < sns.length; i++) {
+						let sn = sns[i].trim()
+						if (sn == "")
+							continue
+
+						if (!(sn in rv.sns))
+							rv.sns[sn] = 0
+
+						rv.sns[sn]++
+					}
+				}
+
+			})
+
+			rv.sns = Object.keys(rv.sns).filter(item => rv.sns[item] > (this._totalServers - this.options.maxFailedRaidas) )
+			for (let sn of rv.sns)
+				rv.total += this.getDenomination(sn)
+
+			return rv
+
+		})
+		
+		return mainPromise
+	}
+
 	// Get Ticket (no multi)
 	async apiGetticket(params, callback = null) {
 		let coin = params
@@ -1377,9 +1453,11 @@ class RaidaJS {
 				continue
 			}
 
+			console.log(i)
+				console.log(response[i])
 			serverResponse = response[i].value.data
 			if (arrayLength == 0) {
-				if (!('status' in serverResponse)) {
+				if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
 					this._addDetails(rv)
 					callback("error")
@@ -1472,6 +1550,7 @@ class RaidaJS {
 		
 		//pms = pms.map(p => p.catch(e => e))
 
+		//console.log("as="+allSettled.shim())
 		//return Promise.allSettled(pms)
 		return allSettled(pms)
 		//return Promise.all(pms)

@@ -32,6 +32,7 @@ The raida.min.js file contains the Raida class and other supporting libraries, s
 
 [apiRegisterSkyWallet](README.md#apiRegisterSkyWallet)
 
+[apiViewreceipt](README.md#apiViewreceipt)
 
 ## Installing
 
@@ -611,5 +612,33 @@ Data returned
 {
 	status : "done"  // "done" or "error"
 	message : ""     // Information
+}
+```
+
+
+
+#### apiViewreceipt
+
+This method downolads a receipt from a Sky Wallet
+
+Input:
+
+```js
+params = {
+	// Sky Coin 
+	account : "7392040",
+
+	// 32-byte hex receipt ID
+	tag : "762c2d8eeb06a193b759eaf681826d9c"
+}
+```
+
+Data returned
+
+```js
+{
+	status : "done"  // "done" or "error"
+	sns : [],	// array of serial numbers
+	total: 20,	// Total coins in receipt
 }
 ```
