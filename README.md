@@ -1,5 +1,12 @@
-class Raida
+# class Raida
+There are two different files here. One is for Internet Browsers and the other is for Node.js programs. 
+
+## Web Browser (in 'lib' folder)
+
 The raida.min.js file contains the Raida class and other supporting libraries, such as Axios. The Raida class has functions that allow you to connect to RAIDA Cloud such as CloudCoin and CloudBanks such as SkyWallet quickly. The Raida class uses the latest callback, tracing, and debug techniques available today.
+
+## Node.js (in 'dist' folder)
+The node.js repository and can be installed via npm install raidajs. It doesn't have libraries in it.  (like axios) Libraries are installed by npm using dependency tree.
 
 
 ## Table of Contents
