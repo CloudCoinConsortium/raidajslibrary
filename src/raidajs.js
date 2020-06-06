@@ -641,7 +641,7 @@ class RaidaJS {
 		if (coin == null) 
 			return this._getError("Failed to parse coin from params")
 
-		let changeMakerId = this.options._changeMakerId
+		let changeMakerId = this.options.changeMakerId
 		if ('changeMakerId' in params) {
 			changeMakerId = params['changeMakerId']
 		}
@@ -733,8 +733,7 @@ class RaidaJS {
 				vsns = this._getA(d1s)
 				break;
 			default:
-				response.errText = "Can't break denomination"
-				return response
+				return this._getErrorresponse("Can't break denomination")
 		}
 
 		let rest = params.amount - this._calcAmount(coinsToReceive)
@@ -745,8 +744,7 @@ class RaidaJS {
 		let total = 0
 
 		if (pickedSns.extra != 0) {
-			response.errText = "Failed to pick coin for change"
-			return response
+			return this._getError("Failed to pick coin for change")
 		}
 
 
@@ -766,8 +764,7 @@ class RaidaJS {
 		}
 
 		if (this._calcAmount(changeCoinsToReceive) + this._calcAmount(changeCoinsToChange) != this.getDenomination(changeCoin)) {
-			response.errText = "Error in making change. Incorrect calculations"
-			return response
+			return this._getError("Error in making change. Incorrect calculations")
 		}
 
 		rqdata = []
@@ -808,11 +805,15 @@ class RaidaJS {
 			nrv.frackedNotes += response.frackedNotes
 			nrv.status = response.status
 
-			for (let sn in response.result)
+			for (let sn in response.result) {
 				nrv.result[sn] = response.result[sn]
+				nrv.result[sn]['an'] = [...response.result[sn].message]
+				delete(nrv.result[sn]['message'])
+			}
 
 			for (let i in response.details)
 				nrv.details.push(response.details)
+
 
 			return nrv
 		})
@@ -836,7 +837,7 @@ class RaidaJS {
 			return this._getError("Failed to resolve DNS name: " + params.to)
 		}
 
-		let changeMakerId = this.options._changeMakerId
+		let changeMakerId = this.options.changeMakerId
 		if ('changeMakerId' in params) {
 			changeMakerId = params['changeMakerId']
 		}
