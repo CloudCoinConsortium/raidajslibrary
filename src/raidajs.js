@@ -615,6 +615,13 @@ class RaidaJS {
 			})
 			for (let j = 0; j < params['coins'].length; j++) {
 				let coin = params['coins'][j]
+				if ('an' in coin) {
+					for (let x = 0; x < coin.an.length; x++) {
+						if (coin.an[x] == null)
+							coin.an[x] = this._generatePan()
+					}
+				}
+
 				if (!this._validateCoin(coin)) {
 					console.error("Invalid coin. Coin index: " + j)
 					return null
@@ -685,9 +692,10 @@ class RaidaJS {
 	
 			let coins = new Array(coinsToReceive.length)
 			coinsToReceive.forEach((value, idx) => { 
-				coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
+				coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
 			})
 
+			console.log(coins)
 			response = await this._getGenericMainPromise(rqs, coins)
 			response.changeCoinSent = 0
 			response.changeRequired = false
@@ -695,6 +703,8 @@ class RaidaJS {
 				response.result[k]['an'] = [...response.result[k].message]
 				delete(response.result[k]['message'])
 			}
+
+			console.log("xxxxxxxxx")
 
 			if (changeCoin === 0)
 				return response
@@ -705,6 +715,8 @@ class RaidaJS {
 				totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
 			}
 		}
+
+		return
 
 		response.changeRequired = true
 		let scResponse = await this.showChange({ 
@@ -1259,6 +1271,7 @@ class RaidaJS {
 			})
 			for (let j = 0; j < params.length; j++) {
 				let coin = params[j]
+
 				if (!this._validateCoin(coin)) {
 					console.error("Invalid coin. Coin index: " + j)
 					return null
@@ -1487,8 +1500,12 @@ class RaidaJS {
 	}
 
 	_addDetails(rv, serverResponse = null) {
-		if (this.options.debug)
+		if (this.options.debug) {
+			if (!('details' in rv)) {
+				rv['details'] = []
+			}
 			rv['details'].push(serverResponse)
+		}
 	}
 
 	_launchRequests(url, params = null, method = 'POST', callback = null, servers = null) {
