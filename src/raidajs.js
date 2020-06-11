@@ -326,10 +326,6 @@ class RaidaJS {
 			if (coin.result != this.__frackedResult)
 				continue
 
-		//	coin['an'] = []
-		//	for (let x = 0; x < this._totalServers; x++)
-		//		coin['an'][x] = this._generatePan()
-
 			if (!this._validateCoin(coin))
 				continue
 
@@ -695,7 +691,6 @@ class RaidaJS {
 				coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
 			})
 
-			console.log(coins)
 			response = await this._getGenericMainPromise(rqs, coins)
 			response.changeCoinSent = 0
 			response.changeRequired = false
@@ -703,8 +698,6 @@ class RaidaJS {
 				response.result[k]['an'] = [...response.result[k].message]
 				delete(response.result[k]['message'])
 			}
-
-			console.log("xxxxxxxxx")
 
 			if (changeCoin === 0)
 				return response
@@ -715,8 +708,6 @@ class RaidaJS {
 				totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
 			}
 		}
-
-		return
 
 		response.changeRequired = true
 		let scResponse = await this.showChange({ 
@@ -1271,6 +1262,12 @@ class RaidaJS {
 			})
 			for (let j = 0; j < params.length; j++) {
 				let coin = params[j]
+				if ('an' in coin) {
+					for (let x = 0; x < coin.an.length; x++) {
+						if (coin.an[x] == null)
+							coin.an[x] = this._generatePan()
+					}
+				}
 
 				if (!this._validateCoin(coin)) {
 					console.error("Invalid coin. Coin index: " + j)
