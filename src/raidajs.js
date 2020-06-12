@@ -225,7 +225,6 @@ class RaidaJS {
 			'total' : 0
 		}
 		let mainPromise = rqs.then(response => {
-			console.log(response)
 			for (let i = 0; i < response.length; i++) {
 				if (typeof(response[i].value) == 'undefined')
 					continue
@@ -237,15 +236,11 @@ class RaidaJS {
 			}
 
 			this._parseMainPromise(response, 0, rv, serverResponse => {
-				console.log("push")
-
 				if (typeof(serverResponse) != 'object')
 					return
 
-				console.log(serverResponse)
 				if ('serial_numbers' in serverResponse) {
 					let sns = serverResponse['serial_numbers'].split(',')
-					console.log(sns)
 					for (let i = 0; i < sns.length; i++) {
 						let sn = sns[i].trim()
 						if (sn == "")
@@ -619,8 +614,7 @@ class RaidaJS {
 				}
 
 				if (!this._validateCoin(coin)) {
-					console.error("Invalid coin. Coin index: " + j)
-					return null
+					return this._getError("Invalid coin. Idx " + j)
 				}
 
 				rqdata[i].sns.push(coin.sn)					
@@ -1315,7 +1309,7 @@ class RaidaJS {
 					authentic: 0,
 					pownstring: "",
 					result: "unknown",
-					message: []
+					message: new Array(this._totalServers)
 				}
 
 				if (typeof(coins[i].pan) != 'undefined')
@@ -1464,8 +1458,6 @@ class RaidaJS {
 				continue
 			}
 
-			console.log(i)
-				console.log(response[i])
 			serverResponse = response[i].value.data
 			if (arrayLength == 0) {
 				if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
