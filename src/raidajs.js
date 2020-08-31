@@ -818,6 +818,91 @@ class RaidaJS {
 		return rvs
 	}
 
+
+	// BreakInBank
+	async apiBreakInBank(extraSn, idcc, callback) {
+		let csns = []
+
+		console.log("breaking")
+		console.log(extraSn)
+		console.log(idcc)
+		let scResponse = await this.showChange({ 
+			nn: this.options.defaultCoinNn, 
+			sn: this.options.changeMakerId,
+			denomination: this.getDenomination(extraSn)
+		}, callback)
+
+		let d100s = Object.keys(scResponse.d100)
+		let d25s = Object.keys(scResponse.d25)
+		let d5s = Object.keys(scResponse.d5)
+		let d1s = Object.keys(scResponse.d1)
+
+		let vsns
+		switch (this.getDenomination(extraSn)) {
+			case 250:
+				vsns = this._get250E(d100s, d25s, d5s, d1s)
+				break;
+			case 100:
+				vsns = this._get100E(d25s, d5s, d1s)
+				break;
+			case 25:
+				vsns = this._get25B(d5s, d1s)
+				break;
+			case 5:
+				vsns = this._getA(d1s, 5)
+				break;
+			default:
+				console.log("Failed to get denomination for coin " + extraSn)
+				return csns
+		}
+
+		for (let i = 0; i < vsns.length; i++) {
+			console.log("picked " + vsns[i])
+		}
+
+		// Assemble input data for each Raida Server
+		let rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				id_nn: idcc.nn,
+				id_sn: idcc.sn,
+				id_an: idcc.an[i],
+				id_dn: this.getDenomination(idcc.sn),
+				nn:  this.options.defaultCoinNn,
+				sn: extraSn,
+				dn: this.getDenomination(extraSn),
+				change_server: this.options.changeMakerId,
+				csn: vsns
+			})
+		}
+
+		console.log(rqdata)
+
+		let response = await this._launchRequests("break_in_bank", rqdata, 'GET', callback)
+		console.log("resp")
+		console.log(response)
+		let p = 0
+		let rv = await this._parseMainPromise(response, 0, {}, response => {
+			if (response == "error")
+				return
+			console.log("mp " + p)
+			console.log(response)
+			console.log(response.status)
+			if (response.status == "success") {
+				p++
+			}
+		})
+		console.log("resp2")
+		console.log(p)
+
+		if (p >= 17)
+			return vsns
+
+		console.log("Not enough positive responses from RAIDA: " + p)
+		return []
+
+	}
+
 	// Transfer
 	async apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
@@ -858,6 +943,26 @@ class RaidaJS {
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
 
+		let changeRequired
+		if (changeCoin !== 0) {
+			let csns = await this.apiBreakInBank(rvalues.extra, coin, callback)
+			if (csns.length == 0) {
+				return	this._getError("Failed to break in bank")
+			}
+
+			coinsToSend = coinsToSend.concat(csns)
+			rvalues = this._pickCoinsAmountFromArrayWithExtra(coinsToSend, params.amount)
+			coinsToSend = rvalues.coins
+			changeCoin = rvalues.extra
+			if (changeCoin !== 0) {
+				return	this._getError("Failed to pick coins after break in bank")
+			}
+
+			changeRequired = true
+		} else {
+			changeRequired = false
+		}
+
 		let rqdata = []
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
@@ -883,121 +988,9 @@ class RaidaJS {
 		})
 
 		let response = await this._getGenericMainPromise(rqs, coins)
-		response.changeCoinSent = 0
-		response.changeRequired = false
-		
-		if (changeCoin === 0)
-			return response
-	
-		// Doing change
-		response.changeRequired = true
-		let scResponse = await this.showChange({ 
-			nn: this.options.defaultCoinNn, 
-			sn: changeMakerId,
-			denomination: this.getDenomination(changeCoin)
-		}, callback)
+		response.changeCoinSent = changeRequired
 
-		let d100s = Object.keys(scResponse.d100)
-		let d25s = Object.keys(scResponse.d25)
-		let d5s = Object.keys(scResponse.d5)
-		let d1s = Object.keys(scResponse.d1)
-
-		let vsns
-		switch (this.getDenomination(changeCoin)) {
-			case 250:
-				vsns = this._get250E(d100s, d25s, d5s, d1s)
-				break;
-			case 100:
-				vsns = this._get100E(d25s, d5s, d1s)
-				break;
-			case 25:
-				vsns = this._get25B(d5s, d1s)
-				break;
-			case 5:
-				vsns = this._getA(d1s, 5)
-				break;
-			default:
-				response.errText = "Can't break denomination"
-				return response
-		}
-
-		console.log("xxxxxxxxxxxxxx")
-		console.log(this.getDenomination(changeCoin))
-		console.log(vsns)
-		console.log(d1s)
-		let rest = params.amount - this._calcAmount(coinsToSend)
-
-		let changeCoinsToSend = []
-		let changeCoinsToChange = []
-		let pickedSns = this._pickCoinsAmountFromArrayWithExtra(vsns, rest)
-		let total = 0
-
-		if (pickedSns.extra != 0) {
-			response.errText = "Failed to pick coin for change"
-			return response
-		}
-
-		for (let y = 0; y < vsns.length; y++) {
-			let present = false
-			for (let x = 0; x < pickedSns.coins.length;x++) {
-				if (vsns[y] == pickedSns.coins[x]) {
-					present = true;
-					break;
-				}
-			}
-
-			if (present)
-				changeCoinsToSend.push(vsns[y])
-			else
-				changeCoinsToChange.push(vsns[y])
-		}
-
-		if (this._calcAmount(changeCoinsToSend) + this._calcAmount(changeCoinsToChange) != this.getDenomination(changeCoin)) {
-			response.errText = "Error in making change. Incorrect calculations"
-			return response
-		}
-
-		rqdata = []
-		for (let i = 0; i < this._totalServers; i++) {
-			rqdata.push({
-				sns: [ changeCoin ],
-				nns: [ this.options.defaultCoinNn ],
-				an: coin.an[i],
-				pan: coin.pan[i],
-				sn: coin.sn,
-				nn: coin.nn,
-				denomination: this.getDenomination(coin.sn),
-				to_sn: to,
-				payment_envelope: memo,
-				payment_required: rest,
-				public_change_maker: changeMakerId,
-				paysns: changeCoinsToSend,
-				chsns: changeCoinsToChange
-			})
-		}
-
-		response.changeCoinSent = changeCoin
-		response.result[changeCoin] = {}
-		let nrv = response
-		rqs = this._launchRequests("transfer_with_change", rqdata, 'POST', callback)
-		let rvs = await this._getGenericMainPromise(rqs, [{ sn: changeCoin, nn: this.options.defaultCoinNn }]).then(response => {
-			nrv.totalNotes += response.totalNotes
-			nrv.authenticNotes += response.authenticNotes
-			nrv.counterfeitNotes += response.counterfeitNotes
-			nrv.errorNotes += response.errorNotes
-			nrv.frackedNotes += response.frackedNotes
-			nrv.status = response.status
-
-			for (let sn in response.result)
-				nrv.result[sn] = response.result[sn]
-
-			for (let i in response.details)
-				nrv.details.push(response.details)
-
-			return nrv
-		})
-
-		return rvs
+		return response
 	}
 
 	async showChange(params, callback = null) {
@@ -1462,11 +1455,8 @@ class RaidaJS {
 				continue
 			}
 
-				console.log("Parse main")
 			serverResponse = response[i].value.data
 			if (arrayLength == 0) {
-				console.log("sr")
-				console.log(serverResponse)
 				if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
 					this._addDetails(rv)
