@@ -727,7 +727,7 @@ class RaidaJS {
 				vsns = this._get25B(d5s, d1s)
 				break;
 			case 5:
-				vsns = this._getA(d1s)
+				vsns = this._getA(d1s, 5)
 				break;
 			default:
 				return this._getErrorresponse("Can't break denomination")
@@ -851,7 +851,7 @@ class RaidaJS {
 		let nns = new Array(sns.length)
 		nns.fill(this.options.defaultCoinNn)
 		if (params.amount > this._calcAmount(sns)) {
-			return	this._getError("Not enought cloudcoins")
+			return	this._getError("Not enough cloudcoins")
 		}
 
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
@@ -914,13 +914,17 @@ class RaidaJS {
 				vsns = this._get25B(d5s, d1s)
 				break;
 			case 5:
-				vsns = this._getA(d1s)
+				vsns = this._getA(d1s, 5)
 				break;
 			default:
 				response.errText = "Can't break denomination"
 				return response
 		}
 
+		console.log("xxxxxxxxxxxxxx")
+		console.log(this.getDenomination(changeCoin))
+		console.log(vsns)
+		console.log(d1s)
 		let rest = params.amount - this._calcAmount(coinsToSend)
 
 		let changeCoinsToSend = []
@@ -1458,8 +1462,11 @@ class RaidaJS {
 				continue
 			}
 
+				console.log("Parse main")
 			serverResponse = response[i].value.data
 			if (arrayLength == 0) {
+				console.log("sr")
+				console.log(serverResponse)
 				if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
 					this._addDetails(rv)
