@@ -657,6 +657,29 @@ class RaidaJS {
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
 		let coinsToReceive = rvalues.coins
 		let changeCoin = rvalues.extra
+
+		let changeRequired
+		if (changeCoin !== 0) {
+			let csns = await this.apiBreakInBank(rvalues.extra, coin, callback)
+			if (csns.length == 0) {
+				return	this._getError("Failed to break in bank")
+			}
+
+			coinsToReceive = coinsToReceive.concat(csns)
+			rvalues = this._pickCoinsAmountFromArrayWithExtra(coinsToReceive, params.amount)
+			coinsToReceive = rvalues.coins
+			changeCoin = rvalues.extra
+			if (changeCoin !== 0) {
+				return	this._getError("Failed to pick coins after break in bank")
+			}
+
+			changeRequired = true
+		} else {
+			changeRequired = false
+		}
+
+
+
 		let rqdata = []
 
 		let nns = new Array(coinsToReceive.length)
@@ -702,6 +725,8 @@ class RaidaJS {
 				totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
 			}
 		}
+
+/*
 
 		response.changeRequired = true
 		let scResponse = await this.showChange({ 
@@ -816,6 +841,7 @@ class RaidaJS {
 		})
 			
 		return rvs
+			*/
 	}
 
 
@@ -823,9 +849,6 @@ class RaidaJS {
 	async apiBreakInBank(extraSn, idcc, callback) {
 		let csns = []
 
-		console.log("breaking")
-		console.log(extraSn)
-		console.log(idcc)
 		let scResponse = await this.showChange({ 
 			nn: this.options.defaultCoinNn, 
 			sn: this.options.changeMakerId,
@@ -876,11 +899,7 @@ class RaidaJS {
 			})
 		}
 
-		console.log(rqdata)
-
 		let response = await this._launchRequests("break_in_bank", rqdata, 'GET', callback)
-		console.log("resp")
-		console.log(response)
 		let p = 0
 		let rv = await this._parseMainPromise(response, 0, {}, response => {
 			if (response == "error")
