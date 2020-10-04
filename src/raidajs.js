@@ -23,7 +23,8 @@ class RaidaJS {
 			changeMakerId: 2,
 			debug: false,
 			defaultRaidaForQuery: 7,
-			ddnsServer: "ddns.cloudcoin.global"
+			ddnsServer: "ddns.cloudcoin.global",
+			maxCoins: 300
 		, ...options}
 
 		this._raidaServers = []
@@ -961,6 +962,12 @@ class RaidaJS {
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
+
+		
+		if (coinsToSend.length > this.options.maxCoins) {
+			return	this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
+		}
+
 
 		let changeRequired
 		if (changeCoin !== 0) {
