@@ -24,7 +24,7 @@ class RaidaJS {
 			debug: false,
 			defaultRaidaForQuery: 7,
 			ddnsServer: "ddns.cloudcoin.global",
-			maxCoins: 300
+			maxCoins: 200
 		, ...options}
 
 		this._raidaServers = []
@@ -963,11 +963,13 @@ class RaidaJS {
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
 
-		
+	
+		console.log(coinsToSend)
+		console.log("length" + coinsToSend.length + " t="+this.options.maxCoins)
+
 		if (coinsToSend.length > this.options.maxCoins) {
 			return	this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
 		}
-
 
 		let changeRequired
 		if (changeCoin !== 0) {
@@ -983,6 +985,9 @@ class RaidaJS {
 			if (changeCoin !== 0) {
 				return	this._getError("Failed to pick coins after break in bank")
 			}
+			if (coinsToSend.length > this.options.maxCoins) {
+				return	this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
+			}
 
 			changeRequired = true
 		} else {
@@ -993,8 +998,8 @@ class RaidaJS {
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
+				b : 't',
 				sns: coinsToSend,
-				nns: nns,
 				an: coin.an[i],
 				pan: coin.pan[i],
 				sn: coin.sn,
@@ -1013,7 +1018,7 @@ class RaidaJS {
 			coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
 		})
 
-		let response = await this._getGenericMainPromise(rqs, coins)
+		let response = await this._getGenericBriefMainPromise(rqs, coins)
 		response.changeCoinSent = changeRequired
 
 		return response
@@ -1302,7 +1307,7 @@ class RaidaJS {
 		return rqdata
 	}
 
-	_getGenericMainPromise(rqs, coins, gradeFunction = null) {
+	_getGenericBriefMainPromise(rqs, coins) {
 		// Parse the response from all RAIDA servers
 		let mainPromise = rqs.then(response => {
 			// Return value
@@ -1340,6 +1345,158 @@ class RaidaJS {
 			}
 
 			// Collect responses
+			this._parseMainPromise(response, 0, rv, (serverResponse, raidaIdx) => {
+				console.log("sr")
+				console.log(serverResponse)
+				if (serverResponse === "error") {
+					Object.keys(rcoins).map(sn => {
+						rcoins[sn].errors++;
+						rcoins[sn].pownstring += "e"
+					})
+					return
+				}
+
+				let sr = serverResponse
+				if (!('status' in sr)) {
+					for (let i = 0; i < coins.length; i++) {
+						let sn = coins[i].sn
+						rcoins[sn].errors++
+						rcoins[sn].pownstring += "e"
+					}
+					return
+				}
+
+				let s = sr.status
+				console.log("status")
+				console.log(s)
+				if (sr.status == 'allpass') {
+					for (let i = 0; i < coins.length; i++) {
+						let sn = coins[i].sn
+						rcoins[sn].authentic++
+						rcoins[sn].pownstring += "p"
+					}
+					return
+				}
+
+				if (sr.status == 'allfail') {
+					for (let i = 0; i < coins.length; i++) {
+						let sn = coins[i].sn
+						rcoins[sn].counterfeit++
+						rcoins[sn].pownstring += "f"
+					}
+					return
+				}
+
+				if (sr.status == 'mixed') {
+					let message = sr.message
+					let vals = message.split(',')
+					console.log("m="+message)
+					if (vals.length != coins.length) {
+						console.log("Invalid size: " + vals.length + ", coins size: " + coins.length)
+						for (let i = 0; i < coins.length; i++) {
+							let sn = coins[i].sn
+							rcoins[sn].errors++
+							rcoins[sn].pownstring += "e"
+						}
+						return
+					}
+			
+					console.log("gox")
+					console.log(vals)
+					for (let x = 0; x < vals.length; x++) {
+						let vs = vals[x]
+						let sn = coins[x].sn
+						console.log("vs="+vs)
+						if (vs == 'pass') {
+							rcoins[sn].authentic++
+							rcoins[sn].pownstring += "p"
+						} else if (vs == 'fail') {
+							rcoins[sn].counterfeit++
+							rcoins[sn].pownstring += "f"
+						} else {
+							rcoins[sn].errors++
+							rcoins[sn].pownstring += "e"
+						}
+					}
+
+
+					for (let i = 0; i < coins.length; i++) {
+						let sn = coins[i].sn
+						rcoins[sn].counterfeit = this._totalServers
+						rcoins[sn].pownstring = "f".repeat(this._totalServers)
+					}
+					return
+				}
+
+				console.log("rcoi")
+				console.log(rcoins)
+			})
+
+			// Detect the result of each coin
+			Object.keys(rcoins).map(sn => {
+				rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic, rcoins[sn].counterfeit, rcoins[sn].errors, this)
+				switch(rcoins[sn].result) {
+					case this.__authenticResult:
+						rv.authenticNotes++
+						break
+					case this.__counterfeitResult:
+						rv.counterfeitNotes++
+						break
+					case this.__frackedResult:
+						rv.frackedNotes++
+						break
+					default:
+						rv.errorNotes++
+						break
+				}
+			})
+
+			rv.result = rcoins
+			return rv
+		})
+
+		return mainPromise
+	}
+
+	_getGenericMainPromise(rqs, coins, gradeFunction = null) {
+		// Parse the response from all RAIDA servers
+		let mainPromise = rqs.then(response => {
+			// Return value
+			let rv = {
+				status: "done",
+				totalNotes: coins.length,
+				authenticNotes: 0,
+				counterfeitNotes: 0,
+				errorNotes: 0,
+				frackedNotes: 0,
+				result : [],
+				details : []
+			}
+	
+			// Return value
+			let rcoins = {}
+
+			// Setup the return hash value
+			for (let i = 0; i < coins.length; i++) {
+				let sn = coins[i].sn
+
+				rcoins[sn] = {
+					nn: coins[i].nn,
+					sn: sn,
+					denomination: this.getDenomination(sn),
+					errors: 0,
+					counterfeit: 0,
+					authentic: 0,
+					pownstring: "",
+					result: "unknown",
+					message: new Array(this._totalServers)
+				}
+
+				if (typeof(coins[i].pan) != 'undefined')
+					rcoins[sn].an = coins[i].pan
+			}
+
+			// Collect responses
 			this._parseMainPromise(response, rv.totalNotes, rv, (serverResponse, raidaIdx) => {
 				if (serverResponse === "error") {
 					Object.keys(rcoins).map(sn => {
@@ -1353,6 +1510,7 @@ class RaidaJS {
 				for (let i = 0; i < serverResponse.length; i++) {
 					let sn = coins[i].sn
 					let sr = serverResponse[i]
+
 					if (!'status' in sr) {
 						rcoins[sn].errors++;
 						rcoins[sn].pownstring += "e"
