@@ -24,7 +24,8 @@ class RaidaJS {
 			debug: false,
 			defaultRaidaForQuery: 7,
 			ddnsServer: "ddns.cloudcoin.global",
-			maxCoins: 200
+			maxCoins: 20000,
+			maxCoinsPerIteraiton: 200
 		, ...options}
 
 		this._raidaServers = []
@@ -905,15 +906,10 @@ class RaidaJS {
 		let rv = await this._parseMainPromise(response, 0, {}, response => {
 			if (response == "error")
 				return
-			console.log("mp " + p)
-			console.log(response)
-			console.log(response.status)
 			if (response.status == "success") {
 				p++
 			}
 		})
-		console.log("resp2")
-		console.log(p)
 
 		if (p >= 17)
 			return vsns
@@ -964,8 +960,6 @@ class RaidaJS {
 		let changeCoin = rvalues.extra
 
 	
-		console.log(coinsToSend)
-		console.log("length" + coinsToSend.length + " t="+this.options.maxCoins)
 
 		if (coinsToSend.length > this.options.maxCoins) {
 			return	this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
@@ -993,9 +987,60 @@ class RaidaJS {
 		} else {
 			changeRequired = false
 		}
+		let batch = this.options.maxCoinsPerIteraiton
 
-		let rqdata = []
+		let iterations = Math.floor(coinsToSend.length / batch)
+
+		let localCoinsToSend
+		let b = 0
+		let response = {}
+		for (; b < iterations; b++) {
+			let from = b * batch
+			let tol = from + batch
+			localCoinsToSend = coinsToSend.slice(from,tol)
+			let lr = await this._doTransfer(coin, to, memo, localCoinsToSend, callback, b)
+			response = this._mergeResponse(response, lr)	
+		}
+
+		let from = b * batch
+		if (from < coinsToSend.length) {
+			let tol = coinsToSend.length
+			localCoinsToSend = coinsToSend.slice(from,tol)
+			let lr = await this._doTransfer(coin, to, memo, localCoinsToSend, callback, iterations)
+			response = this._mergeResponse(response, lr)	
+
+		}
+		
 		// Assemble input data for each Raida Server
+		response.changeCoinSent = changeRequired
+
+		return response
+	}
+
+	_mergeResponse(response, addon) {
+		if (Object.keys(response).length == 0) 
+			return addon
+
+		if (addon.status != 'done')
+			response.status = addon.status
+
+		response.authenticNotes += addon.authenticNotes
+		response.counterfeitNotes += addon.counterfeitNotes
+		response.errorNotes += addon.errorNotes
+		response.totalNotes += addon.totalNotes
+		response.frackedNotes += addon.frackedNotes
+		response.details = response.details.concat(addon.details)
+		for (let k in addon.result) {
+			response.result[k] = addon.result[k]
+		}
+	//	response.result = Object.assign(response.result, addon.result)
+
+		return response
+
+	}
+
+	async _doTransfer(coin, to, memo, coinsToSend, callback, iteration) {
+		let rqdata = []
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
 				b : 't',
@@ -1011,15 +1056,14 @@ class RaidaJS {
 		}
 
 		// Launch Requests
-		let rqs = this._launchRequests("transfer", rqdata, 'POST', callback)
+		let rqs = this._launchRequests("transfer", rqdata, 'POST', callback, null, iteration)
 	
 		let coins = new Array(coinsToSend.length)
 		coinsToSend.forEach((value, idx) => { 
-			coins[idx] = { sn: sns[idx], nn: this.options.defaultCoinNn }
+			coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
 		})
 
 		let response = await this._getGenericBriefMainPromise(rqs, coins)
-		response.changeCoinSent = changeRequired
 
 		return response
 	}
@@ -1346,8 +1390,6 @@ class RaidaJS {
 
 			// Collect responses
 			this._parseMainPromise(response, 0, rv, (serverResponse, raidaIdx) => {
-				console.log("sr")
-				console.log(serverResponse)
 				if (serverResponse === "error") {
 					Object.keys(rcoins).map(sn => {
 						rcoins[sn].errors++;
@@ -1367,8 +1409,6 @@ class RaidaJS {
 				}
 
 				let s = sr.status
-				console.log("status")
-				console.log(s)
 				if (sr.status == 'allpass') {
 					for (let i = 0; i < coins.length; i++) {
 						let sn = coins[i].sn
@@ -1390,7 +1430,6 @@ class RaidaJS {
 				if (sr.status == 'mixed') {
 					let message = sr.message
 					let vals = message.split(',')
-					console.log("m="+message)
 					if (vals.length != coins.length) {
 						console.log("Invalid size: " + vals.length + ", coins size: " + coins.length)
 						for (let i = 0; i < coins.length; i++) {
@@ -1401,12 +1440,9 @@ class RaidaJS {
 						return
 					}
 			
-					console.log("gox")
-					console.log(vals)
 					for (let x = 0; x < vals.length; x++) {
 						let vs = vals[x]
 						let sn = coins[x].sn
-						console.log("vs="+vs)
 						if (vs == 'pass') {
 							rcoins[sn].authentic++
 							rcoins[sn].pownstring += "p"
@@ -1428,8 +1464,6 @@ class RaidaJS {
 					return
 				}
 
-				console.log("rcoi")
-				console.log(rcoins)
 			})
 
 			// Detect the result of each coin
@@ -1678,7 +1712,7 @@ class RaidaJS {
 		}
 	}
 
-	_launchRequests(url, params = null, method = 'POST', callback = null, servers = null) {
+	_launchRequests(url, params = null, method = 'POST', callback = null, servers = null, data = null) {
 		if (params == null)
 			params = {}
 
@@ -1719,8 +1753,8 @@ class RaidaJS {
 			}
 
 			pm.then(response => {
-				if (callback != null)
-					callback(raidaIdx, url)
+				if (callback != null) 
+					callback(raidaIdx, url, data)
 
 				return response.data
 			}).catch(error => {
@@ -1736,12 +1770,7 @@ class RaidaJS {
 			pms.push(pm)
 		}
 		
-		//pms = pms.map(p => p.catch(e => e))
-
-		//console.log("as="+allSettled.shim())
-		//return Promise.allSettled(pms)
 		return allSettled(pms)
-		//return Promise.all(pms)
 	}
 
 	_initAxios() {
