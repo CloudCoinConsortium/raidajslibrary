@@ -674,7 +674,7 @@ Data returned
 
 ```js
 {
-	status : "done"  // "done" or "error"
+  status : "done"  // "done" or "error"
   cc : {} // CloudCoin
 }
 ```
@@ -688,10 +688,10 @@ Input:
 ```js
 params = {
 	// Username
-	username : "my.skywallet.cc",
+  username : "my.skywallet.cc",
 
 	// Cardnumber
-	cardnumber : "4011131191011149",
+  cardnumber : "4011131191011149",
 
   // CVV
   cvv: "2222"
@@ -702,7 +702,7 @@ Data returned
 
 ```js
 {
-	status : "done"  // "done" or "error"
+  status : "done"  // "done" or "error"
   cc : {} // CloudCoin
 }
 ```
