@@ -24,9 +24,9 @@ module.exports = function(options) {
 	let xplugins
 	if (isProd) {
 		xplugins = [new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"production"'}})]
-		if (isWeb) {
-			xplugins.push(new UglifyJsPlugin())
-		}
+	//	if (isWeb) {
+//			xplugins.push(new UglifyJsPlugin())
+	//	}
 	} else {
 		xplugins = [new webpack.DefinePlugin({'process.env': {'NODE_ENV': '"development"'}})]
 	}

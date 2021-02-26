@@ -1,6 +1,6 @@
 {
   "name": "raidajs",
-  "version": "0.3.20",
+  "version": "0.3.21",
   "description": "RAIDA JavaScript Library",
   "main": "lib/raidajs.js",
   "scripts": {
@@ -32,6 +32,7 @@
     "axios": "^0.19.2",
     "babel-cli": "^6.26.0",
     "babel-polyfill": "^6.26.0",
+    "crypto-js": "^4.0.0",
     "kind-of": "^6.0.3",
     "promise.allsettled": "^1.0.2",
     "qs": "^6.9.4"

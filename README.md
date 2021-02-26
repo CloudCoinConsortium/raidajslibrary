@@ -41,6 +41,10 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiViewreceipt](README.md#apiViewreceipt)
 
+[apiGetCCByUsernameAndPassword](README.md#apiGetCCByUsernameAndPassword)
+
+[apiGetCCByCardData](README.md#apiGetCCByCardData)
+
 ## Installing
 
 Using npm:
@@ -647,5 +651,58 @@ Data returned
 	status : "done"  // "done" or "error"
 	sns : [],	// array of serial numbers
 	total: 20,	// Total coins in receipt
+}
+```
+
+#### apiGetCCByUsernameAndPassword
+
+This method extracts CC from Username and Password
+
+Input:
+
+```js
+params = {
+	// Username
+	username : "my.skywallet.cc",
+
+	// Password
+	password : "q12w3e4r5t67uxcvgdwht4"
+}
+```
+
+Data returned
+
+```js
+{
+	status : "done"  // "done" or "error"
+  cc : {} // CloudCoin
+}
+```
+
+#### apiGetCCByCardData
+
+This method extracts CC from Card Number and Cvv
+
+Input:
+
+```js
+params = {
+	// Username
+	username : "my.skywallet.cc",
+
+	// Cardnumber
+	cardnumber : "4011131191011149",
+
+  // CVV
+  cvv: "2222"
+}
+```
+
+Data returned
+
+```js
+{
+	status : "done"  // "done" or "error"
+  cc : {} // CloudCoin
 }
 ```

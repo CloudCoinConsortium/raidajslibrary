@@ -1,5 +1,6 @@
 import axios from 'axios'
 import qs from 'qs'
+import CryptoJS from 'crypto-js'
 
 
 import allSettled from 'promise.allsettled'
@@ -25,7 +26,8 @@ class RaidaJS {
 			defaultRaidaForQuery: 7,
 			ddnsServer: "ddns.cloudcoin.global",
 			maxCoins: 20000,
-			maxCoinsPerIteraiton: 200
+			maxCoinsPerIteraiton: 200,
+      minPasswordLength: 16
 		, ...options}
 
 		this._raidaServers = []
@@ -405,9 +407,98 @@ class RaidaJS {
 		return rv
 	}
 
+  // Get CC by Card Number and CVV
+  async apiGetCCByCardData(params) {
+    if (!('cardnumber' in params))
+			return this._getError("Card Number is not defined")
+
+    if (!('cvv' in params))
+			return this._getError("CVV is not defined")
+
+    if (!('username' in params))
+			return this._getError("Username is not defined")
+
+    let cardNumber = params['cardnumber']
+    let cvv = params['cvv']
+    let username = params['username']
+    if (!this._validateCard(cardNumber, cvv))
+      return this._getError("Invalid Card")
+
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getError("Failed to resolve DNS")
+
+    let part = cardNumber.substring(3, cardNumber.length - 1)
+    let ans = []
+    for (let i = 0; i < 25; i++) {
+      let seed = "" + i + sn + part + cvv
+      ans[i] = "" + CryptoJS.MD5(seed)
+    }
+
+    let rv = {
+      status: 'done',
+      'cc' : {
+        nn: 1,
+        sn: sn,
+        ans: ans
+      }
+    }
+    
+    return rv
+    
+  }
+
+  // Get CC by username and Password
+  async apiGetCCByUsernameAndPassword(params) {
+    if (!('username' in params))
+			return this._getError("Username is not defined")
+
+    if (!('password' in params))
+			return this._getError("Password is not defined")
+
+    let username = params['username']
+    let password = params['password']
+    if (password.length < this.options.minPasswordLength)
+      return this._getError("Password length must be at least 16 characters")
+
+    let name = await this._resolveDNS(username)
+    if (name == null)
+      return this._getError("Failed to resolve DNS")
+
+    let sn = name
+    let finalStr = ""
+    for (let i = 0; i < password.length; i++) {
+      let code = password.charCodeAt(i)
+      finalStr += "" + code
+    }
+
+    // Generating rand and pin from the password
+    let rand = finalStr.slice(0, 12)
+    let pin = finalStr.slice(12, 16)
+    let pans = []
+    for (let i = 0; i < this._totalServers; i++) {
+      let seed = "" + i + sn + rand + pin
+      pans[i] = "" + CryptoJS.MD5(seed)
+    }
+
+    let cc = {
+      'sn' : sn,
+      'nn' : 1,
+      'an' : pans
+    }
+
+    let rvFinal = {
+      'status' : 'done',
+      'cc' : cc
+    }
+
+    return rvFinal
+
+  }
+
 	// extract stack from PNG
 	async extractStack(params) {
-		if (!'template' in params) {
+		if (!('template' in params)) {
 			return this._getError("Template is not defined")
 		}
 
@@ -2281,6 +2372,40 @@ class RaidaJS {
 
 		return {coins: coinsPicked, extra: extraSN};
 	}
+
+  _validateCard(cardnumber, cvv) {
+    if (!cardnumber.match(/^\d{16}$/))
+      return false
+
+    if (!cvv.match(/^\d+$/))
+      return false
+
+    if (!cardnumber.startsWith("401")) 
+      return false
+
+    let total = 0;
+    let precardNumber = cardnumber.substring(0, cardnumber.length - 1)
+    let reverse = precardNumber.split("").reverse().join("")
+    for (let i = 0; i < reverse.length; i++) {
+      let num = parseInt(reverse.charAt(i))
+      if ((i + 3) % 2) {
+        num *= 2
+        if (num > 9)
+          num -= 9
+      }
+      total += num;
+    }
+
+    let remainder = cardnumber.substring(cardnumber.length - 1)
+    let calcRemainder = 10 - (total % 10)
+    if (calcRemainder == 10)
+      calcRemainder = 0
+
+    if (calcRemainder != remainder) 
+      return false
+
+    return true
+  }
 
 	// Error return
 	_getError(msg) {
