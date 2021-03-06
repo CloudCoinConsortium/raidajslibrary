@@ -27,7 +27,8 @@ class RaidaJS {
 			ddnsServer: "ddns.cloudcoin.global",
 			maxCoins: 20000,
 			maxCoinsPerIteraiton: 200,
-      minPasswordLength: 16
+      minPasswordLength: 16,
+      memoMetadataSeparator: "METADATASEPARATOR"
 		, ...options}
 
 		this._raidaServers = []
@@ -1010,6 +1011,85 @@ class RaidaJS {
 
 	}
 
+	async apiPay(params, callback = null) {
+    if (!('sender_name' in params))
+			return this._getError("Sender Name is required")
+
+    let sender_address = params.sender_name
+
+    if (!('to' in params))
+			return this._getError("To is required")
+
+    let memo = ""
+    if ('memo' in params)
+      memo = params.memo
+
+    let guid = ""
+    if (!('guid' in params)) {
+      guid = this._generatePan()
+    } else {
+      guid = params.guid
+      if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
+        return this._getError("Invalid GUID format")
+    }
+
+    let merchant_address = params.to
+		let reportUrl = await this._resolveDNS(merchant_address, "TXT")
+		if (reportUrl == null) {
+			return this._getError("Receiver doesn't have TXT record in DNS name")
+		}
+
+    let senderSn = await this._resolveDNS(sender_address)
+    if (senderSn == null) {
+			return this._getError("Failed to resolve Sender")
+    }
+
+    params.sn = senderSn
+
+    reportUrl = reportUrl.replaceAll("\"", "")
+    try {
+      let url = new URL(reportUrl)
+    } catch (e) {
+      return this._getError("Ivalid URL in TXT record")
+    }
+ 
+    let sep = this.options.memoMetadataSeparator
+
+    let meta = ""
+    meta += "from = \"" + sender_address + "\"\n"
+    meta += "message = \"" + memo + "\"\n"
+    meta = btoa(meta)
+
+    let finalMemo = guid + sep + meta
+
+    params.memo = finalMemo
+    let rv = this.apiTransfer(params, callback).then(response => {
+      if (response.status == "error")
+        return response
+
+      response.guid = guid
+  		let rAx = axios.create()
+      let mParams = {
+        'merchant_skywallet' : merchant_address,
+        'sender_skywallet': sender_address,
+        'guid' : guid
+      }
+
+      let rv2 = rAx.get(reportUrl, mParams).then(response2 => {
+        if (!response2 || response2.status != 200) {
+          return this._getError("Coins sent, but the Merchant was not notified. HTTP code returned from the Merchant: " + response2.status + ". Remember your GUID and contact the Merchant")
+        }
+
+        // Original response from apiTransfer
+        return response
+      })
+
+      return rv2
+    })
+
+    return rv
+  }
+
 	// Transfer
 	async apiTransfer(params, callback = null) {
 		let coin = this._getCoinFromParams(params)
@@ -1031,7 +1111,6 @@ class RaidaJS {
 			changeMakerId = params['changeMakerId']
 		}
 
-
 		if (!('amount' in params)) {
 			return this._getError("Invalid params. Amount is not defined")
 		}
@@ -1049,9 +1128,6 @@ class RaidaJS {
 		let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
 		let coinsToSend = rvalues.coins
 		let changeCoin = rvalues.extra
-
-	
-
 		if (coinsToSend.length > this.options.maxCoins) {
 			return	this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
 		}
@@ -1232,10 +1308,14 @@ class RaidaJS {
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
-	async _resolveDNS(hostname) {
+	async _resolveDNS(hostname, type = null) {
 		let dnsAx = axios.create()
 
-		let response = await dnsAx.get("https://dns.google/resolve?name=" + hostname)
+    let url = "https://dns.google/resolve?name=" + hostname
+    if (type != null)
+      url += "&type=" + type
+
+		let response = await dnsAx.get(url)
 		if (!('data' in response)) {
 			console.error("Invalid response from Google DNS")
 			return null
@@ -1259,17 +1339,21 @@ class RaidaJS {
 
 
 		let reply = data.Answer[0]
-		if (reply.type !== 1) {
-			console.error("Wrong response from Google DNS:" + data.Status)
-			return null
-		}
+    if (type == null) {  
+      if (reply.type !== 1) {
+        console.error("Wrong response from Google DNS:" + data.Status)
+        return null
+      }
 
-		let arecord = reply.data
-		let parts = arecord.split('.')
+      let arecord = reply.data
+      let parts = arecord.split('.')
 
-		let sn = parts[1] << 16 | parts[2] << 8 | parts[3]
+      let sn = parts[1] << 16 | parts[2] << 8 | parts[3]
 
-		return sn
+      return sn
+    } else {
+      return reply.data
+    }
 	}
 
 	async apiShowBalance(coin, callback) {
