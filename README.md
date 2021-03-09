@@ -718,7 +718,7 @@ Input:
 
 ```js
 params = {
-  // array of ANs of the receiver's coin
+  // array of ANs of the senders's Skywallet ID coin
 	an: ["01f2b05d74192e31478846f1b7bdd661","02025cf02053edb09b93ef532a37099d",
 	"03518632d60f897d84ae62e75a7059a3","04dfb17c08b6dbc2846fbe8938bece1a",
 	"050744735d8b124cc0e31a349770d1f4","0613fcc1a2806a75322d5a9fda0feaa4",
