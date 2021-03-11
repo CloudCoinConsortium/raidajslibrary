@@ -44,6 +44,8 @@ class RaidaJS {
 		this._initNeighbours()
 
 		this._crcTable = null
+
+    this._rarr = {}
 	}
 
 
@@ -1092,6 +1094,8 @@ class RaidaJS {
 
 	// Transfer
 	async apiTransfer(params, callback = null) {
+    this._rarr = {}
+
 		let coin = this._getCoinFromParams(params)
 		if (coin == null) 
 			return this._getError("Failed to parse coin from params")
@@ -1181,8 +1185,39 @@ class RaidaJS {
 		// Assemble input data for each Raida Server
 		response.changeCoinSent = changeRequired
 
+    let pm = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this._fixTransfer()
+      }, 500)
+    })
+
 		return response
 	}
+
+  _getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+  }
+
+  async _fixTransfer() {
+    let corner = this._getRandomInt(4) + 1
+
+    let rqdata = new Array(this._totalServers)
+    let servers = []
+    for (let raidaIdx in this._rarr) {
+      let sns = this._rarr[raidaIdx]
+      rqdata[raidaIdx] = {
+        'corner' : corner,
+        'sn' : sns
+      }
+
+      servers.push(raidaIdx)
+    }
+
+	  let pm = this._launchRequests("sync/fix_transfer", rqdata, 'GET', () => {}, servers)
+
+    return pm  
+
+  }
 
 	_mergeResponse(response, addon) {
 		if (Object.keys(response).length == 0) 
@@ -1592,8 +1627,9 @@ class RaidaJS {
 					}
 					return
 				}
-
+        
 				if (sr.status == 'allfail') {
+          this._addCoinsToRarr(raidaIdx, coins) 
 					for (let i = 0; i < coins.length; i++) {
 						let sn = coins[i].sn
 						rcoins[sn].counterfeit++
@@ -1601,6 +1637,7 @@ class RaidaJS {
 					}
 					return
 				}
+
 
 				if (sr.status == 'mixed') {
 					let message = sr.message
@@ -1622,6 +1659,7 @@ class RaidaJS {
 							rcoins[sn].authentic++
 							rcoins[sn].pownstring += "p"
 						} else if (vs == 'fail') {
+              this._addCoinToRarr(raidaIdx, coins[x]) 
 							rcoins[sn].counterfeit++
 							rcoins[sn].pownstring += "f"
 						} else {
@@ -1638,6 +1676,15 @@ class RaidaJS {
 					}
 					return
 				}
+
+        // General error
+        for (let i = 0; i < coins.length; i++) {	
+          let sn = coins[i].sn
+					rcoins[sn].errors++
+					rcoins[sn].pownstring += "e"
+				}
+
+        return
 
 			})
 
@@ -2489,6 +2536,19 @@ class RaidaJS {
       return false
 
     return true
+  }
+
+  _addCoinsToRarr(raidaIdx, coins) {
+    for (let i = 0; i < coins.length; i++) {
+      this._addCoinToRarr(raidaIdx, coins[i])
+    }
+  }
+
+  _addCoinToRarr(raidaIdx, coin) {
+    if (!(raidaIdx in this._rarr))
+      this._rarr[raidaIdx] = []
+
+    this._rarr[raidaIdx].push(coin.sn)
   }
 
 	// Error return
