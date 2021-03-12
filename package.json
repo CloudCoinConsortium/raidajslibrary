@@ -36,7 +36,8 @@
     "kind-of": "^6.0.3",
     "npm-check-updates": "^11.1.10",
     "promise.allsettled": "^1.0.2",
-    "qs": "^6.9.4"
+    "qs": "^6.9.4",
+    "serialize-javascript": "^5.0.1"
   },
   "homepage": "https://github.com/CloudCoinConsortium/raidajslibrary#readme",
   "devDependencies": {

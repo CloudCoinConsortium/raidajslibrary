@@ -4,7 +4,7 @@ var webpack = require('webpack')
 
 var path = require( 'path' );
 var { CleanWebpackPlugin } = require('clean-webpack-plugin');
-var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+//var UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 var assign = require('object-assign');
 
 module.exports = function(options) {
