@@ -443,7 +443,7 @@ class RaidaJS {
       'cc' : {
         nn: 1,
         sn: sn,
-        ans: ans
+        an: ans
       }
     }
     
