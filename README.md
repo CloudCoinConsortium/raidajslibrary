@@ -737,7 +737,7 @@ params = {
   sender_name: "my.skywallet.cc",
 
   // Merchant skywallet
-  to: "verify_skywallet_payment.raidamail.com",
+  to: "cc.exchange.com",
 
   // Amount
   amount: 100,
