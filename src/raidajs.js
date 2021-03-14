@@ -470,9 +470,11 @@ class RaidaJS {
 
     let sn = name
     let finalStr = ""
-    for (let i = 0; i < password.length; i++) {
-      let code = password.charCodeAt(i)
-      finalStr += "" + code
+    let tStr = "" + CryptoJS.MD5(password)
+    let tChars = tStr.split('');
+    for (let c = 0; c < tChars.length; c++) {
+      let cs = parseInt(tChars[c], 16)
+      finalStr += cs
     }
 
     // Generating rand and pin from the password
