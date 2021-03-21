@@ -27,7 +27,7 @@ class RaidaJS {
 			ddnsServer: "ddns.cloudcoin.global",
 			maxCoins: 20000,
 			maxCoinsPerIteraiton: 200,
-      minPasswordLength: 16,
+      minPasswordLength: 8,
       memoMetadataSeparator: "METADATASEPARATOR"
 		, ...options}
 
@@ -726,7 +726,14 @@ class RaidaJS {
 		// Launch Requests
 		let rqs = this._launchRequests("send", rqdata, 'POST', callback)
 
-		return this._getGenericMainPromise(rqs, params['coins'])	
+		let rv = this._getGenericMainPromise(rqs, params['coins'])	
+    let pm = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this._fixTransfer()
+      }, 500)
+    })
+
+    return rv
 	}
 
 
@@ -1017,12 +1024,12 @@ class RaidaJS {
 
 	async apiPay(params, callback = null) {
     if (!('sender_name' in params))
-			return this._getError("Sender Name is required")
+      return this._getError("Sender Name is required")
 
     let sender_address = params.sender_name
 
     if (!('to' in params))
-			return this._getError("To is required")
+      return this._getError("To is required")
 
     let memo = ""
     if ('memo' in params)
@@ -1057,16 +1064,12 @@ class RaidaJS {
       return this._getError("Ivalid URL in TXT record")
     }
  
-    let sep = this.options.memoMetadataSeparator
-
     let meta = ""
     meta += "from = \"" + sender_address + "\"\n"
     meta += "message = \"" + memo + "\"\n"
     meta = btoa(meta)
 
-    let finalMemo = guid + sep + meta
-
-    params.memo = finalMemo
+    params.memo = guid
     let rv = this.apiTransfer(params, callback).then(response => {
       if (response.status == "error")
         return response
@@ -1076,10 +1079,16 @@ class RaidaJS {
       let mParams = {
         'merchant_skywallet' : merchant_address,
         'sender_skywallet': sender_address,
+        'meta' : meta,
         'guid' : guid
       }
+      let options = {
+        timeout : this.options.timeout
+      }
+      options.params = mParams
 
-      let rv2 = rAx.get(reportUrl, mParams).then(response2 => {
+
+      let rv2 = rAx.get(reportUrl, options).then(response2 => {
         if (!response2 || response2.status != 200) {
           return this._getError("Coins sent, but the Merchant was not notified. HTTP code returned from the Merchant: " + response2.status + ". Remember your GUID and contact the Merchant")
         }
