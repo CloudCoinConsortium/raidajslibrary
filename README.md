@@ -627,7 +627,7 @@ Data returned
 
 ```js
 {
-	coins: {}	// Hashmap with coins. Can be empty if the skywallet balance is zero,
+  coins: {}	// Hashmap with coins. Can be empty if the skywallet balance is zero,
   coinsPerRaida: {} // Hashmap with coins and RAIDA presense
 }
 ```
@@ -641,7 +641,9 @@ coinsPerRaida shows the array (25) of coin's presense on RAIDA servers:
 ```
 
 // yes - coin is present on raida#
+
 // no - coin is not present
+
 // unknown - the status is unknown (raida server is not responding)
 
 CoinsPerRaida can be passed AS-IS to apiFixTransferSync call
@@ -677,7 +679,7 @@ Data returned
 
 ```js
 {
-	balances: {}	// Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
+  balances: {}	// Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
   raidaStatuses: "ppppppppppppppppppppppppp" // pownstring
 }
 ```
@@ -685,9 +687,13 @@ Data returned
 Possible values are:
 
 "p" - "pass"
+
 "f" - "fail" // counterfeit
+
 "u" - "untried"
+
 "n" - "network issue"
+
 "e" - "error"
 
 If balances returned like this:
