@@ -984,9 +984,9 @@ class RaidaJS {
 				return csns
 		}
 
-		for (let i = 0; i < vsns.length; i++) {
-			console.log("picked " + vsns[i])
-		}
+//		for (let i = 0; i < vsns.length; i++) {
+//			console.log("picked " + vsns[i])
+//		}
 
 		// Assemble input data for each Raida Server
 		let rqdata = []
@@ -1007,7 +1007,7 @@ class RaidaJS {
 		let response = await this._launchRequests("break_in_bank", rqdata, 'GET', callback)
 		let p = 0
 		let rv = await this._parseMainPromise(response, 0, {}, response => {
-			if (response == "error")
+			if (response == "error" || response == "network")
 				return
 			if (response.status == "success") {
 				p++
@@ -1402,13 +1402,171 @@ class RaidaJS {
     }
 	}
 
-	async apiShowBalance(coin, callback) {
+	async apiFixTransferSync(coinsPerRaida, callback) {
+    if (typeof(coinsPerRaida) != "object")
+			return this._getError("Failed to validate input args")
+
+    let rqdata = []
+		for (let k in coinsPerRaida) {
+      let rs = coinsPerRaida[k]
+
+      let yes = 0
+      let no = 0
+      let yraidas = []
+      let nraidas = []
+      for (let i = 0; i < rs.length; i++) {
+        if (rs[i] == "yes") {
+          yes++
+          yraidas.push(i)
+          continue
+        }
+
+        if (rs[i] == "no") {
+          no++
+          nraidas.push(i)
+          continue
+        }
+      }
+
+      if (yes + no < this._totalServers - this.options.maxFailedRaidas) {
+        // No fix. a lot of network errors
+        continue
+      }
+
+      if (yes != 0 && no != 0) {
+        let raidas = []
+        if (yes == no) {
+          // Don't know what to do
+          console.log("Coin " + k + " has equal votes from all raida servers")
+          continue
+        }
+
+        if (yes > no) {
+          raidas = nraidas
+        } else {
+          raidas = yraidas
+        }
+
+        // Will fix coin on raida servers
+        for (let r = 0; r < raidas.length; r++) {
+          let rIdx = raidas[r]
+          if (!(rIdx in rqdata)) {
+            rqdata[rIdx] = {
+              sync : "true",
+              sn : []
+            }
+          }
+
+          // Will not add more than
+          if (rqdata[rIdx].sn.length >= this.options.maxCoinsPerIteraiton)
+            continue
+
+          rqdata[rIdx].sn.push(k)
+        }
+      }
+    }
+
+    let servers = Object.keys(rqdata)
+    let rv = {
+      "status":"done"
+    }
+    let rqs = this._launchRequests("sync/fix_transfer", rqdata, 'GET', callback, servers).then(response => {
+     // console.log("DONE")
+     // console.log(response)
+      /*
+      this._parseMainPromise(response, 0, rv, (response, rIdx) => {
+        if (response == "error" || response == "network") {
+          return this._getError("Network error")
+        }
+
+        console.log("df="+rIdx)
+        console.log(response)
+      })
+      */
+      return rv
+    })
+
+    return rv
+  }
+
+	async apiShowCoins(coin, callback) {
 		if (!this._validateCoin(coin)) {
 			return this._getError("Failed to validate params")
 		}
 
 		return this._getCoins(coin, callback)
 	}
+
+	async apiShowBalance(coin, callback) {
+		if (!this._validateCoin(coin)) {
+			return this._getError("Failed to validate params")
+		}
+
+    let rqdata = []
+		for (let i = 0; i < this._totalServers; i++) {
+			rqdata.push({
+				sn: coin.sn,
+				nn: coin.nn,
+				an: coin.an[i],
+				pan: coin.an[i],
+				denomination: this.getDenomination(coin.sn),
+			})
+		}
+		let rv = { 
+      balances: [],
+      raidaStatuses: []
+    }
+    for (let i = 0; i < this._totalServers; i++) {
+      rv.raidaStatuses[i] = "u"
+      rv.balances[i] = 0
+    }
+
+    let balances = {}
+		let rqs = this._launchRequests("show_transfer_balance", rqdata, 'GET', callback).then(response => {
+			this._parseMainPromise(response, 0, rv, (response, rIdx) => {
+        if (response == "network") {
+          rv.raidaStatuses[rIdx] = "n"
+          return
+        }
+        if (response == "error") {
+          rv.raidaStatuses[rIdx] = "e"
+          return
+        }
+
+        if (!('status' in response)) {
+          rv.raidaStatuses[rIdx] = "e"
+          return
+        }
+
+				if (response.status == "fail") {
+          rv.raidaStatuses[rIdx] = "f"
+          return
+        }
+
+				if (response.status !== "pass") {
+          rv.raidaStatuses[rIdx] = "e"
+					return
+				}
+
+        rv.raidaStatuses[rIdx] = "p"
+        let b = response.total
+
+        if (!(b in balances)) {
+          balances[b] = 0
+        }
+
+        balances[b]++
+      })
+
+      rv.balances = balances
+      rv.raidaStatuses = rv.raidaStatuses.join("")
+
+      return rv
+
+    })
+
+    return rqs
+  }
 
 	async _getCoins(coin, callback) {
 		let rqdata = []
@@ -1423,10 +1581,26 @@ class RaidaJS {
 				denomination: this.getDenomination(coin.sn),
 			})
 		}
-		let rv = { coins: {} }
+		let rv = { 
+      coins: {},
+      coinsPerRaida: {}
+    }
+
+    let skipRaidas = []
 		let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
-			this._parseMainPromise(response, 0, rv, response => {
+			this._parseMainPromise(response, 0, rv, (response, rIdx) => {
+        if (response == "network" || response == "error") {
+          skipRaidas.push(rIdx)
+          return
+        }
+
+        if (!('status' in response)) {
+          skipRaidas.push(rIdx)
+          return
+        }
+
 				if (response.status !== "pass") {
+          skipRaidas.push(rIdx)
 					return
 				}
 
@@ -1437,13 +1611,24 @@ class RaidaJS {
 						rv.coins[key] = {
 							passed: 0
 						}
+            rv.coinsPerRaida[key] = []
+            for (let j = 0; j < this._totalServers; j++)
+              rv.coinsPerRaida[key][j] = "no"
 					}
 
+          rv.coinsPerRaida[key][rIdx] = "yes"
 					rv.coins[key].passed++
 				}
 			}) 
 
 			let nrv = { coins: {} }
+      nrv.coinsPerRaida = rv.coinsPerRaida
+      for (let f = 0; f < skipRaidas.length; f++) {
+        let frIdx = skipRaidas[f]
+        for (let sn in rv.coinsPerRaida) {
+          rv.coinsPerRaida[sn][frIdx] = "unknown"
+        }
+      }
 			for (let sn in rv.coins) {
 				if (rv.coins[sn].passed >= this._totalServers - this.options.maxFailedRaidas) {
 					nrv.coins[sn] = {
@@ -1902,7 +2087,7 @@ class RaidaJS {
 
 			if (response[i].status != 'fulfilled') {
 				this._addDetails(rv)
-				callback("error")
+				callback("network", i)
 				continue
 			}
 
@@ -1911,14 +2096,14 @@ class RaidaJS {
 				if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
 					console.error("Invalid response from RAIDA: " + i +". No status")
 					this._addDetails(rv)
-					callback("error")
+					callback("error", i)
 					continue
 				}
 			} else {
 				if (!Array.isArray(serverResponse)) {
 					console.error("Expected array from RAIDA: " + i)
 					this._addDetails(rv)
-					callback("error")
+					callback("error", i)
 					continue
 				}
 
@@ -1926,7 +2111,7 @@ class RaidaJS {
 					console.error("Invalid length returned from RAIDA: " + i
 						+ ". Expected: " + arrayLength +", got " + serverResponse.length)
 					this._addDetails(rv)
-					callback("error")
+					callback("error", i)
 					continue
 				}
 			}
@@ -1973,8 +2158,9 @@ class RaidaJS {
 			}
 
 			let rparams
-			if (typeof(params) === 'object' && Array.isArray(params))
+			if (typeof(params) === 'object' && Array.isArray(params)) {
 				rparams = params[raidaIdx]
+      }
 			else
 				rparams = params
 

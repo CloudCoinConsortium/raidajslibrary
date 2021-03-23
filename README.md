@@ -25,6 +25,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiFixFracked](README.md#apiFixFracked)
 
+[apiFixTransferSync](README.md#apiFixTransferSync)
+
 [apiTransfer](README.md#apiTransfer)
 
 [apiReceive](README.md#apiReceive)
@@ -34,6 +36,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 [extractStack](README.md#extractStack)
 
 [apiGetticket](README.md#apiGetticket)
+
+[apiShowCoins](README.md#apiShowCoins)
 
 [apiShowBalance](README.md#apiShowBalance)
 
@@ -143,7 +147,10 @@ let options = {
 	defaultRaidaForQuery: 7,
 
 	// DDNS service for SkyWallets
-	ddnsServer: "ddns.cloudcoin.global"
+	ddnsServer: "ddns.cloudcoin.global",
+
+  // Maximum coins to deal at a time
+  maxCoinsPerIteraiton: 200
 }
 
 let raidaJS = new RaidaJS(options)
@@ -356,7 +363,7 @@ Data Returned:
 The same as the one for the apiDetect
 
 
-#### apiFixfracked
+#### apiFixFracked
 
 This service can be used as a standalone call but it is reasonable to call it right after the apiDetect call. 
 The method accepts apiDetect response.result as its input value
@@ -434,6 +441,28 @@ Data Returned
 	}
 }
 
+```
+
+#### apiFixTransferSync
+
+Fixes coins previously returned by apiShowCoins() call.
+The function fixes no more than this.options.maxCoinsPerIteraiton coins at a time. Default is 200
+
+Input:
+```js
+{
+  sn0: [],  // Array of 25 values of enum ["yes", "no", "unknown"]
+  sn1: [],  // Array of 25 values of enum ["yes", "no", "unknown"]
+  ...
+}
+```
+
+Data returned:
+
+```js
+{
+  "status":"done"
+}
 ```
 
 #### apiReceive
@@ -577,13 +606,63 @@ Data returned
 ```
 
 
+#### apiShowCoins
+
+Returns the SkyWallet contents
+
+Input:
+
+```js
+params = {
+	"sn" : "4343",
+	"an" :  ["f9f2b05d74192e31478846f1b7bdd661","74025cf02053edb09b93ef532a37099d","c3518632d60f897d84ae62e75a7059a3","66dfb17c08b6dbc2846fbe8938bece1a","2f0744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"]
+}
+
+r.apiShowCoins(params).then(response => {
+	console.log(response)
+})
+```
+
+Data returned
+
+```js
+{
+	coins: {}	// Hashmap with coins. Can be empty if the skywallet balance is zero,
+  coinsPerRaida: {} // Hashmap with coins and RAIDA presense
+}
+```
+
+coinsPerRaida shows the array (25) of coin's presense on RAIDA servers:
+
+```js
+...
+45345: ["yes", "yes", "no", "unknown", "no", "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes",  "yes", "yes"]
+...
+```
+
+// yes - coin is present on raida#
+// no - coin is not present
+// unknown - the status is unknown (raida server is not responding)
+
+CoinsPerRaida can be passed AS-IS to apiFixTransferSync call
+
+```js
+
+ r.apiShowCoins(data, () => {}).then(response => {
+   r.apiFixTransferSync(response.coinsPerRaida).then(response => {
+    console.log("done")
+   })
+ })
+
+```
+
 #### apiShowBalance
 
 Returns the SkyWallet contents
 
 Input:
 
-```
+```js
 params = {
 	"sn" : "4343",
 	"an" :  ["f9f2b05d74192e31478846f1b7bdd661","74025cf02053edb09b93ef532a37099d","c3518632d60f897d84ae62e75a7059a3","66dfb17c08b6dbc2846fbe8938bece1a","2f0744735d8b124cc0e31a349770d1f4","cd13fcc1a2806a75322d5a9fda0feaa4","f611a8eb968d4d4b0dd82d8a05b2d8eb","23f8f118f4e76e8cc1488514e6bc6881","d31849f975223a06e765d3433d3e6a9b","4502d00825ccae4c3507cfe1749980d1","62925225e48a9b0fe497dcde66de9227","54688f1c40550d113b8f4f513bf6b8d4","9c2b39d22d0b3e4012eb6e962e99b31b","1564dacd34ace94eb4abfe2f378abe87","1b890b7fa38069745c1b7c7729b242c1","23a0120db1384da7fed62a9100c2f56f","07500e20b49fd14ea5880aa279061aea","72c35043e9a0ea06dc3a29e0409af6ed","415110f4d85b09cf6618aa13164f6b87","8bcf9c8ca170528891bb9eb4ffcbaec0","506c76f5422e92297f4daa453a0d195b","8608a6edb997d0abfec8f88782ff61bd","56d153108902aa4bfe5dab55d9298250","763ec57476e3923eb3f4d9309c5651d6","6938b4aafd39bd136141a2ac31fc8141"]
@@ -596,11 +675,35 @@ r.apiShowBalance(params).then(reponse => {
 
 Data returned
 
-```
+```js
 {
-	coins: {}	// Hashmap with coins. Can be empty if the skywallet balance is zero
+	balances: {}	// Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
+  raidaStatuses: "ppppppppppppppppppppppppp" // pownstring
 }
 ```
+
+Possible values are:
+
+"p" - "pass"
+"f" - "fail" // counterfeit
+"u" - "untried"
+"n" - "network issue"
+"e" - "error"
+
+If balances returned like this:
+
+```js
+balances : {
+  193: 20,
+  191: 2,
+  0: 3
+}
+```
+
+It means that twenty raida servers think that the balance is 193 CloudCoins
+Two RAIDA servers think that the balance is 191 CloudCoins
+Three RAIDA servers think that the balance is zero
+
 
 
 #### apiRegisterSkyWallet
