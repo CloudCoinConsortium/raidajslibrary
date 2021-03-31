@@ -1031,6 +1031,10 @@ class RaidaJS {
     if (!('to' in params))
       return this._getError("To is required")
 
+    let from = sender_address
+    if ('from' in params) 
+      from = params.from
+
     let memo = ""
     if ('memo' in params)
       memo = params.memo
@@ -1065,7 +1069,7 @@ class RaidaJS {
     }
  
     let meta = ""
-    meta += "from = \"" + sender_address + "\"\n"
+    meta += "from = \"" + from + "\"\n"
     meta += "message = \"" + memo + "\"\n"
     meta = btoa(meta)
 
@@ -1354,7 +1358,73 @@ class RaidaJS {
 	}
 
 	/*** INTERNAL FUNCTIONS. Use witch caution ***/
-	async _resolveDNS(hostname, type = null) {
+  async _resolveDNS(hostname, type = null) {
+    let r = await this._resolveGoogleDNS(hostname, type)
+    if (r == null) {
+      r = await this._resolveCloudFlareDNS(hostname, type)
+    }
+   
+    return r
+  }
+
+  async _resolveCloudFlareDNS(hostname, type = null) {
+    let dnsAx = axios.create({
+      headers: {
+        'Accept': 'application/dns-json'
+      }
+    })
+
+    let url = "https://cloudflare-dns.com/dns-query?name=" + hostname
+    if (type != null)
+      url += "&type=" + type
+
+    let response
+    try {
+      response = await dnsAx.get(url)
+    } catch (e) {
+      console.log("Error querying CloudFlare DNS: " + e)
+      return null
+    }
+    if (!('data' in response)) {
+      console.error("Invalid response from CloudFlare DNS")
+      return null
+    }
+
+    let data = response.data
+    if (!('Status' in data)) {
+      console.error("Invalid data from CloudFlare DNS")
+      return null
+    }
+
+    if (data.Status != 0) {
+      console.error("Failed to resolve DNS name. Wrong response from CloudFlare DNS:" + data.Status)
+      return null
+    }
+
+    if (!('Answer' in data)) {
+      console.error("Invalid data from CloudFlare DNS")
+      return null
+    }
+
+    let reply = data.Answer[0]
+    if (type == null || type == "A") {  
+      if (reply.type !== 1) {
+        console.error("Wrong response from CloudFlare DNS:" + data.Status)
+        return null
+      }
+
+      let arecord = reply.data
+      let parts = arecord.split('.')
+
+      let sn = parts[1] << 16 | parts[2] << 8 | parts[3]
+
+      return sn
+    } else {
+      return reply.data
+    }
+  }
+
+	async _resolveGoogleDNS(hostname, type = null) {
 		let dnsAx = axios.create()
 
     let url = "https://dns.google/resolve?name=" + hostname
@@ -1385,7 +1455,7 @@ class RaidaJS {
 
 
 		let reply = data.Answer[0]
-    if (type == null) {  
+    if (type == null || type == "A") {  
       if (reply.type !== 1) {
         console.error("Wrong response from Google DNS:" + data.Status)
         return null

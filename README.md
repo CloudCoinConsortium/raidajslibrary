@@ -845,6 +845,9 @@ params = {
   // Send
   sender_name: "my.skywallet.cc",
 
+  // From (optional, defaulted to sender_name if missing)
+  from: "michael.skywallet.cc",
+
   // Merchant skywallet
   to: "cc.exchange.com",
 
