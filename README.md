@@ -39,6 +39,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiShowCoins](README.md#apiShowCoins)
 
+[apiShowCoinsAsArray](README.md#apiShowCoinsAsArray)
+
 [apiShowBalance](README.md#apiShowBalance)
 
 [apiRegisterSkyWallet](README.md#apiRegisterSkyWallet)
@@ -657,6 +659,11 @@ CoinsPerRaida can be passed AS-IS to apiFixTransferSync call
  })
 
 ```
+
+#### apiShowCoinsAsArray
+
+This one is the same as apiShowCoins but the returned coins are put in Array instead of Object
+
 
 #### apiShowBalance
 

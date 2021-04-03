@@ -28,7 +28,7 @@ class RaidaJS {
 			maxCoins: 20000,
 			maxCoinsPerIteraiton: 200,
       minPasswordLength: 8,
-      memoMetadataSeparator: "METADATASEPARATOR"
+      memoMetadataSeparator: "*"
 		, ...options}
 
 		this._raidaServers = []
@@ -688,9 +688,18 @@ class RaidaJS {
 			}
 		}
 		
+    let amount = 0
+    for (let i in params.coins) {
+      let cc = params.coins[i]
+      amount += this.getDenomination(cc.sn)
+    }
+
 		let rqdata = []
 		let memo = 'memo' in params ? params['memo'] : "Send"
+    let from = "RaidaJS"
 
+    let guid = this._generatePan()
+    let tags = this._getObjectMemo(guid, memo, amount, from)
 		// Assemble input data for each Raida Server
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
@@ -1034,19 +1043,27 @@ class RaidaJS {
     let from = sender_address
     if ('from' in params) 
       from = params.from
+    else 
+      params.from = from
 
     let memo = ""
     if ('memo' in params)
       memo = params.memo
 
+		if (!('amount' in params)) 
+			return this._getError("Invalid params. Amount is not defined")
+
     let guid = ""
     if (!('guid' in params)) {
       guid = this._generatePan()
+      params.guid = guid
     } else {
       guid = params.guid
       if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
         return this._getError("Invalid GUID format")
     }
+
+
 
     let merchant_address = params.to
 		let reportUrl = await this._resolveDNS(merchant_address, "TXT")
@@ -1074,6 +1091,7 @@ class RaidaJS {
     meta = btoa(meta)
 
     params.memo = guid
+
     let rv = this.apiTransfer(params, callback).then(response => {
       if (response.status == "error")
         return response
@@ -1125,6 +1143,7 @@ class RaidaJS {
 			return this._getError("Failed to resolve DNS name: " + params.to)
 		}
 
+
 		let changeMakerId = this.options.changeMakerId
 		if ('changeMakerId' in params) {
 			changeMakerId = params['changeMakerId']
@@ -1135,6 +1154,24 @@ class RaidaJS {
 		}
 
 		let memo = 'memo' in params ? params['memo'] : "Transfer from SN#" + coin.sn
+    let guid
+    if (!('guid' in params)) {
+      guid = this._generatePan()
+    } else {
+      guid = params.guid
+      if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
+        return this._getError("Invalid GUID format")
+    }
+
+    console.log("generated guid " + guid)
+    if ('from' in params) 
+      from = params.from
+    else
+      from = "SN " + coin.sn
+
+    let tags = this._getObjectMemo(guid, memo, params.amount, from)
+
+    
 
 		let gcRqs = await this._getCoins(coin, callback)
 		let sns = Object.keys(gcRqs.coins)
@@ -1184,7 +1221,7 @@ class RaidaJS {
 			let from = b * batch
 			let tol = from + batch
 			localCoinsToSend = coinsToSend.slice(from,tol)
-			let lr = await this._doTransfer(coin, to, memo, localCoinsToSend, callback, b)
+			let lr = await this._doTransfer(coin, to, tags, localCoinsToSend, callback, b)
 			response = this._mergeResponse(response, lr)	
 		}
 
@@ -1192,7 +1229,7 @@ class RaidaJS {
 		if (from < coinsToSend.length) {
 			let tol = coinsToSend.length
 			localCoinsToSend = coinsToSend.slice(from,tol)
-			let lr = await this._doTransfer(coin, to, memo, localCoinsToSend, callback, iterations)
+			let lr = await this._doTransfer(coin, to, tags, localCoinsToSend, callback, iterations)
 			response = this._mergeResponse(response, lr)	
 
 		}
@@ -1256,7 +1293,7 @@ class RaidaJS {
 
 	}
 
-	async _doTransfer(coin, to, memo, coinsToSend, callback, iteration) {
+	async _doTransfer(coin, to, tags, coinsToSend, callback, iteration) {
 		let rqdata = []
 		for (let i = 0; i < this._totalServers; i++) {
 			rqdata.push({
@@ -1268,7 +1305,7 @@ class RaidaJS {
 				nn: coin.nn,
 				denomination: this.getDenomination(coin.sn),
 				to_sn: to,
-				tag: memo
+				tag: tags[i]
 			})
 		}
 
@@ -1566,6 +1603,26 @@ class RaidaJS {
 
 		return this._getCoins(coin, callback)
 	}
+
+	async apiShowCoinsAsArray(coin, callback) {
+		if (!this._validateCoin(coin)) {
+			return this._getError("Failed to validate params")
+		}
+
+		let d = await this._getCoins(coin, callback)
+    let coins = d.coins
+    
+    let a = []
+    for (let sn in coins) {
+      a.push({
+        'sn': sn,
+        'denomination': coins[sn]
+      })
+    }
+
+    d.coins = a
+    return d
+  }
 
 	async apiShowBalance(coin, callback) {
 		if (!this._validateCoin(coin)) {
@@ -2386,45 +2443,82 @@ class RaidaJS {
 		return msg
 	}
 
-	// Split message into 25 chunks
-	_splitMessage(message) {
-		// Pad the message to have it multily of 25
-		let pads = message.length % this._totalServers
-		for (let i = 0; i < (this._totalServers - pads); i++)
-			message += "-"
+  _getObjectMemo(guid, memo, amount, from) {
+    let str = "[general]\n"
 
-		// Break the message
-		let cs = message.split('')
+    let date = new Date().toLocaleString();;
+    
+    str += "date=" + date + "\n"
+    str += "guid=" + guid + "\n"
+    str += "from=" + from + "\n"
+    str += "amount=" + amount + "\n"
+    str += "description=Payment from RaidaJS\n"
 
-		// Init array
-		let nrmessage = []
-		for (let i = 0; i < this._totalServers; i++)
-			nrmessage[i] = ""
+  	str = this._b64EncodeUnicode(str) 
+    let data = this._splitMessage(str)
 
-		// Go over the message
-		for (let i = 0; i < cs.length; i++) {
-			// Raida index
-			let ridx = i % this._totalServers
+    let d = []
+    let ms = this.options.memoMetadataSeparator
+    for (let i = 0; i < this._totalServers; i++) {
+      d[i] = memo + ms + guid + ms + data[i]['stripe'] + ms + data[i]['mirror1'] + ms + data[i]['mirror2']
+    }
 
-			// Chunk indexes
-			let cidx0 = i + 3
-			let cidx1 = i + 6
+    return d
+  }
 
-			if (cidx0 >= cs.length)
-				cidx0 -= cs.length
 
-			if (cidx1 >= cs.length)
-				cidx1 -= cs.length
+  _splitMessage(message) {
+    // Pad the message to have it multily of 25
+    let pads = message.length % this._totalServers
+    if (pads > 0)
+      for (let i = 0; i < (this._totalServers - pads); i++)
+        message += "-"
+    // Break the message
+    let cs = message.split('')
 
-			// Fill the message with three chunks
-			nrmessage[ridx] += cs[i]
-			nrmessage[ridx] += cs[cidx0]
-			nrmessage[ridx] += cs[cidx1]
-		}
+    // Init array
+    let nrmessage = []
+    for (let i = 0; i < this._totalServers; i++) {
+      nrmessage[i] = {
+        'stripe' : "",
+        'mirror1' : "",
+        'mirror2' : ""
+      }
+    }
 
-		return nrmessage
-	}
+    // Go over the message
+    for (let i = 0; i < cs.length; i++) {
+      // Raida index
+      let ridx = i % this._totalServers
 
+      // Chunk indexes
+      let cidx0 = i + 3
+      let cidx1 = i + 6
+      if (cidx0 >= cs.length)
+        cidx0 -= cs.length
+
+      if (cidx1 >= cs.length)
+        cidx1 -= cs.length
+
+      // Fill the message with three chunks
+      nrmessage[ridx]['stripe'] += cs[i]
+    }
+
+    for (let i = 0; i < this._totalServers; i++) {
+      let cidx0 = i + 3
+      let cidx1 = i + 6
+      if (cidx0 >= this._totalServers)
+        cidx0 -= this._totalServers
+
+      if (cidx1 >= this._totalServers)
+        cidx1 -= this._totalServers
+
+      nrmessage[i]['mirror1'] += nrmessage[cidx0]['stripe']
+      nrmessage[i]['mirror2'] += nrmessage[cidx1]['stripe']
+    }
+
+    return nrmessage
+  }
 
 	// Base64 utils
 	_b64EncodeUnicode(str) {
