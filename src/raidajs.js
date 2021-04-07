@@ -29,7 +29,9 @@ class RaidaJS {
       maxCoins: 20000,
       maxCoinsPerIteraiton: 200,
       minPasswordLength: 8,
-      memoMetadataSeparator: "*"
+      memoMetadataSeparator: "*",
+      minPassedNumToBeAuthentic: 14,
+      maxFailedNumToBeCounterfeit: 12
     , ...options}
 
     this._raidaServers = []
@@ -711,7 +713,7 @@ class RaidaJS {
         pans: [], 
         denomination: [],
         to_sn: to,
-        tag: memo
+        tag: tags[i]
       })
       for (let j = 0; j < params['coins'].length; j++) {
         let coin = params['coins'][j]
@@ -736,8 +738,79 @@ class RaidaJS {
 
     // Launch Requests
     let rqs = this._launchRequests("send", rqdata, 'POST', callback)
+    let rv = this._getGenericMainPromise(rqs, params['coins']).then(result => {
+      if (!('status' in result) || result.status != 'done')
+        return result
 
-    let rv = this._getGenericMainPromise(rqs, params['coins'])  
+      let sns = []
+      for (let sn in result.result) {
+        let cr = result.result[sn]
+        if (cr.result == this.__errorResult) {
+          console.log("adding to send again " +sn)
+          sns.push(sn)
+        }
+      }
+
+      // Need to call SendAgain
+      if (sns.length > 0) {
+        console.log("Need to call sendagain")
+        let nrqdata = []
+        for (let i = 0; i < this._totalServers; i++) { 
+          nrqdata.push({
+            b : 't',
+            sns: [],
+            nns: [],
+            ans: [],
+            pans: [], 
+            denomination: [],
+            to_sn: to,
+            tag: tags[i]
+          })
+          for (let j = 0; j < params['coins'].length; j++) {
+            let coin = params['coins'][j]
+
+            if (!sns.includes(coin.sn))
+              continue
+
+            nrqdata[i].sns.push(coin.sn)         
+            nrqdata[i].nns.push(coin.nn)
+            nrqdata[i].ans.push(coin.an[i])
+            nrqdata[i].pans.push(coin.pan[i])
+            nrqdata[i].denomination.push(this.getDenomination(coin.sn))
+          }
+        }
+
+        let rqs = this._launchRequests("sendagain", nrqdata, 'POST', callback)
+        let coins = new Array(sns.length)
+        sns.forEach((value, idx) => { 
+          coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
+        })
+
+        console.log(coins)
+
+        let response = this._getGenericBriefMainPromise(rqs, coins).then(response => {
+          // Merging results from 'send' and 'send_again'
+          result.errorNotes -= sns.length
+          result.authenticNotes += response.authenticNotes
+          result.counterfeitNotes += response.counterfeitNotes
+          result.frackedNotes += response.frackedNotes
+          result.errorNotes += response.errorNotes
+
+          for (let sn in response.result) {
+            result.result[sn] = response.result[sn]
+          }
+
+          return result
+        })
+
+        return response
+      }
+
+      return result
+    })
+
+    
+
     let pm = new Promise((resolve, reject) => {
       setTimeout(() => {
         this._fixTransfer()
@@ -746,7 +819,6 @@ class RaidaJS {
 
     return rv
   }
-
 
   // Receive
   async apiReceive(params, callback = null) {
@@ -1811,6 +1883,13 @@ class RaidaJS {
           })
           return
         }
+        if (serverResponse === "network") {
+          Object.keys(rcoins).map(sn => {
+            rcoins[sn].errors++;
+            rcoins[sn].pownstring += "n"
+          })
+          return
+        }
 
         let sr = serverResponse
         if (!('status' in sr)) {
@@ -1965,6 +2044,14 @@ class RaidaJS {
           })
           return
         }
+        if (serverResponse === "network") {
+          Object.keys(rcoins).map(sn => {
+            rcoins[sn].errors++;
+            rcoins[sn].pownstring += "n"
+          })
+          return
+        }
+
 
         // The order in input and output data is the same
         for (let i = 0; i < serverResponse.length; i++) {
@@ -2039,16 +2126,18 @@ class RaidaJS {
     if (a + f + e != this._totalServers)
       return this.__errorResult
 
-    if (e > 12)
-      return this.__errorResult
-
-    if (f > a || f > 5)
+    
+    if (a >= this.options.minPassedNumToBeAuthentic) {
+      if (f > 0) {
+        return this.__frackedResult
+      } else {
+        return this.__authenticResult
+      }
+    } else if (f >= this.options.maxFailedNumToBeCounterfeit) {
       return this.__counterfeitResult
-
-    if (f > 0 || e > 0)
-      return this.__frackedResult
-
-    return this.__authenticResult
+    } else {
+      return this.__errorResult
+    }
   }
     
   _getCoinFromParams(params) {
