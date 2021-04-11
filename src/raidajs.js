@@ -614,8 +614,8 @@ class RaidaJS {
   async apiCreateCCForRegistration(params) {
     this.addBreadCrumbEntry("apiCreateCCForRegistration", params)
 
-    if (!('username' in params))
-      return this._getError("Username is not defined")
+    if (!('sn' in params))
+      return this._getError("SN is not defined")
 
     if (!('password' in params))
       return this._getError("Password is not defined")
@@ -623,17 +623,12 @@ class RaidaJS {
     if (!('email' in params))
       return this._getError("Email is not defined")
 
-    let username = params['username']
     let password = params['password']
     let email = params['password']
     if (password.length < this.options.minPasswordLength)
       return this._getError("Password length must be at least 16 characters")
 
-    let name = await this._resolveDNS(username)
-    if (name == null)
-      return this._getError("Failed to resolve DNS")
-
-    let sn = name
+    let sn = params['sn']
     let finalStr = ""
     let tStr = "" + CryptoJS.MD5(password)
     let tChars = tStr.split('');

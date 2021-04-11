@@ -811,8 +811,8 @@ Input:
 
 ```js
 params = {
-  // Username
-  username : "my.skywallet.cc",
+  // Serial Number
+  sn : 538942,
 
   // Password
   password : "q12w3e4r5t67uxcvgdwht4",
