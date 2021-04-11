@@ -811,11 +811,11 @@ Input:
 
 ```js
 params = {
-	// Username
-	username : "my.skywallet.cc",
+  // Username
+  username : "my.skywallet.cc",
 
-	// Password
-	password : "q12w3e4r5t67uxcvgdwht4",
+  // Password
+  password : "q12w3e4r5t67uxcvgdwht4",
 
   // Recovery Email
   email: "my@domain.com"
@@ -842,10 +842,10 @@ Input:
 
 ```js
 params = {
-	// Username
+  // Username
   username : "my.skywallet.cc",
 
-	// Cardnumber
+  // Cardnumber
   cardnumber : "4011131191011149",
 
   // CVV
