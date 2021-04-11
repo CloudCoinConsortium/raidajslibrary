@@ -49,6 +49,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiGetCCByUsernameAndPassword](README.md#apiGetCCByUsernameAndPassword)
 
+[apiCreateCCForRegistration](README.md#apiCreateCCForRegistration)
+
 [apiGetCCByCardData](README.md#apiGetCCByCardData)
 
 [apiPay](README.md#apiPay)
@@ -153,6 +155,9 @@ let options = {
 
   // Maximum coins to deal at a time
   maxCoinsPerIteraiton: 200
+
+  // Sentry DSN. If passed the library will report errors to Sentry
+  sentryDSN: "https://b332c30ba22b4dd199765eb244dd776c@o565766.ingest.sentry.io/5710548"
 }
 
 let raidaJS = new RaidaJS(options)
@@ -796,6 +801,38 @@ Data returned
   cc : {} // CloudCoin
 }
 ```
+
+
+#### apiCreateCCForRegistration
+
+This method creates CC from Username, Password and Email
+
+Input:
+
+```js
+params = {
+	// Username
+	username : "my.skywallet.cc",
+
+	// Password
+	password : "q12w3e4r5t67uxcvgdwht4",
+
+  // Recovery Email
+  email: "my@domain.com"
+}
+```
+
+Data returned
+
+```js
+{
+  status : "done"  // "done" or "error",
+  pans: [] // array of 25 generated PANs
+  rand: string // string used to generate CC
+  cvv: string // generated cvv
+}
+```
+
 
 #### apiGetCCByCardData
 

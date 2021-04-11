@@ -2,6 +2,10 @@ import axios from 'axios'
 import qs from 'qs'
 import CryptoJS from 'crypto-js'
 
+import * as Sentry from "@sentry/browser";
+import { Integrations } from "@sentry/tracing";
+
+import {version} from '../package.json';
 
 import allSettled from 'promise.allsettled'
 
@@ -10,7 +14,6 @@ if (typeof(process.browser) !== 'undefined' && process.browser) {
   _isBrowser = true
 }
 
-// Entry Point for the Library
 class RaidaJS {
   // Contrustor
   constructor(options) {
@@ -31,7 +34,8 @@ class RaidaJS {
       minPasswordLength: 8,
       memoMetadataSeparator: "*",
       minPassedNumToBeAuthentic: 14,
-      maxFailedNumToBeCounterfeit: 12
+      maxFailedNumToBeCounterfeit: 12,
+      sentryDSN: null
     , ...options}
 
     this._raidaServers = []
@@ -49,8 +53,134 @@ class RaidaJS {
     this._crcTable = null
 
     this._rarr = {}
+
+    this.requestId = this._generatePan()
+
+    if (this.options.sentryDSN)
+      this.initSentry()
   }
 
+  // Init Sentry
+  initSentry() {
+    Sentry.init({
+      dsn: this.options.sentryDSN,
+      integrations: [
+        new Integrations.BrowserTracing({
+          tracingOrigins: ["localhost", /^\//, /raida.+\.cloudcoin\.global/]
+        }),
+      ],
+      release: "raidajs@" + version,
+      normalizeDepth: 10,
+      sendDefaultPii: true,
+      environment: "production",
+      maxBreadcrumbs: 2000,
+      autoSessionTracking: true,
+      beforeBreadcrumb (breadcrumb, hint) {
+        if (breadcrumb.category === 'console')
+          return null
+
+        if (breadcrumb.category === 'xhr') {
+          breadcrumb.data.responseText = hint.xhr.responseText
+        }
+        return breadcrumb;
+      },
+
+      beforeSend(event, hint) {
+        return event
+      },
+
+      tracesSampleRate: 1.0
+    })
+
+    let rqId = this.requestId
+    Sentry.configureScope(function(scope) {
+      scope.setTag("raida", "empty")
+      scope.setTag("requestID", rqId)
+    })
+
+  
+    Sentry.setContext("Request", {
+      "raidaJSRequestID" : rqId
+    })
+
+
+    /*
+    Sentry.withScope(function(scope) {
+      console.log("CAPTURE")
+      scope.setTag("raida", "14")
+      scope.setLevel("warning")
+      Sentry.captureException(new Error("my error"))
+    })
+
+      Sentry.captureMessage("Hello")
+    */
+  }
+
+  addBreadCrumb(msg, data = null) {
+    if (!this.options.sentryDSN)
+      return
+
+    Sentry.addBreadcrumb({
+      category: 'custom',
+      message: msg,
+      level: 'info',
+      type: 'user',
+      data: {'rjsdata' : JSON.stringify(data) }
+    });
+  }
+
+  addBreadCrumbEntry(msg, data = null) {
+    if (!this.options.sentryDSN)
+      return
+
+    Sentry.addBreadcrumb({
+      category: 'entry',
+      message: msg,
+      level: 'info',
+      type: 'user',
+      data: {'rjsdata' : JSON.stringify(data) }
+    });
+  }
+
+  addBreadCrumbReturn(msg, data = null) {
+    if (!this.options.sentryDSN)
+      return
+
+    Sentry.addBreadcrumb({
+      category: 'return',
+      message: msg,
+      level: 'info',
+      type: 'user',
+      data: {'rjsdata' : JSON.stringify(data) }
+    });
+  }
+
+
+  addBreadCrumbError(msg) {
+    if (!this.options.sentryDSN)
+      return
+
+    Sentry.addBreadcrumb({
+      category: 'custom',
+      message: msg,
+      level: 'error',
+      type: 'user'
+    });
+  }
+
+  addSentryError(msg, raida = "unknown", data = null) {
+    if (!this.options.sentryDSN)
+      return
+
+    this.addBreadCrumbError("Reporting Error. RequestID " + this.requestId)
+    Sentry.withScope(function(scope) {
+      scope.setLevel("error")
+      scope.setTag("raida", raida)
+      scope.setExtra("raidaServer", raida)
+      scope.setExtra("data", JSON.stringify(data))
+      Sentry.captureException(new Error(msg))
+    })
+  }
 
   // Get denomination
   getDenomination(sn) {
@@ -112,6 +242,8 @@ class RaidaJS {
 
   // Echo
   apiEcho(callback = null) {
+    this.addBreadCrumbEntry("apiEcho")
+
     let rqs = this._launchRequests("echo", {}, 'GET', callback)
     let rv = {
       status: 'done',
@@ -130,6 +262,8 @@ class RaidaJS {
         }
       })
 
+      this.addBreadCrumbReturn("apiEcho", rv)
+
       return rv
     })
     
@@ -138,6 +272,8 @@ class RaidaJS {
 
   // Detect
   apiDetect(params, callback = null) {
+    this.addBreadCrumbEntry("apiDetect", params)
+
     if (!Array.isArray(params)) {
       console.error("Invalid input data")
       return null
@@ -148,11 +284,20 @@ class RaidaJS {
     // Launch Requests
     let rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
 
-    return this._getGenericMainPromise(rqs, params) 
+    let rv = this._getGenericMainPromise(rqs, params).then(response => {
+      this.addBreadCrumbReturn("apiDetect", response)
+
+      return response
+    })
+
+
+    return rv
   }
 
   // Register DNS
   async apiRegisterSkyWallet(params, callback = null) {
+    this.addBreadCrumbEntry("apiRegisterSkyWallet", params)
+
     if (!('name' in params) || !('coin' in params))
       return this._getError("Invalid params")
 
@@ -199,6 +344,7 @@ class RaidaJS {
       return this._getError("DNSService returned incorrect status: " + msg)
     }
 
+    this.addBreadCrumbReturn("apiRegisterSkyWallet", "done")
     return {
       'status' : 'done',
       'message' : 'SkyWallet has been successfully registered'
@@ -207,6 +353,8 @@ class RaidaJS {
 
   // View receipt
   async apiViewreceipt(params, callback = null) {
+    this.addBreadCrumbEntry("apiViewReceipt", params)
+
     let coin = params
     if (!'account' in params || !'tag' in params) {
       return this._getError("Account and Tag required")
@@ -278,6 +426,8 @@ class RaidaJS {
 
   // Get Ticket (no multi)
   async apiGetticket(params, callback = null) {
+    this.addBreadCrumbEntry("apiGetTicket", params)
+
     let coin = params
     if (!this._validateCoin(coin)) {
       return this._getError("Failed to validate params")
@@ -316,6 +466,8 @@ class RaidaJS {
 
   // FixFracked
   async apiFixfracked(params, callback = null) {
+    this.addBreadCrumbEntry("apiFixFracked", params)
+
     let coins = []
 
     // Filter out fracked coins
@@ -410,11 +562,14 @@ class RaidaJS {
       rv.result[coins[i].sn] = coins[i]
     }
 
+    this.addBreadCrumbReturn("apiFixFracked", rv)
     return rv
   }
 
   // Get CC by Card Number and CVV
   async apiGetCCByCardData(params) {
+    this.addBreadCrumbEntry("apiGetCCByCardData", params)
+
     if (!('cardnumber' in params))
       return this._getError("Card Number is not defined")
 
@@ -450,12 +605,74 @@ class RaidaJS {
       }
     }
     
+    this.addBreadCrumbReturn("apiGetCCByCardData", rv)
     return rv
     
   }
 
+  // Greates a CloudCoin by Username, Password and Email
+  async apiCreateCCForRegistration(params) {
+    this.addBreadCrumbEntry("apiCreateCCForRegistration", params)
+
+    if (!('username' in params))
+      return this._getError("Username is not defined")
+
+    if (!('password' in params))
+      return this._getError("Password is not defined")
+
+    if (!('email' in params))
+      return this._getError("Email is not defined")
+
+    let username = params['username']
+    let password = params['password']
+    let email = params['password']
+    if (password.length < this.options.minPasswordLength)
+      return this._getError("Password length must be at least 16 characters")
+
+    let name = await this._resolveDNS(username)
+    if (name == null)
+      return this._getError("Failed to resolve DNS")
+
+    let sn = name
+    let finalStr = ""
+    let tStr = "" + CryptoJS.MD5(password)
+    let tChars = tStr.split('');
+    for (let c = 0; c < tChars.length; c++) {
+      let cs = parseInt(tChars[c], 16)
+      finalStr += cs
+    }
+
+     // Generating rand and pin from the password
+    const rand = finalStr.slice(0, 12);
+    const pin = finalStr.slice(12, 16);
+    const pans = [];
+    for (let i = 0; i < 25; i++) {
+      const seed = '' + i + sn + rand + pin;
+      const p = '' + CryptoJS.MD5(seed);
+
+      const p0 = p.substring(0, 24);
+      let component = '' + sn + '' + i + email;
+      component = '' + CryptoJS.MD5(component);
+      const p1 = component.substring(0, 8);
+      pans[i] = p0 + p1;
+    }
+
+    const grv = {
+      "status": "done",
+      "pans" : pans, 
+      "rand" : rand, 
+      "cvv" : pin
+    };
+  
+    this.addBreadCrumbReturn("apiCreateCCForRegistration", grv)
+
+    return grv;
+  }
+
   // Get CC by username and Password
   async apiGetCCByUsernameAndPassword(params) {
+    this.addBreadCrumbEntry("apiGetCCByUsernameAndPassword", params)
+
     if (!('username' in params))
       return this._getError("Username is not defined")
 
@@ -500,12 +717,16 @@ class RaidaJS {
       'cc' : cc
     }
 
+    this.addBreadCrumbReturn("apiGetCCByUsernameAndPassword", rvFinal)
+
     return rvFinal
 
   }
 
   // extract stack from PNG
   async extractStack(params) {
+    this.addBreadCrumbEntry("apiExtractStack", params)
+
     if (!('template' in params)) {
       return this._getError("Template is not defined")
     }
@@ -591,6 +812,8 @@ class RaidaJS {
 
   // embed stack into image
   async embedInImage(params) {
+    this.addBreadCrumbEntry("apiEmbedInImage", params)
+
     if (!'template' in params) {
       return this._getError("Template is not defined")
     }
@@ -669,6 +892,10 @@ class RaidaJS {
 
   // Send
   async apiSend(params, callback = null) {
+    this.addBreadCrumbEntry("apiSend", params)
+
+    //this.addSentryError("superError", 19, {'xxx':'yyy'})
+
     if (!'coins' in params) {
       return this._getError("Invalid input data. No coins")
     }
@@ -786,8 +1013,6 @@ class RaidaJS {
           coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
         })
 
-        console.log(coins)
-
         let response = this._getGenericBriefMainPromise(rqs, coins).then(response => {
           // Merging results from 'send' and 'send_again'
           result.errorNotes -= sns.length
@@ -800,16 +1025,16 @@ class RaidaJS {
             result.result[sn] = response.result[sn]
           }
 
+          this.addBreadCrumbReturn("apiSend", result)
           return result
         })
 
         return response
       }
 
+      this.addBreadCrumbReturn("apiSend", result)
       return result
     })
-
-    
 
     let pm = new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -822,6 +1047,8 @@ class RaidaJS {
 
   // Receive
   async apiReceive(params, callback = null) {
+    this.addBreadCrumbEntry("apiReceive", params)
+
     let coin = this._getCoinFromParams(params)
     if (coin == null) 
       return this._getError("Failed to parse coin from params")
@@ -868,10 +1095,7 @@ class RaidaJS {
       changeRequired = false
     }
 
-
-
     let rqdata = []
-
     let nns = new Array(coinsToReceive.length)
     nns.fill(this.options.defaultCoinNn)
 
@@ -906,8 +1130,8 @@ class RaidaJS {
         delete(response.result[k]['message'])
       }
 
-      if (changeCoin === 0)
-        return response
+      this.addBreadCrumbReturn("apiReceive", response)     
+      return response
     } else if (changeCoin === 0) {
       return this._getError("No coins to receive")
     } else {
@@ -915,6 +1139,7 @@ class RaidaJS {
         totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
       }
 
+      this.addBreadCrumbReturn("apiReceive", response)     
       return response
     }
 
@@ -923,6 +1148,8 @@ class RaidaJS {
 
   // BreakInBank
   async apiBreakInBank(extraSn, idcc, callback) {
+    this.addBreadCrumbEntry("apiBreakInBank", {'extraSn' : extraSn, 'idcc' : idcc})
+
     let csns = []
 
     let scResponse = await this.showChange({ 
@@ -981,8 +1208,10 @@ class RaidaJS {
       }
     })
 
-    if (p >= 17)
+    if (p >= 17) {
+      this.addBreadCrumbReturn("apiBreakInBank", vsns)
       return vsns
+    }
 
     console.log("Not enough positive responses from RAIDA: " + p)
     return []
@@ -991,6 +1220,8 @@ class RaidaJS {
 
   // Used to pay money to a merchant
   async apiPay(params, callback = null) {
+    this.addBreadCrumbEntry("apiPay", params)
+
     if (!('sender_name' in params))
       return this._getError("Sender Name is required")
 
@@ -1086,6 +1317,8 @@ class RaidaJS {
 
   // Transfer
   async apiTransfer(params, callback = null) {
+    this.addBreadCrumbEntry("apiTransfer", params)
+
     this._rarr = {}
 
     let coin = this._getCoinFromParams(params)
@@ -1201,6 +1434,7 @@ class RaidaJS {
       }, 500)
     })
 
+    this.addBreadCrumbReturn("apiTransfer", response)     
     return response
   }
 
@@ -1209,6 +1443,8 @@ class RaidaJS {
   }
 
   async _fixTransfer() {
+    this.addBreadCrumbEntry("_fixTransfer")
+
     let corner = this._getRandomInt(4) + 1
 
     let rqdata = new Array(this._totalServers)
@@ -1254,6 +1490,8 @@ class RaidaJS {
 
   // Doing actual transfer
   async _doTransfer(coin, to, tags, coinsToSend, callback, iteration) {
+    this.addBreadCrumbEntry("_doTransfer")
+
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
@@ -1278,11 +1516,14 @@ class RaidaJS {
     })
 
     let response = await this._getGenericBriefMainPromise(rqs, coins)
+    this.addBreadCrumbReturn("_doTransfer", response)     
 
     return response
   }
 
   async showChange(params, callback = null) {
+    this.addBreadCrumbEntry("showChange", params)
+
     let { sn, nn, denomination } = params
     let rqdata = []
     let seed = this._generatePan().substring(0, 8)
@@ -1348,6 +1589,7 @@ class RaidaJS {
           mnrv.d100[sn] = nrv.d100[sn]
       }
 
+      this.addBreadCrumbReturn("showChange", mnrv)     
       return mnrv
     })
 
@@ -1356,6 +1598,8 @@ class RaidaJS {
 
 
   async apiFixTransferSync(coinsPerRaida, callback) {
+    this.addBreadCrumbEntry("apiFixTransferSync", coinsPerRaida)
+
     if (typeof(coinsPerRaida) != "object")
       return this._getError("Failed to validate input args")
 
@@ -1434,6 +1678,8 @@ class RaidaJS {
   }
 
   async apiShowCoins(coin, callback) {
+    this.addBreadCrumbEntry("apiShowCoins", coin)
+
     if (!this._validateCoin(coin)) {
       return this._getError("Failed to validate params")
     }
@@ -1442,6 +1688,8 @@ class RaidaJS {
   }
 
   async apiShowCoinsAsArray(coin, callback) {
+    this.addBreadCrumbEntry("apiShowCoinsArray", coin)
+
     if (!this._validateCoin(coin)) {
       return this._getError("Failed to validate params")
     }
@@ -1462,6 +1710,8 @@ class RaidaJS {
   }
 
   async apiShowBalance(coin, callback) {
+    this.addBreadCrumbEntry("apiShowBalance", coin)
+
     if (!this._validateCoin(coin)) {
       return this._getError("Failed to validate params")
     }
@@ -1525,6 +1775,7 @@ class RaidaJS {
       rv.balances = balances
       rv.raidaStatuses = rv.raidaStatuses.join("")
 
+      this.addBreadCrumbReturn("apiShowBalance", rv)     
       return rv
 
     })
@@ -1534,6 +1785,8 @@ class RaidaJS {
 
   /*** INTERNAL FUNCTIONS. Use witch caution ***/
   async _resolveDNS(hostname, type = null) {
+    this.addBreadCrumbEntry("_resolveDNS", hostname)
+
     let r = await this._resolveGoogleDNS(hostname, type)
     if (r == null) {
       r = await this._resolveCloudFlareDNS(hostname, type)
@@ -2184,6 +2437,7 @@ class RaidaJS {
 
       if (response[i].status != 'fulfilled') {
         this._addDetails(rv)
+        this.addSentryError("Network Error with RAIDA", i, response[i])
         callback("network", i)
         continue
       }
@@ -2192,6 +2446,7 @@ class RaidaJS {
       if (arrayLength == 0) {
         if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
           console.error("Invalid response from RAIDA: " + i +". No status")
+          this.addSentryError("Invalid Response. No Status", i, serverResponse)
           this._addDetails(rv)
           callback("error", i)
           continue
@@ -2199,6 +2454,7 @@ class RaidaJS {
       } else {
         if (!Array.isArray(serverResponse)) {
           console.error("Expected array from RAIDA: " + i)
+          this.addSentryError("Expected to receive Array from RAIDA. But got something else", i, serverResponse)
           this._addDetails(rv)
           callback("error", i)
           continue
@@ -2207,6 +2463,7 @@ class RaidaJS {
         if (serverResponse.length != arrayLength) {
           console.error("Invalid length returned from RAIDA: " + i
             + ". Expected: " + arrayLength +", got " + serverResponse.length)
+          this.addSentryError("Invalid length returned from RAIDA. Expected " + arrayLength + ", got " + serverResponse.length, i, serverResponse)
           this._addDetails(rv)
           callback("error", i)
           continue
@@ -2265,6 +2522,7 @@ class RaidaJS {
         options.params = rparams
         pm = this._axInstance.get(rq, options)
       } else {
+        this.addBreadCrumb("POST " + rq, rparams)
         pm = this._axInstance.post(rq, qs.stringify(rparams), options)
       }
 
@@ -2276,8 +2534,10 @@ class RaidaJS {
       }).catch(error => {
         if (error.response) {
           console.error("Invalid server response from RAIDA" + i + ": " + error.response.status)
+          this.addSentryError("Invalid response from RAIDA", i, error)
         } else {
           console.error("Failed to get a respose from RAIDA" + i)
+          this.addSentryError("Failed to get any response from RAIDA", i, error)
         }
 
         return null
@@ -2884,6 +3144,7 @@ class RaidaJS {
 
   // Error return
   _getError(msg) {
+    this.addBreadCrumbError("Returning Error To Client: " + msg)
     return {
       'status' : 'error',
       'errorText' : msg
