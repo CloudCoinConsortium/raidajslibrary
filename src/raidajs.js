@@ -35,6 +35,7 @@ class RaidaJS {
       memoMetadataSeparator: "*",
       minPassedNumToBeAuthentic: 14,
       maxFailedNumToBeCounterfeit: 12,
+      freeCoinURL: "https://cloudcoin.global/freecoin.php",
       sentryDSN: null
     , ...options}
 
@@ -1671,6 +1672,32 @@ class RaidaJS {
 
     return rv
   }
+
+  // Get Free Coin
+  async apiGetFreeCoin(hwId) {
+    let url = this.options.freeCoinURL
+    let response
+    try {
+      response = await this._axInstance.get(url + "?hwid=" + hwId)
+    } catch (e) {
+      return this._getError("Failed to get response from the FreeCoin Server")
+    }
+    if (response.status != 200)
+      return this._getError("Failed to get free coin")
+
+    let data = response.data
+    if (!('status' in data))
+      return this._getError("Failed to parse respense from FreeCoin Server")
+
+    if (data.status != "success")
+      return this._getError(data.message)
+
+    let ccStack = data.message
+    let cc = ccStack.cloudcoin
+
+    return cc[0]
+  }
+
 
   async apiShowCoins(coin, callback) {
     this.addBreadCrumbEntry("apiShowCoins", coin)

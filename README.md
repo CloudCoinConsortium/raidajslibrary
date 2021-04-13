@@ -55,6 +55,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiPay](README.md#apiPay)
 
+[apiGetFreeCoin](README.md#apiGetFreeCoin)
+
 ## Installing
 
 Using npm:
@@ -909,3 +911,40 @@ params = {
 Data returned
 
 The same as the one for the apiDetect. A 'guid' (transaction ID) parameter is added to the response. 
+
+#### apiGetFreeCoin
+
+Function queries the FreeCoin Server and downloads a coin from there. It accepts a Uniq Hardware ID which is 32 character hexidecimal string
+The generation of HardwareID is up to the caller. It can be an MD5 sum of the IP address or MAC address
+
+
+Input:
+```js
+hwId - 32 hex string
+```
+
+Output:
+```js
+// CloudCoin
+{
+  "an" : array,
+  "sn" : string,
+  "nn" : string,
+  "pown" : string // ponwString
+  "ed" : stirng // expiration Date
+}
+```
+
+```js
+let c = r.apiGetFreeCoin("102f5037fe6474019fe947b4977bb2a5").then(response => {
+  if ('status' in response && response.status == 'error')  {
+    console.error("Error")
+    return
+  }
+
+  console.log("cloudcoin")
+  console.log(response)
+}
+```
+
+
