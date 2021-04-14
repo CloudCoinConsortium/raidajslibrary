@@ -27,6 +27,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiFixTransferSync](README.md#apiFixTransferSync)
 
+[apiFixTransfer](README.md#apiFixTransfer)
+
 [apiTransfer](README.md#apiTransfer)
 
 [apiReceive](README.md#apiReceive)
@@ -473,6 +475,12 @@ Data returned:
   "status":"done"
 }
 ```
+
+#### apiFixTransfer
+
+The function has the same input and output signature as apiFixTransferSync
+The only difference is that the coins are fixed asynchronously
+
 
 #### apiReceive
 

@@ -1592,8 +1592,15 @@ class RaidaJS {
     return rqs
   }
 
-
   async apiFixTransferSync(coinsPerRaida, callback) {
+    return this.apiFixTransferGeneric(coinsPerRaida, true, callback) 
+  }
+
+  async apiFixTransfer(coinsPerRaida, callback) {
+    return this.apiFixTransferGeneric(coinsPerRaida, false, callback) 
+  }
+
+  async apiFixTransferGeneric(coinsPerRaida, sync, callback) {
     this.addBreadCrumbEntry("apiFixTransferSync", coinsPerRaida)
 
     if (typeof(coinsPerRaida) != "object")
@@ -1645,9 +1652,13 @@ class RaidaJS {
           let rIdx = raidas[r]
           if (!(rIdx in rqdata)) {
             rqdata[rIdx] = {
-              sync : "true",
               sn : []
             }
+
+            if (sync) {
+              rqdata[rIdx]['sync'] = "true"
+            }
+          
           }
 
           // Will not add more than
