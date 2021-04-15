@@ -490,10 +490,11 @@ class RaidaJS {
       coin.pownArray = coin.pownstring.split("")
       coin.pownstring = ""
       for (let x = 0; x < this._totalServers; x++) {
-        if (coin.pownArray[x] != 'p') {
+        /*if (coin.pownArray[x] == 'f') {
           coin.an[x] = this._generatePan()
           coin.pan[x] = coin.an[x]
         }
+        */
       }
       coins.push(coin)
     }
@@ -502,7 +503,7 @@ class RaidaJS {
     for (let i = 0; i < this._totalServers; i++) {
       let ctfix = []
       for (let j = 0; j < coins.length; j++) {
-        if (coins[j].pownArray[i] == 'p')
+        if (coins[j].pownArray[i] != 'f')
           continue;
 
         ctfix.push(coins[j])
@@ -517,7 +518,7 @@ class RaidaJS {
     for (let i = this._totalServers - 1; i >= 0; i--) {
       let ctfix = []
       for (let j = 0; j < coins.length; j++) {
-        if (coins[j].pownArray[i] == 'p')
+        if (coins[j].pownArray[i] != 'f')
           continue;
 
         ctfix.push(coins[j])
@@ -1593,15 +1594,17 @@ class RaidaJS {
   }
 
   async apiFixTransferSync(coinsPerRaida, callback) {
+    this.addBreadCrumbEntry("apiFixTransferSync", coinsPerRaida)
     return this.apiFixTransferGeneric(coinsPerRaida, true, callback) 
   }
 
   async apiFixTransfer(coinsPerRaida, callback) {
+    this.addBreadCrumbEntry("apiFixTransfer", coinsPerRaida)
     return this.apiFixTransferGeneric(coinsPerRaida, false, callback) 
   }
 
   async apiFixTransferGeneric(coinsPerRaida, sync, callback) {
-    this.addBreadCrumbEntry("apiFixTransferSync", coinsPerRaida)
+    this.addBreadCrumbEntry("apiFixTransferGeneric", coinsPerRaida)
 
     if (typeof(coinsPerRaida) != "object")
       return this._getError("Failed to validate input args")
@@ -2037,6 +2040,8 @@ class RaidaJS {
       }
 
       let i = 0
+      console.log("ResData")
+      console.log(resultData)
       for (let sn in resultData['result']) {
         let coin = resultData['result'][sn]
         if (coin.result != this.__authenticResult) {
@@ -2051,6 +2056,11 @@ class RaidaJS {
 
         rqdata.pans.push(coins[i].pan[raidaIdx])
         i++
+      }
+
+      if (rqdata.message1.length == 0 || rqdata.message2.length == 0 || rqdata.message3.length == 0 || rqdata.message4.length == 0) {
+        console.log("no tickets. continue")
+        return
       }
     
       // exec fix fracked
