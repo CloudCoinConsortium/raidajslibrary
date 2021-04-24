@@ -17,7 +17,7 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [RaidaJS](README.md#RaidaJS)
 
-[ErrorCodes](README.md#ErrorCodes)
+[Errors](README.md#Errors)
 
 [apiEcho](README.md#apiEcho)
 
@@ -205,7 +205,7 @@ raidaJS.getServers()
 raidaJS.getDenomination(12500)
 ```
 
-### Error Codes
+### Errors
 If any method fails or an error occurs the function will retuns the following object:
 ```js
 {
@@ -220,6 +220,12 @@ If any method fails or an error occurs the function will retuns the following ob
 }
 ```
 
+Error Codes are two-bytes hexidecimals defined on the RaidaJS Class.
+E.g.
+
+```js
+RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
+```
 
 
 ### Api Methods
