@@ -17,6 +17,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [RaidaJS](README.md#RaidaJS)
 
+[ErrorCodes](README.md#ErrorCodes)
+
 [apiEcho](README.md#apiEcho)
 
 [apiDetect](README.md#apiDetect)
@@ -200,6 +202,37 @@ raidaJS.getServers()
 // Returns the denomination of the coin
 raidaJS.getDenomination(12500)
 ```
+
+### ErrorCodes
+If any method fails or an error occurs the function will retuns the following object:
+```js
+{
+  // Status is 'error'
+  "status" : "error",
+
+  // Error plain-text description in English
+  "errorText" : string,
+
+  // Error Code
+  "errorCode" : integer
+}
+```
+
+List of error codes:
+
+```js
+// A-Record of the SkyWallet was not found neither by Google DNS nor by CloudFlare DNS
+ERR_DNS_RECORD_NOT_FOUND = 0x5001
+
+// The library failed to connect to Google DNS and CloudFlare DNS
+ERR_DNS_NETWORK_ERROR = 0x5002
+
+// The library failed to parse results from Goolge DNS and CloudFlare DNS
+ERR_DNS_PARSE_ERROR = 0x5003
+
+```
+
+
 
 ### Api Methods
 

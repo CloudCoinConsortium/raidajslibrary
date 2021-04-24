@@ -14,6 +14,8 @@ if (typeof(process.browser) !== 'undefined' && process.browser) {
   _isBrowser = true
 }
 
+
+
 class RaidaJS {
   // Contrustor
   constructor(options) {
@@ -60,6 +62,8 @@ class RaidaJS {
     if (this.options.sentryDSN)
       this.initSentry()
   }
+
+  
 
   // Init Sentry
   initSentry() {
@@ -1819,6 +1823,12 @@ class RaidaJS {
     return rqs
   }
 
+  // Resolves a SkyWallet
+  async apiResolveSkyWallet(hostname) {
+    return "xxx"
+
+  }
+
   /*** INTERNAL FUNCTIONS. Use witch caution ***/
   async _resolveDNS(hostname, type = null) {
     this.addBreadCrumbEntry("_resolveDNS", hostname)
@@ -3307,7 +3317,8 @@ class RaidaJS {
 
   }
 }
-
+// Error Codes
+RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 
 
 // Export to the Window Object if we are in browser
