@@ -31,6 +31,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiFixTransfer](README.md#apiFixTransfer)
 
+[apiResolveSkyWallet](README.md#apiResolveSkyWallet)
+
 [apiTransfer](README.md#apiTransfer)
 
 [apiReceive](README.md#apiReceive)
@@ -203,7 +205,7 @@ raidaJS.getServers()
 raidaJS.getDenomination(12500)
 ```
 
-### ErrorCodes
+### Error Codes
 If any method fails or an error occurs the function will retuns the following object:
 ```js
 {
@@ -216,20 +218,6 @@ If any method fails or an error occurs the function will retuns the following ob
   // Error Code
   "errorCode" : integer
 }
-```
-
-List of error codes:
-
-```js
-// A-Record of the SkyWallet was not found neither by Google DNS nor by CloudFlare DNS
-ERR_DNS_RECORD_NOT_FOUND = 0x5001
-
-// The library failed to connect to Google DNS and CloudFlare DNS
-ERR_DNS_NETWORK_ERROR = 0x5002
-
-// The library failed to parse results from Goolge DNS and CloudFlare DNS
-ERR_DNS_PARSE_ERROR = 0x5003
-
 ```
 
 
@@ -320,6 +308,53 @@ Data Returned:
 	}
 }
 ```
+
+#### apiResolveSkyWallet
+
+The function receives a SkyWallet DNS name (e.g. my.skywallet.cc) and resolves it to a Serial Number. The library first queries Google DNS and if it fails the CloudFlare DNS will be queried. The function is asynchronous and returns a Promise
+
+Input:
+```js
+// SkyWallet name 
+string
+```
+
+Data Returned
+```js
+{
+  // Always Done if response is successfull
+  "status" : string,
+
+  // Serial Number
+  "sn" : integer
+}
+```
+
+Example
+```js
+let r = r.apiResolveSkyWallet("test.skywallet.cc").then(response => {
+  if (response.status == "error") {
+    console.log("Error Occured: " + error.errorText + ", Code: " + error.errorCode)
+    return
+  }
+
+  console.log("Serial Number: " + response.sn)
+})
+```
+
+Error Codes:
+```js
+// A-Record of the SkyWallet was not found neither by Google DNS nor by CloudFlare DNS
+ERR_DNS_RECORD_NOT_FOUND = 0x5001
+
+// The library failed to connect to Google DNS and CloudFlare DNS
+ERR_DNS_NETWORK_ERROR = 0x5002
+
+// The library failed to parse results from Goolge DNS and CloudFlare DNS
+ERR_DNS_PARSE_ERROR = 0x5003
+```
+
+
 
 #### apiTransfer
 
