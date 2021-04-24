@@ -295,6 +295,266 @@ class RaidaJS {
     return rv
   }
 
+  // Deletes a statement from the RAIDA
+  async apiDeleteStatement(params, callback = null) {
+    if (!('coin' in params))
+      return this._getError("Coin in missing")
+
+    if (!('statement_id' in params))
+      return this._getError("Statement_id in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getError("Failed to validate coin")
+    }
+
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+        'statement_id': params.statement_id
+      })
+    }
+
+    let rv = {
+      'status' : 'done'
+    }
+
+    let a, e, f
+    a = f = e = 0
+    let rqs = this._launchRequests("statements/delete", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+        console.log("deleted")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+          return
+        }
+        if (serverResponse.status == "fail") {
+          f++
+          return
+        }
+
+        e++
+      })
+      let result = this._gradeCoin(a, f, e)
+      if (result != this.__authenticResult)
+        return this._getError("Failed to delete statement. Too many error responses from RAIDA")
+
+        return rv
+
+    })
+
+    return mainPromise    
+
+  }
+
+  // Reads a statement from the RAIDA
+  async apiGetStatements(params, callback = null) {
+    if (!('coin' in params))
+      return this._getError("Coin in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getError("Failed to validate coin")
+    }
+
+    let ts = 0
+    if ('start_ts' in params)
+      ts = params['start_ts']
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+        'return' : 'all',
+        'start_date': ts
+      })
+    }
+
+    let rv = {
+      'status': 'done',
+      'statements' : []
+    }
+
+    let e, a, f
+    e = a = f = 0
+    let statements = {}
+    let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+        console.log("received")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+
+        if (serverResponse.status == "success") {
+          if (!('data' in serverResponse)) {
+            e++
+            return
+          }
+
+          let data = serverResponse.data
+          if (!Array.isArray(data)) {
+            e++
+            return
+          }
+
+          let mparts = []
+          for (let r = 0; r < data.length; r++) {
+            let ldata = data[r]
+            if (typeof(ldata) == 'undefined')
+              continue
+
+            if (!('stripe' in ldata) || !('mirror' in ldata) || !('mirror2' in ldata))  {
+              continue
+            }
+
+            let key = ldata.id
+            if (!(key in statements)) {
+              statements[key] = {}
+              statements[key]['ldata'] = ldata
+              statements[key]['mparts'] = []
+            }
+
+            statements[key]['mparts'][rIdx] = {}
+            statements[key]['mparts'][rIdx]['stripe'] = ldata.stripe
+            statements[key]['mparts'][rIdx]['mirror1'] = ldata.mirror
+            statements[key]['mparts'][rIdx]['mirror2'] = ldata.mirror2
+          }
+
+          a++
+          return
+        }
+
+        if (serverResponse.status == "fail") {
+          f++
+          return
+        }
+
+        e++
+      })
+
+      console.log("mparttt")
+      console.log(statements)
+      for (let statement_id in statements) {
+        let item = statements[statement_id]
+        let odata = this._getDataFromObjectMemo(item.mparts)
+        if (odata == null) {
+          console.log("Failed to assemble statement " + statement_id + " Not enough valid responses")
+          continue
+
+        }
+
+      }
+ //     console.log(mparts)
+   //   let odata = this._getDataFromObjectMemo(mparts)
+     // if (odata == null)
+       // return this._getError("Failed to get statements. Can't collect enough valid responses")
+
+      let result = this._gradeCoin(a, f, e)
+      if (result != this.__authenticResult)
+        return this._getError("Failed to get statements. Too many error responses from RAIDA")
+
+        return rv
+    })
+
+    return mainPromise;
+
+  }
+
+  // Creates a statement on the RAIDA
+  async apiCreateStatement(params, callback = null) {
+    this.addBreadCrumbEntry("apiCreateStatement", params)
+    if (!('coin' in params))
+      return this._getError("Coin in missing")
+
+    if (!('amount' in params))
+      return this._getError("Amount in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getError("Failed to validate coin")
+    }
+
+    let guid = this._generatePan()
+    if ('guid' in params)
+      guid = params['guid']
+
+    let memo = "Transfer from " + coin.sn
+    if ('memo' in params)
+      memo = params['memo']
+
+    let from = "SN " + coin.sn
+    if ('from' in params)
+      from = params['from']
+
+    let rqdata = []
+    let amount = params.amount
+    let tags = this._getStripesMirrorsForObjectMemo(guid, memo, amount, from)
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'account_sn' : coin.sn,
+        'account_an' : coin.an[i],
+        'transaction_id': guid,
+        'version': 0,
+        'compression' : 0,
+        'raid' : '110',
+        'stripe' : tags[i]['stripe'],
+        'mirror' : tags[i]['mirror1'],
+        'mirror2' : tags[i]['mirror2']
+      })
+    }
+
+    let rv = {
+      "status" : "done",
+      'transaction_id' : guid
+    }
+
+    let passed = 0
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("statements/create", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (result != this.__authenticResult)
+        return this._getError("Failed to create statements. Too many error responses from RAIDA")
+
+      return rv
+
+    })
+
+
+
+
+    this.addBreadCrumbReturn("apiCreateStatement", rv)
+
+    return mainPromise
+  }
+
   // Register DNS
   async apiRegisterSkyWallet(params, callback = null) {
     this.addBreadCrumbEntry("apiRegisterSkyWallet", params)
@@ -2647,16 +2907,16 @@ class RaidaJS {
     return true
   }
 
-  // Assemble message from 25 Raida Servers
+  // Put message toghether
   _assembleMessage(mparts) {
     let cs = 0, length
 
     // Determine the chunk size
     for (let i = 0; i < this._totalServers; i++) {
       if (mparts[i] == null)
-        continue
+              continue
 
-      cs = mparts[i].length / 3
+      cs = mparts[i]['stripe'].length
       break
     }
 
@@ -2664,47 +2924,48 @@ class RaidaJS {
     if (cs == 0)
       return null
 
-    // The length of the message
-    length = cs * this._totalServers
-    let msg = [length]
-
+    let collected = []
     for (let i = 0; i < this._totalServers; i++) {
-      if (mparts[i] == null)
+      if (mparts[i] == null || typeof(mparts[i]) == 'undefined')
         continue
 
-      // Split the data from one RAIDA server
-      let chrs = mparts[i].split('')
+      if (!mparts[i]['stripe'] || !mparts[i]['mirror1'] || !mparts[i]['mirror2'])
+        continue
 
-      // Go over this data
-      for (let j = 0; j < chrs.length; j += 3) {
-        let triplet = j / 3
+      let cidx0 = i
+      let cidx1 = i + 3
+      let cidx2 = i + 6
 
-        let cidx0 = triplet * this._totalServers + i
-        let cidx1 = triplet * this._totalServers + i + 3
-        let cidx2 = triplet * this._totalServers + i + 6
+      if (cidx1 >= this._totalServers)
+        cidx1 -= this._totalServers
 
-        if (cidx0 >= length)
-          cidx0 -= length
+      if (cidx2 >= this._totalServers)
+        cidx2 -= this._totalServers
 
-        if (cidx1 >= length)
-          cidx1 -= length
+      collected[cidx0] = mparts[i]['stripe']
+      collected[cidx1] = mparts[i]['mirror1']
+      collected[cidx2] = mparts[i]['mirror2']
+    }
 
-        if (cidx1 >= length)
-          cidx1 -= length
+    let msg = []
+    for (let i = 0; i < this._totalServers; i++) {
+      if (!collected[i]) {
+        console.log("Failed to assemble message. Chunk #" + i + " wasn't found on stripe and mirrors")
+        return null
+      }
 
-        if (cidx2 >= length)
-          cidx2 -= length
-
-        msg[cidx0] = chrs[j]
-        msg[cidx1] = chrs[j + 1]
-        msg[cidx2] = chrs[j + 2]
+      let totalStr = collected[i].split('')
+      for (let j = 0; j < totalStr.length; j++) {
+        let offset = i + j * this._totalServers
+        msg[offset] = totalStr[j]
       }
     }
 
     // Check if the message is full
-    for (let i = 0; i < length; i++) {
-      if (typeof(msg[i]) == 'undefined')
+    for (let i = 0; i < msg.length; i++) {
+      if (typeof(msg[i]) == 'undefined') {
         return null
+      }
     }
 
     // Join the string together
@@ -2716,7 +2977,20 @@ class RaidaJS {
     return msg
   }
 
-  _getObjectMemo(guid, memo, amount, from) {
+  _getDataFromObjectMemo(mparts) {
+    console.log("doing mparts")
+    console.log(mparts)
+
+    let data = this._assembleMessage(mparts)
+    if (data == null)
+      return null
+
+    console.log("assembled")
+    console.log(mparts)
+
+  }
+
+  _getStripesMirrorsForObjectMemo(guid, memo, amount, from) {
     let str = "[general]\n"
 
     let date = new Date().toLocaleString();;
@@ -2729,6 +3003,12 @@ class RaidaJS {
 
     str = this._b64EncodeUnicode(str) 
     let data = this._splitMessage(str)
+
+    return data
+  }
+
+  _getObjectMemo(guid, memo, amount, from) {
+    let data = this._getStripesMirrorsForObjectMemo(guid, memo, amount, from)
 
     let d = []
     let ms = this.options.memoMetadataSeparator
