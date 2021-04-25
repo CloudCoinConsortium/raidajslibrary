@@ -209,14 +209,11 @@ raidaJS.getDenomination(12500)
 If any method fails or an error occurs the function will retuns the following object:
 ```js
 {
-  // Status is 'error'
-  "status" : "error",
+  // Error Code
+  "code" : integer
 
   // Error plain-text description in English
-  "errorText" : string,
-
-  // Error Code
-  "errorCode" : integer
+  "text" : string,
 }
 ```
 
@@ -225,6 +222,12 @@ E.g.
 
 ```js
 RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
+```
+
+If there is no error and function returns 'success' the 'code' field is zero
+
+```js
+RaidaJS.ERR_NO_ERROR = 0x0
 ```
 
 
@@ -317,7 +320,7 @@ Data Returned:
 
 #### apiResolveSkyWallet
 
-The function receives a SkyWallet DNS name (e.g. my.skywallet.cc) and resolves it to a Serial Number. The library first queries Google DNS and if it fails the CloudFlare DNS will be queried. The function is asynchronous and returns a Promise
+The function receives a SkyWallet DNS name (e.g. my.skywallet.cc) and resolves it to a Serial Number. The library first queries CloudFlare DNS and if it fails the Google DNS will be queried. The function is asynchronous and returns a Promise
 
 Input:
 ```js
@@ -328,8 +331,8 @@ string
 Data Returned
 ```js
 {
-  // Always Done if response is successfull
-  "status" : string,
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful
+  "code" : string,
 
   // Serial Number
   "sn" : integer
@@ -339,8 +342,8 @@ Data Returned
 Example
 ```js
 let r = r.apiResolveSkyWallet("test.skywallet.cc").then(response => {
-  if (response.status == "error") {
-    console.log("Error Occured: " + error.errorText + ", Code: " + error.errorCode)
+  if (response.code != RaidaJS.ERR_NO_ERROR) {
+    console.log("Error Occured: " + response.text + ", Code: " + response.code)
     return
   }
 
