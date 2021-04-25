@@ -951,8 +951,15 @@ Data returned
 
 #### apiPay
 
-apiPay is used for transferring CloudCoins from a skywallet to a merchant. Merchant declares the Callback URL in the TXT record of his skywallet
-The record contains an URL that is called by RaidaJS when the transer is done
+apiPay is used for transferring CloudCoins from a skywallet to a merchant or to a RAIDA. 
+
+Merchant declares the Callback URL in the TXT record of his skywallet
+The record contains an URL that is called by RaidaJS when the transer is done. 
+
+If the "to" begins with "cloudcoin" then this is considered a payment to a merchant. All merchants must have a wallet that starts with "cloudcoin" to receive a payment. If the skywallet starts with "raidapay" then this payment is to a RAIDA. All payments to RAIDA must start with the word "raidapay"
+
+RAIDA declares the Callback URL in the TXT record of their skywallet and the URLs of all the RAIDA are infered from that one URL. ATM calls the raidapay.raidamail.com TXT record and finds the webhook."raida0.raida.tech/service/reportpayment.php". The raidajs will then call the web hook page for all 25 raida by replacing the zero in "raida0" with all the RAIDA Numbers 1-24. 
+
 
 Input:
 
@@ -980,7 +987,10 @@ params = {
   from: "michael.skywallet.cc",
 
   // Merchant skywallet
-  to: "cc.exchange.com",
+  to: "cloudcoin.exchange.com",
+
+  // Or RAIDA skywallet
+  to: "raidapay.raidamail.com",
 
   // Amount
   amount: 100,
