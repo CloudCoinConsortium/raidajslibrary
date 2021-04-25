@@ -3009,7 +3009,7 @@ class RaidaJS {
     str += "guid=" + guid + "\n"
     str += "from=" + from + "\n"
     str += "amount=" + amount + "\n"
-    str += "description=Payment from RaidaJS\n"
+    str += "description=" + memo + "\n"
 
     str = this._b64EncodeUnicode(str) 
     let data = this._splitMessage(str)
