@@ -63,9 +63,11 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiGetFreeCoin](README.md#apiGetFreeCoin)
 
-[apiRecordTransaction](README.md#apiRecordTransaction)
+[apiCreateRecord](README.md#apiCreateRecord)
 
 [apiShowRecords](README.md#apiShowRecords)
+
+[apiDeleteRecord](README.md#apiDeleteRecord)
 
 [apiHealthCheck](README.md#apiHealthCheck)
 
@@ -1051,7 +1053,7 @@ let c = r.apiGetFreeCoin("102f5037fe6474019fe947b4977bb2a5").then(response => {
 }
 ```
 
-#### apiRecordTransaction
+#### apiCreateRecord
 
 The function creates a statement on the RAIDA. The function can be called by the sender or receiver if he wants to save transaction details on the RAIDA.
 
@@ -1120,7 +1122,7 @@ let trdata = {
   "guid" : "ae596e96d15cfed1d137c2e99de50754"
 }
 
-let c = r.apiRecordOutgoingTransfer(trdata, () => {}).then(response => {
+let c = r.apiCreateRecord(trdata, () => {}).then(response => {
   if (response.code != RaidaJS.ERR_NO_ERROR) {
     console.log("Record has been saved successfully")
   }
@@ -1198,6 +1200,7 @@ Record structure
 }
 ```
 
+Example:
 
 ```js
 let cc = {
@@ -1216,6 +1219,55 @@ let c = r.apiShowRecords(trdata, () => {}).then(response => {
     for (let record in response.records) {
       console.log("Transaction " + record.guid + " amount: " + record.amount)
     }
+  }
+}
+```
+
+#### apiDeleteRecord
+
+The function deletes a statement on the RAIDA. 
+
+Input:
+```js
+{
+  // CloudCoin (SN and AN must be passed) of the transaction owner
+  "coin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+
+  // 32 chars hexidecimal string. ID of the transaction. Optional, if omitted it will be generated
+  "guid" : string,
+}
+```
+
+Data Returned:
+```js
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful
+  "code" : integer,
+}
+```
+
+Example
+
+```js
+let cc = {
+  "sn":3788106,
+   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
+}
+
+let trdata = {
+  "coin" : cc,
+  "guid" : "ae596e96d15cfed1d137c2e99de50754"
+}
+
+let c = r.apiDeleteRecordr(trdata, () => {}).then(response => {
+  if (response.code != RaidaJS.ERR_NO_ERROR) {
+    console.log("Record has been deleted successfully")
   }
 }
 ```
