@@ -63,11 +63,11 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiGetFreeCoin](README.md#apiGetFreeCoin)
 
-[apiRecordOutgoingTransfer](README.md#apiRecordOutgoingTransfer)
-
-[apiRecordSend](README.md#apiRecordSend)
+[apiRecordTransaction](README.md#apiRecordTransaction)
 
 [apiShowRecords](README.md#apiShowRecords)
+
+[apiHealthCheck](README.md#apiHealthCheck)
 
 
 
@@ -1051,10 +1051,9 @@ let c = r.apiGetFreeCoin("102f5037fe6474019fe947b4977bb2a5").then(response => {
 }
 ```
 
-#### apiRecordOutgoingTransfer
+#### apiRecordTransaction
 
-The function creates a statement on the RAIDA. The function can be called by the sender if he wants to save transaction details on the RAIDA.
-The function is only called when there is a transfer between skywallets. The function is internally called by <i>apiTransfer</i> method
+The function creates a statement on the RAIDA. The function can be called by the sender or receiver if he wants to save transaction details on the RAIDA.
 
 Input:
 ```js
@@ -1068,6 +1067,9 @@ Input:
     "an" : []
   },
 
+  //Event code. One of ['send', 'recieve', 'transfer_out', 'transfer_in', 'break', 'break_in_bank', 'join', 'join_in_bank', 'unknown'],
+  "event_code" : string,
+
   // Amount of CloudCoins that was sent
   "amount" : integer,
 
@@ -1077,8 +1079,17 @@ Input:
   // Transaction memo. Optional
   "memo" : string,
 
-  // Sender's SkyWallet address. Optional
-  "from" : string
+  // Optional. One of ['self', 'other_know', 'other_anonymous', 'unknown']. The default is 'self'
+  "initiator_type" : string,
+
+  // Optional. ID of the initiator. It can be a SkyWallet Address or a Serial Number of the sender
+  "initiator_id" : string,
+
+  // Optional. Image URL to display along with the transaction record
+  "initiator_image_url": string,
+
+  // Optional. Description URL
+  "initiator_description_url": string
 }
 ```
 
@@ -1099,74 +1110,17 @@ let cc = {
 
 let trdata = {
   "coin" : cc,
-  "from" : "mywallet.skywallet.cc",
+  "event_code": "transfer",
+  "initiator_type" : "self",
+  "initiator_id" : "mywallet.skywallet.cc",
+  "initiator_image_url" : "https://mydomain.com/assets/logo.jpg",
+  "initiator_description_url": "https://mydomain.com/faq",
   "memo" : "payment for the car",
   "amount" : 125000,
   "guid" : "ae596e96d15cfed1d137c2e99de50754"
 }
 
 let c = r.apiRecordOutgoingTransfer(trdata, () => {}).then(response => {
-  if (response.code != RaidaJS.ERR_NO_ERROR) {
-    console.log("Record has been saved successfully")
-  }
-}
-```
-
-#### apiRecordSend
-
-This function is very close to apiRecordOutgoingTransaction. The main difference is that the function must be called when someone sends local CloudCoins to a SkyWallet.
-The function is internally called by <i>apiSend</i>
-
-Input:
-```js
-{
-  // CloudCoin (SN and AN must be passed) of the transaction owner
-  "coin" : {
-    // Serial Number
-    "sn" : interger,
-
-    // Array of 25 Authenticity Numbers
-    "an" : []
-  },
-
-  // Amount of CloudCoins that was sent
-  "amount" : integer,
-
-  // 32 chars hexidecimal string. ID of the transaction. Optional, if omitted it will be generated
-  "guid" : string,
-
-  // Transaction memo. Optional
-  "memo" : string,
-
-  // Sender's identity. Can be First and Lastname, or a nickname
-  "from" : string
-}
-```
-
-Data Returned:
-```js
-{
-  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful
-  "code" : integer,
-}
-```
-
-Example
-```js
-let cc = {
-  "sn":3788106,
-   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
-}
-
-let trdata = {
-  "coin" : cc,
-  "from" : "Andy Smith",
-  "memo" : "payment for the car",
-  "amount" : 125000,
-  "guid" : "ae596e96d15cfed1d137c2e99de50754"
-}
-
-let c = r.apiRecordSend(trdata, () => {}).then(response => {
   if (response.code != RaidaJS.ERR_NO_ERROR) {
     console.log("Record has been saved successfully")
   }
@@ -1227,8 +1181,17 @@ Record structure
   // Transaction memo. 
   "memo" : string,
 
-  // Sender's identity. Can be First and Lastname, or a nickname or skywallet
-  "from" : string,
+  // Sender's identity. 
+  "inititator_id" : string,
+
+  // Image URL
+  "initiator_umage_url": string,
+
+  // Description URL
+  "initiator_description_url" : string,
+
+  // Initiator type. One of ['self', 'other_know', 'other_anonymous', 'unknown'].
+  "initiator_type": string,
 
   // Created Timestamp
   "created_ts" : integer
@@ -1236,6 +1199,89 @@ Record structure
 ```
 
 
+```js
+let cc = {
+  "sn":3788106,
+   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
+}
+
+let trdata = {
+  "coin" : cc,
+  "start_ts" : 1619359363,
+  "order_by" : "guid",
+  "order_asc" : false
+}
+let c = r.apiShowRecords(trdata, () => {}).then(response => {
+  if (response.code != RaidaJS.ERR_NO_ERROR) {
+    for (let record in response.records) {
+      console.log("Transaction " + record.guid + " amount: " + record.amount)
+    }
+  }
+}
+```
+
+
+#### apiHealthCheck
+
+apiHealthCheck receives an ID coins and executes three calls to the RAIDA. 'show_transfer_balance', 'show' and 'show?content=true'. It collects and analyzes the responses and return a so called 'Health Check array' that holds the status of every coin in the SkyWallet for each RAIDA server. The response of the apiHealthCheck can be further used to fix the coins that are out-of-sync.
+
+
+Input:
+```js
+{
+  // ID CloudCoin (SN and AN must be passed) 
+  "coin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+}
+```
+
+Output:
+```js
+// CloudCoin
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful
+  "code" : integer,
+
+  // Array of 25 balances returned by 'show_transfer_balance' call
+  "balances" : [
+
+  ],
+
+  // 'Winner' Balance
+  "balance" : integer,
+
+  // Array of 25 balances calculated by doing 'show?content=1' call
+  "show_balances" : [
+
+  ],
+
+  // Array of Serial Numbers. Each item is an array of 25 items itself. 
+  "sns" : [
+
+  ]
+}
+```
+
+"SNS" item structure
+```js
+// Array of 25 booleans. 'True'. Array index is a RAIDA server number. Array value says whether the coin exists on the RAIDA server
+// true - coin is present on the RAIDA server
+// false - coin is NOT present on the RAIDA server
+[
+true, true, false, true, true, 
+true, true, false, true, true, 
+true, true, false, true, true, 
+true, true, false, true, true, 
+true, true, false, true, true, 
+]
+```
+
+Example:
 ```js
 let cc = {
   "sn":3788106,
