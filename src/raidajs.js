@@ -37,6 +37,7 @@ class RaidaJS {
       memoMetadataSeparator: "*",
       minPassedNumToBeAuthentic: 14,
       maxFailedNumToBeCounterfeit: 12,
+      syncThreshold: 13,
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
       sentryDSN: null
     , ...options}
@@ -353,7 +354,7 @@ class RaidaJS {
         e++
       })
       let result = this._gradeCoin(a, f, e)
-      if (result != this.__authenticResult)
+      if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to delete statement. Too many error responses from RAIDA")
 
         return rv
@@ -393,12 +394,14 @@ class RaidaJS {
 
     let rv = {
       'code' : RaidaJS.ERR_NO_ERROR,
-      'statements' : []
+      'text' : "Records returned",
+      'records' : []
     }
 
     let e, a, f
     e = a = f = 0
     let statements = {}
+    let serverResponses = []
     let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
@@ -406,20 +409,25 @@ class RaidaJS {
         console.log(serverResponse)
         if (serverResponse === "error" || serverResponse == "network") {
           e++
+          serverResponses.push(null)
           return
         }
 
         if (serverResponse.status == "success") {
           if (!('data' in serverResponse)) {
             e++
+            serverResponses.push(null)
             return
           }
 
           let data = serverResponse.data
           if (!Array.isArray(data)) {
             e++
+            serverResponses.push(null)
             return
           }
+
+          serverResponses.push(serverResponse)
 
           let mparts = []
           for (let r = 0; r < data.length; r++) {
@@ -431,7 +439,10 @@ class RaidaJS {
               continue
             }
 
-            let key = ldata.id
+            if (!('statement_id' in ldata))
+              continue
+
+            let key = ldata.statement_id
             if (!(key in statements)) {
               statements[key] = {}
               statements[key]['ldata'] = ldata
@@ -449,35 +460,35 @@ class RaidaJS {
         }
 
         if (serverResponse.status == "fail") {
+          serverResponses.push(null)
           f++
           return
         }
 
+        serverResponses.push(null)
         e++
       })
 
-      console.log("mparttt")
-      console.log(statements)
       for (let statement_id in statements) {
         let item = statements[statement_id]
         let odata = this._getDataFromObjectMemo(item.mparts)
         if (odata == null) {
           console.log("Failed to assemble statement " + statement_id + " Not enough valid responses")
           continue
-
         }
 
+        rv.records.push(odata)
       }
- //     console.log(mparts)
-   //   let odata = this._getDataFromObjectMemo(mparts)
-     // if (odata == null)
-       // return this._getError("Failed to get statements. Can't collect enough valid responses")
+
+      // Fire-and-forget (if neccessary)
+      this._syncAdd(serverResponses, "statement_id", "statements/sync/sync_add")
+      this._syncDelete(serverResponses, "statement_id", "statements/sync/sync_delete")
 
       let result = this._gradeCoin(a, f, e)
-      if (result != this.__authenticResult)
+      if (!this._validResult(result))
         return this._getError("Failed to get statements. Too many error responses from RAIDA")
 
-        return rv
+      return rv
     })
 
     return mainPromise;
@@ -565,6 +576,7 @@ class RaidaJS {
 
     let rv = {
       'code' : RaidaJS.ERR_NO_ERROR,
+      'guid' : guid,
       'text' : "Created successfully"
     }
 
@@ -586,9 +598,8 @@ class RaidaJS {
         }
       })
 
-      console.log("a="+a+" f="+f + " e="+e)
       let result = this._gradeCoin(a, f, e)
-      if (result != this.__authenticResult)
+      if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create statement. Too many error responses from RAIDA")
 
       return rv
@@ -2351,8 +2362,6 @@ class RaidaJS {
       }
 
       let i = 0
-      console.log("ResData")
-      console.log(resultData)
       for (let sn in resultData['result']) {
         let coin = resultData['result'][sn]
         if (coin.result != this.__authenticResult) {
@@ -3044,27 +3053,41 @@ class RaidaJS {
   }
 
   _getDataFromObjectMemo(mparts) {
-
     let data = this._assembleMessage(mparts)
     if (data == null)
       return null
 
-    console.log(mparts)
+    try {
+      data = this._b64DecodeUnicode(data) 
+    } catch (e) {
+      console.log("Failed to decode strange message: " + data)
+      return null
+    }
 
+    data = this._parseINIString(data)
+    if (data == null) {
+      console.log("Failed to parse INI: " + data)
+      return null
+    }
+
+    if (!('general' in data)) {
+      console.log("No general section in INI")
+      return null
+    }
+
+    return data['general']
   }
 
   _getStripesMirrorsForObject(obj) {
     let str = "[general]\n"
 
-    let date = new Date().toLocaleString();
+    let date = Math.floor(Date.now() / 1000)
     
     str += "date=" + date + "\n"
     for (let key in obj) {
       str += key + "=" + obj[key] + "\n"
     }
 
-    console.log("strrr")
-      console.log(str)
     str = this._b64EncodeUnicode(str) 
     let data = this._splitMessage(str)
 
@@ -3074,7 +3097,7 @@ class RaidaJS {
   _getStripesMirrorsForObjectMemo(guid, memo, amount, from) {
     let str = "[general]\n"
 
-    let date = new Date().toLocaleString();
+    let date = Math.floor(Date.now() / 1000)
     
     str += "date=" + date + "\n"
     str += "guid=" + guid + "\n"
@@ -3675,6 +3698,176 @@ class RaidaJS {
 
     return idx
 
+  }
+
+  _validResult(result) {
+    return result == this.__authenticResult || result == this.__frackedResult
+  }
+
+  // Parse INI string and return Object
+  _parseINIString(data){
+    var regex = {
+      section: /^\s*\[\s*([^\]]*)\s*\]\s*$/,
+      param: /^\s*([^=]+?)\s*=\s*(.*?)\s*$/,
+      comment: /^\s*;.*$/
+    }
+
+    var value = {}
+    var lines = data.split(/[\r\n]+/)
+    var section = null
+
+    lines.forEach(function(line) {
+      if (regex.comment.test(line)){
+        return;
+      } else if(regex.param.test(line)){
+        var match = line.match(regex.param);
+        if(section){
+          value[section][match[1]] = match[2];
+        }else{
+          value[match[1]] = match[2];
+        }
+      } else if (regex.section.test(line)){
+        var match = line.match(regex.section);
+        value[match[1]] = {};
+        section = match[1];
+      } else if (line.length == 0 && section){
+        section = null;
+      }
+    })
+
+    return value;
+  }
+
+  // Collects hashData from ServerResponses. Auxillary function that goes through each response and tries to find common elements and their counts (an element might be a serial number or a GUID of a statement
+  _collectHdata(serverResponses, targetKey, level = 1) {
+    let hashData = {}
+    for (let raidaIdx = 0; raidaIdx < serverResponses.length; raidaIdx++) {
+      let serverResponse = serverResponses[raidaIdx]
+        if (!serverResponse)
+          continue
+
+      if (level == 1) {
+        let item = serverResponse.data
+        let key = item[targetKey]
+        if (typeof(key) == 'undefined')
+          continue
+
+        if (!(key in hashData))
+          hashData[key] = {}
+
+        hashData[key][raidaIdx] = item
+      } else if (level == 2) {
+        for (let j = 0; j < serverResponse.data.length; j++) {
+          let item = serverResponse.data[j]
+          if (typeof(item) == 'undefined')
+            continue
+
+          let key = item[targetKey]
+          if (!(key in hashData))
+            hashData[key] = {}
+
+          hashData[key][raidaIdx] = item
+        }
+      }
+    }
+
+    return hashData
+  }
+
+  // Adds records by analyzing serverResponses. The function uses 'key' to find a group_by key. Then it will do 'fcall' call
+  _syncAdd(serverResponses, key, fcall) {
+    let unavailable = 0
+    let servers = []
+    for (let v = 0; v < serverResponses.length; v++) {
+      if (!serverResponses[v]) {
+        unavailable++
+      }
+    }
+    
+    // Check if we need to call fix_groups
+    let hashData = this._collectHdata(serverResponses, key, 2)
+    let drqdata = []
+    for (let eid in hashData) {
+      let quorum = Object.keys(hashData[eid]).length
+
+      // We believe that RAIDA servers that don't respond have our data
+      quorum += unavailable
+      if (quorum < this.options.syncThreshold || quorum == this._totalServers)
+        continue
+
+      let varr = Object.keys(hashData[eid])
+      for (let r = 0; r < this._totalServers; r++) {
+        if (varr.includes("" + r))
+          continue
+
+        servers.push(parseInt(r))
+      }
+
+      drqdata.push(eid)
+    }
+
+    // Make them uniq
+    servers = servers.filter((v, i, a) => a.indexOf(v) === i)
+
+    if (drqdata.length > 0) {
+      let lrqdata = []
+      for (let i = 0; i < this._totalServers; i++) {
+        lrqdata.push({
+          guid: drqdata
+        })
+      }
+
+      // Don't need to wait for result
+      this._launchRequests(fcall, lrqdata, 'GET', () => {}, servers)
+    }
+  }
+
+  // Deletes records by analyzing serverResponses. The function uses 'key' to find a group_by key. Then it will do 'fcall' call
+  _syncDelete(serverResponses, key, fcall) {
+    let unavailable = 0
+    let servers = []
+    for (let v = 0; v < serverResponses.length; v++) {
+      if (!serverResponses[v]) {
+        unavailable++
+      }
+    }
+    
+    // Check if we need to call fix_groups
+    let hashData = this._collectHdata(serverResponses, key, 2)
+    let drqdata = []
+    for (let eid in hashData) {
+      let quorum = Object.keys(hashData[eid]).length
+
+      // We believe that RAIDA servers that don't respond have our data
+      quorum += unavailable
+      if (quorum >= this.options.syncThreshold)
+        continue
+
+      let varr = Object.keys(hashData[eid])
+      for (let r = 0; r < this._totalServers; r++) {
+        if (varr.includes("" + r)) {
+          servers.push(parseInt(r))
+          continue
+        }
+      }
+
+      drqdata.push(eid)
+    }
+
+    // Make them uniq
+    servers = servers.filter((v, i, a) => a.indexOf(v) === i)
+
+    if (drqdata.length > 0) {
+      let lrqdata = []
+      for (let i = 0; i < this._totalServers; i++) {
+        lrqdata.push({
+          guid: drqdata
+        })
+      }
+
+      // Don't need to wait for result
+      this._launchRequests(fcall, lrqdata, 'GET', () => {}, servers)
+    }
   }
 }
 
