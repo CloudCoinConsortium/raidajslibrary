@@ -1100,6 +1100,9 @@ Data Returned:
 {
   // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful
   "code" : integer,
+
+  // Guid of the statement
+  "guid" : string
 }
 ```
 
@@ -1133,6 +1136,8 @@ let c = r.apiCreateRecord(trdata, () => {}).then(response => {
 
 apiShowRecords gets saved records from the RAIDA. It downloads all statements from the servers, decrypts them and returns them to the caller.
 The function doesn't support pagination (limit and offset) and most of the filters. The only filter that is supported by the Backend is 'start_ts' which allows to set the starting datetime of the transactions. Sorting is not supported on the Backend too. The function internally sorts records on the client after downloading all of them.
+
+The function automatically tries to synchronize records if it finds any inconsistency. The sync call (either sync_add or sync_delete) is transparent to the caller.
 
 Input:
 ```js
@@ -1196,7 +1201,7 @@ Record structure
   "initiator_type": string,
 
   // Created Timestamp
-  "created_ts" : integer
+  "date" : integer
 }
 ```
 

@@ -37,6 +37,7 @@ class RaidaJS {
       memoMetadataSeparator: "*",
       minPassedNumToBeAuthentic: 14,
       maxFailedNumToBeCounterfeit: 12,
+      syncThreshold: 13,
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
       sentryDSN: null
     , ...options}
@@ -297,6 +298,317 @@ class RaidaJS {
 
 
     return rv
+  }
+
+  // Deletes a statement from the RAIDA
+  async apiDeleteRecord(params, callback = null) {
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    if (!('guid' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_GUID, "GUID in missing")
+
+    let guid = params['guid']
+    if (!this._validateGuid(guid))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Invalid GUID")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+    }
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+        'statement_id': params.guid
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Deleted successfully"
+    }
+
+    let a, e, f
+    a = f = e = 0
+    let rqs = this._launchRequests("statements/delete", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+        console.log("deleted")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+          return
+        }
+        if (serverResponse.status == "fail") {
+          f++
+          return
+        }
+
+        e++
+      })
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to delete statement. Too many error responses from RAIDA")
+
+        return rv
+    })
+
+    return mainPromise    
+
+  }
+
+  // Reads statements from the RAIDA
+  async apiShowRecords(params, callback = null) {
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+    }
+
+    let ts = 0
+    if ('start_ts' in params) {
+      if (ts < 0 || ts > 1919445247) {
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_TIMESTAMP, "Invalid Timestamp")
+      }
+      ts = params['start_ts']
+    }
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+        'return' : 'all',
+        'start_date': ts
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Records returned",
+      'records' : []
+    }
+
+    let e, a, f
+    e = a = f = 0
+    let statements = {}
+    let serverResponses = []
+    let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+        console.log("received")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          serverResponses.push(null)
+          return
+        }
+
+        if (serverResponse.status == "success") {
+          if (!('data' in serverResponse)) {
+            e++
+            serverResponses.push(null)
+            return
+          }
+
+          let data = serverResponse.data
+          if (!Array.isArray(data)) {
+            e++
+            serverResponses.push(null)
+            return
+          }
+
+          serverResponses.push(serverResponse)
+
+          let mparts = []
+          for (let r = 0; r < data.length; r++) {
+            let ldata = data[r]
+            if (typeof(ldata) == 'undefined')
+              continue
+
+            if (!('stripe' in ldata) || !('mirror' in ldata) || !('mirror2' in ldata))  {
+              continue
+            }
+
+            if (!('statement_id' in ldata))
+              continue
+
+            let key = ldata.statement_id
+            if (!(key in statements)) {
+              statements[key] = {}
+              statements[key]['ldata'] = ldata
+              statements[key]['mparts'] = []
+            }
+
+            statements[key]['mparts'][rIdx] = {}
+            statements[key]['mparts'][rIdx]['stripe'] = ldata.stripe
+            statements[key]['mparts'][rIdx]['mirror1'] = ldata.mirror
+            statements[key]['mparts'][rIdx]['mirror2'] = ldata.mirror2
+          }
+
+          a++
+          return
+        }
+
+        if (serverResponse.status == "fail") {
+          serverResponses.push(null)
+          f++
+          return
+        }
+
+        serverResponses.push(null)
+        e++
+      })
+
+      for (let statement_id in statements) {
+        let item = statements[statement_id]
+        let odata = this._getDataFromObjectMemo(item.mparts)
+        if (odata == null) {
+          console.log("Failed to assemble statement " + statement_id + " Not enough valid responses")
+          continue
+        }
+
+        rv.records.push(odata)
+      }
+
+      // Fire-and-forget (if neccessary)
+      this._syncAdd(serverResponses, "statement_id", "statements/sync/sync_add")
+      this._syncDelete(serverResponses, "statement_id", "statements/sync/sync_delete")
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getError("Failed to get statements. Too many error responses from RAIDA")
+
+      return rv
+    })
+
+    return mainPromise;
+
+  }
+
+  // Creates a statement on the RAIDA
+  async apiCreateRecord(params, callback = null) {
+    this.addBreadCrumbEntry("apiCreateRecord", params)
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    if (!('amount' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_AMOUNT, "Amount in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+    }
+
+    let guid = this._generatePan()
+    if ('guid' in params) {
+      guid = params['guid']
+      if (!this._validateGuid(guid)) {
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
+      }
+    }
+
+    let memo = "Transfer from " + coin.sn
+    if ('memo' in params)
+      memo = params['memo']
+
+    let event_code = "send"
+    if ('event_code' in params) {
+      event_code = params['event_code']
+      if (!this._validateEventCode(event_code)) {
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_EVENT_CODE, "Failed to validate Event Code")
+      }
+    }
+
+    let itype = "self"
+    if ('initiator_type' in params) {
+      itype = params['initiator_type']
+      if (!this._validateInitiatorType(itype)) {
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_INITIATOR_TYPE, "Failed to validate Initiator type")
+      }
+    }
+
+    let iid = "From SN " + coin.sn
+    if ('initiator_id' in params)
+      iid = params['initiator_id']
+
+    let iimage_url = ""
+    if ('initiator_image_url' in params)
+      iid = params['initiator_image_url']
+
+    let idescription_url = ""
+    if ('initiator_description_url' in params)
+      idescription_url = params['initiator_description_url']
+
+    let rqdata = []
+    let amount = params.amount
+    let tags = this._getStripesMirrorsForObject({
+      'guid' : guid,
+      'memo' : memo,
+      'amount' : amount,
+      'initiator_id' : iid,
+      'initiator_image_url' : iimage_url,
+      'initiator_description_url' : idescription_url,
+      'initiator_type' : itype
+    })
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'account_sn' : coin.sn,
+        'account_an' : coin.an[i],
+        'transaction_id': guid,
+        'version': 0,
+        'compression' : 0,
+        'raid' : '110',
+        'stripe' : tags[i]['stripe'],
+        'mirror' : tags[i]['mirror1'],
+        'mirror2' : tags[i]['mirror2']
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'guid' : guid,
+      'text' : "Created successfully"
+    }
+
+    let passed = 0
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("statements/create", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create statement. Too many error responses from RAIDA")
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiCreateStatement", rv)
+
+    return mainPromise
   }
 
   // Register DNS
@@ -2050,8 +2362,6 @@ class RaidaJS {
       }
 
       let i = 0
-      console.log("ResData")
-      console.log(resultData)
       for (let sn in resultData['result']) {
         let coin = resultData['result'][sn]
         if (coin.result != this.__authenticResult) {
@@ -2657,6 +2967,21 @@ class RaidaJS {
     return true
   }
 
+  // Validate GUID
+  _validateGuid(guid) {
+    return guid.match(/^[a-fA-F0-9]{32}$/)
+  }
+
+  // Validate Event Code
+  _validateEventCode(event_code) {
+    return ["send", "receive", "transfer_out", "transfer_in", "break", "break_in_bank", "join", "join_in_bank", "unknown"].includes(event_code)
+  }
+
+  // Validate Initiator type
+  _validateInitiatorType(itype) {
+    return ['self', 'other_know', 'other_anonymous', 'unknown'].includes(itype)
+  }
+
   // Put message toghether
   _assembleMessage(mparts) {
     let cs = 0, length
@@ -2728,22 +3053,51 @@ class RaidaJS {
   }
 
   _getDataFromObjectMemo(mparts) {
-    console.log("doing mparts")
-    console.log(mparts)
-
     let data = this._assembleMessage(mparts)
     if (data == null)
       return null
 
-    console.log("assembled")
-    console.log(mparts)
+    try {
+      data = this._b64DecodeUnicode(data) 
+    } catch (e) {
+      console.log("Failed to decode strange message: " + data)
+      return null
+    }
 
+    data = this._parseINIString(data)
+    if (data == null) {
+      console.log("Failed to parse INI: " + data)
+      return null
+    }
+
+    if (!('general' in data)) {
+      console.log("No general section in INI")
+      return null
+    }
+
+    return data['general']
+  }
+
+  _getStripesMirrorsForObject(obj) {
+    let str = "[general]\n"
+
+    let date = Math.floor(Date.now() / 1000)
+    
+    str += "date=" + date + "\n"
+    for (let key in obj) {
+      str += key + "=" + obj[key] + "\n"
+    }
+
+    str = this._b64EncodeUnicode(str) 
+    let data = this._splitMessage(str)
+
+    return data
   }
 
   _getStripesMirrorsForObjectMemo(guid, memo, amount, from) {
     let str = "[general]\n"
 
-    let date = new Date().toLocaleString();;
+    let date = Math.floor(Date.now() / 1000)
     
     str += "date=" + date + "\n"
     str += "guid=" + guid + "\n"
@@ -3224,6 +3578,15 @@ class RaidaJS {
     }
   }
 
+  // Error Code Return
+  _getErrorCode(code, msg) {
+    this.addBreadCrumbError("Returning Error Code To Client: " + code + ": " + msg)
+    return {
+      'code' : code,
+      'text' : msg
+    }
+  }
+
   // network byte order
   _getUint32(data, offset) {
     let a = (data[offset] << 24 | data[offset + 1] << 16 |
@@ -3336,8 +3699,195 @@ class RaidaJS {
     return idx
 
   }
+
+  _validResult(result) {
+    return result == this.__authenticResult || result == this.__frackedResult
+  }
+
+  // Parse INI string and return Object
+  _parseINIString(data){
+    var regex = {
+      section: /^\s*\[\s*([^\]]*)\s*\]\s*$/,
+      param: /^\s*([^=]+?)\s*=\s*(.*?)\s*$/,
+      comment: /^\s*;.*$/
+    }
+
+    var value = {}
+    var lines = data.split(/[\r\n]+/)
+    var section = null
+
+    lines.forEach(function(line) {
+      if (regex.comment.test(line)){
+        return;
+      } else if(regex.param.test(line)){
+        var match = line.match(regex.param);
+        if(section){
+          value[section][match[1]] = match[2];
+        }else{
+          value[match[1]] = match[2];
+        }
+      } else if (regex.section.test(line)){
+        var match = line.match(regex.section);
+        value[match[1]] = {};
+        section = match[1];
+      } else if (line.length == 0 && section){
+        section = null;
+      }
+    })
+
+    return value;
+  }
+
+  // Collects hashData from ServerResponses. Auxillary function that goes through each response and tries to find common elements and their counts (an element might be a serial number or a GUID of a statement
+  _collectHdata(serverResponses, targetKey, level = 1) {
+    let hashData = {}
+    for (let raidaIdx = 0; raidaIdx < serverResponses.length; raidaIdx++) {
+      let serverResponse = serverResponses[raidaIdx]
+        if (!serverResponse)
+          continue
+
+      if (level == 1) {
+        let item = serverResponse.data
+        let key = item[targetKey]
+        if (typeof(key) == 'undefined')
+          continue
+
+        if (!(key in hashData))
+          hashData[key] = {}
+
+        hashData[key][raidaIdx] = item
+      } else if (level == 2) {
+        for (let j = 0; j < serverResponse.data.length; j++) {
+          let item = serverResponse.data[j]
+          if (typeof(item) == 'undefined')
+            continue
+
+          let key = item[targetKey]
+          if (!(key in hashData))
+            hashData[key] = {}
+
+          hashData[key][raidaIdx] = item
+        }
+      }
+    }
+
+    return hashData
+  }
+
+  // Adds records by analyzing serverResponses. The function uses 'key' to find a group_by key. Then it will do 'fcall' call
+  _syncAdd(serverResponses, key, fcall) {
+    let unavailable = 0
+    let servers = []
+    for (let v = 0; v < serverResponses.length; v++) {
+      if (!serverResponses[v]) {
+        unavailable++
+      }
+    }
+    
+    // Check if we need to call fix_groups
+    let hashData = this._collectHdata(serverResponses, key, 2)
+    let drqdata = []
+    for (let eid in hashData) {
+      let quorum = Object.keys(hashData[eid]).length
+
+      // We believe that RAIDA servers that don't respond have our data
+      quorum += unavailable
+      if (quorum < this.options.syncThreshold || quorum == this._totalServers)
+        continue
+
+      let varr = Object.keys(hashData[eid])
+      for (let r = 0; r < this._totalServers; r++) {
+        if (varr.includes("" + r))
+          continue
+
+        servers.push(parseInt(r))
+      }
+
+      drqdata.push(eid)
+    }
+
+    // Make them uniq
+    servers = servers.filter((v, i, a) => a.indexOf(v) === i)
+
+    if (drqdata.length > 0) {
+      let lrqdata = []
+      for (let i = 0; i < this._totalServers; i++) {
+        lrqdata.push({
+          guid: drqdata
+        })
+      }
+
+      // Don't need to wait for result
+      this._launchRequests(fcall, lrqdata, 'GET', () => {}, servers)
+    }
+  }
+
+  // Deletes records by analyzing serverResponses. The function uses 'key' to find a group_by key. Then it will do 'fcall' call
+  _syncDelete(serverResponses, key, fcall) {
+    let unavailable = 0
+    let servers = []
+    for (let v = 0; v < serverResponses.length; v++) {
+      if (!serverResponses[v]) {
+        unavailable++
+      }
+    }
+    
+    // Check if we need to call fix_groups
+    let hashData = this._collectHdata(serverResponses, key, 2)
+    let drqdata = []
+    for (let eid in hashData) {
+      let quorum = Object.keys(hashData[eid]).length
+
+      // We believe that RAIDA servers that don't respond have our data
+      quorum += unavailable
+      if (quorum >= this.options.syncThreshold)
+        continue
+
+      let varr = Object.keys(hashData[eid])
+      for (let r = 0; r < this._totalServers; r++) {
+        if (varr.includes("" + r)) {
+          servers.push(parseInt(r))
+          continue
+        }
+      }
+
+      drqdata.push(eid)
+    }
+
+    // Make them uniq
+    servers = servers.filter((v, i, a) => a.indexOf(v) === i)
+
+    if (drqdata.length > 0) {
+      let lrqdata = []
+      for (let i = 0; i < this._totalServers; i++) {
+        lrqdata.push({
+          guid: drqdata
+        })
+      }
+
+      // Don't need to wait for result
+      this._launchRequests(fcall, lrqdata, 'GET', () => {}, servers)
+    }
+  }
 }
+
 // Error Codes
+RaidaJS.ERR_NO_ERROR = 0x0
+
+// Params
+RaidaJS.ERR_PARAM_MISSING_COIN = 0x1001
+RaidaJS.ERR_PARAM_INVALID_COIN = 0x1002
+RaidaJS.ERR_PARAM_MISSING_GUID = 0x1003
+RaidaJS.ERR_PARAM_INVALID_GUID = 0x1004
+RaidaJS.ERR_PARAM_MISSING_AMOUNT = 0x1005
+RaidaJS.ERR_PARAM_INVALID_AMOUNT = 0x1006
+RaidaJS.ERR_PARAM_INVALID_EVENT_CODE = 0x1007
+RaidaJS.ERR_PARAM_INVALID_INITIATOR_TYPE = 0x1008
+RaidaJS.ERR_PARAM_INVALID_TIMESTAMP = 0x1009
+
+// Response
+RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
+
 RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 
 
