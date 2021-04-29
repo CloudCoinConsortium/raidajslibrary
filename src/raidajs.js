@@ -405,8 +405,6 @@ class RaidaJS {
     let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
-        console.log("received")
-        console.log(serverResponse)
         if (serverResponse === "error" || serverResponse == "network") {
           e++
           serverResponses.push(null)
@@ -2078,8 +2076,10 @@ class RaidaJS {
         denomination: this.getDenomination(coin.sn),
       })
     }
-    let rv = { 
+    let rv = {
+      code: RaidaJS.ERR_NO_ERROR,
       balances: [],
+      balancesPerRaida: [],
       raidaStatuses: []
     }
     for (let i = 0; i < this._totalServers; i++) {
@@ -2092,30 +2092,36 @@ class RaidaJS {
       this._parseMainPromise(response, 0, rv, (response, rIdx) => {
         if (response == "network") {
           rv.raidaStatuses[rIdx] = "n"
+          rv.balancesPerRaida[rIdx] = null
           return
         }
         if (response == "error") {
           rv.raidaStatuses[rIdx] = "e"
+          rv.balancesPerRaida[rIdx] = null
           return
         }
 
         if (!('status' in response)) {
           rv.raidaStatuses[rIdx] = "e"
+          rv.balancesPerRaida[rIdx] = null
           return
         }
 
         if (response.status == "fail") {
           rv.raidaStatuses[rIdx] = "f"
+          rv.balancesPerRaida[rIdx] = null
           return
         }
 
         if (response.status !== "pass") {
           rv.raidaStatuses[rIdx] = "e"
+          rv.balancesPerRaida[rIdx] = null
           return
         }
 
         rv.raidaStatuses[rIdx] = "p"
         let b = response.total
+        rv.balancesPerRaida[rIdx] = b
 
         if (!(b in balances)) {
           balances[b] = 0
@@ -2137,7 +2143,70 @@ class RaidaJS {
 
   // Resolves a SkyWallet
   async apiResolveSkyWallet(hostname) {
-    return "xxx"
+    return this._resolveDNS(hostname)
+
+  }
+
+  // Health Check
+  async apiHealthCheck(params, callback = null) {
+    this.addBreadCrumbEntry("apiHealthCheck", params)
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "HealthCheck Completed",
+      'balances' : [],
+      'balance' : -1,
+      'show_balances': [],
+      'sns': []
+    }
+
+    let lrv = await this.apiShowBalance(coin, callback)
+    if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
+      rv.balances = lrv.balancesPerRaida
+      let max = 0
+      let balance = -1
+      for (let k in lrv.balances) {
+        if (max < lrv.balances[k]) {
+          max = lrv.balances[k]
+          balance = k
+        }
+      }
+
+      rv.balance = balance
+
+    }
+
+    lrv = await this.apiShowCoins(coin, callback)
+    if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
+      console.log("sss")
+      rv.sns = lrv.coinsPerRaida
+    }
+
+    lrv = await this._getCoinsWithContentBalance(coin, callback)
+    if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
+      console.log("sss2")
+      rv.show_balances = lrv.balancesPerRaida
+    }
+
+
+    console.log("rv2=")
+    console.log(lrv)
+/*
+    let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+      }
+      });
+      */
+
+//    return mainPromise
+    return rv
 
   }
 
@@ -2145,9 +2214,9 @@ class RaidaJS {
   async _resolveDNS(hostname, type = null) {
     this.addBreadCrumbEntry("_resolveDNS", hostname)
 
-    let r = await this._resolveGoogleDNS(hostname, type)
+    let r = await this._resolveCloudFlareDNS(hostname, type)
     if (r == null) {
-      r = await this._resolveCloudFlareDNS(hostname, type)
+      r = await this._resolveGoogleDNS(hostname, type)
     }
    
     return r
@@ -2258,6 +2327,65 @@ class RaidaJS {
     }
   }
 
+  // Gets envelopes with Content
+  async _getCoinsWithContentBalance(coin, callback) {
+    let rqdata = []
+
+    // Assemble input data for each Raida Server
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn: coin.sn,
+        nn: coin.nn,
+        an: coin.an[i],
+        pan: coin.an[i],
+        denomination: this.getDenomination(coin.sn),
+        content: "1"
+      })
+    }
+    let rv = { 
+      code: RaidaJS.ERR_NO_ERROR,
+      balancesPerRaida: []
+    }
+
+    let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
+      this._parseMainPromise(response, 0, rv, (response, rIdx) => {
+        if (response == "network" || response == "error") 
+          return
+
+        if (!('status' in response)) 
+          return
+        
+
+        if (response.status !== "pass") 
+          return
+        
+
+        if (!('contents' in response))
+          return
+
+        let contents = response.contents
+        rv.balancesPerRaida[rIdx] = 0
+        for (let i = 0; i < contents.length; i++) {
+          let item = contents[i]
+          if (!('amount' in item))
+            continue
+
+          let amount = 0
+          try {
+            amount = parseInt(item.amount)
+          } catch (e) { }
+
+
+          rv.balancesPerRaida[rIdx] += amount
+        }
+      }) 
+
+      return rv
+    })
+
+    return rqs
+  }
+
   async _getCoins(coin, callback) {
     let rqdata = []
 
@@ -2272,6 +2400,7 @@ class RaidaJS {
       })
     }
     let rv = { 
+      code: RaidaJS.ERR_NO_ERROR,
       coins: {},
       coinsPerRaida: {}
     }
@@ -2311,7 +2440,7 @@ class RaidaJS {
         }
       }) 
 
-      let nrv = { coins: {} }
+      let nrv = { code: RaidaJS.ERR_NO_ERROR, coins: {} }
       nrv.coinsPerRaida = rv.coinsPerRaida
       for (let f = 0; f < skipRaidas.length; f++) {
         let frIdx = skipRaidas[f]

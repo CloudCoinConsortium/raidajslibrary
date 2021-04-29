@@ -791,6 +791,7 @@ Data returned
 {
   balances: {}	// Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
   raidaStatuses: "ppppppppppppppppppppppppp" // pownstring
+  balancesPerRaida: [], // Array of balances for each RAIDA server
 }
 ```
 
@@ -1327,14 +1328,14 @@ Output:
 "SNS" item structure
 ```js
 // Array of 25 booleans. 'True'. Array index is a RAIDA server number. Array value says whether the coin exists on the RAIDA server
-// true - coin is present on the RAIDA server
-// false - coin is NOT present on the RAIDA server
+// "yes" - coin is present on the RAIDA server
+// "no" - coin is NOT present on the RAIDA server
 [
-true, true, false, true, true, 
-true, true, false, true, true, 
-true, true, false, true, true, 
-true, true, false, true, true, 
-true, true, false, true, true, 
+"yes", "yes", "no", "yes", "yes", 
+"yes", "yes", "no", "yes", "yes", 
+"yes", "yes", "no", "yes", "yes", 
+"yes", "yes", "no", "yes", "yes", 
+"yes", "yes", "no", "yes", "yes", 
 ]
 ```
 
