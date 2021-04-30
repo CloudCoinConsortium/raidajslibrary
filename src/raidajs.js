@@ -35,6 +35,7 @@ class RaidaJS {
       maxCoinsPerIteraiton: 200,
       minPasswordLength: 8,
       memoMetadataSeparator: "*",
+      nftMetadataSeparator: "*",
       minPassedNumToBeAuthentic: 14,
       maxFailedNumToBeCounterfeit: 12,
       syncThreshold: 13,
@@ -2184,30 +2185,196 @@ class RaidaJS {
 
     lrv = await this.apiShowCoins(coin, callback)
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
-      console.log("sss")
       rv.sns = lrv.coinsPerRaida
     }
 
     lrv = await this._getCoinsWithContentBalance(coin, callback)
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
-      console.log("sss2")
       rv.show_balances = lrv.balancesPerRaida
     }
 
-
-    console.log("rv2=")
-    console.log(lrv)
-/*
-    let rqs = this._launchRequests("statements/read", rqdata, 'GET', callback)
-    let mainPromise = rqs.then(response => {
-      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
-      }
-      });
-      */
-
-//    return mainPromise
     return rv
 
+  }
+
+  // Create NFT
+  async apiNFTInsert(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTInsert", rv)
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+
+    if (!('data' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DATA, "Data is missing")
+
+    if (!('metadata' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_METADATA, "MetaData is missing")
+
+    let metadata = params.metadata
+    if (!('filename' in metadata))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_METADATA, "Filename is missing")
+
+    let filename = metadata.filename
+    let mimetype = "application/octet-stream"
+    if ('mimetype' in metadata)
+      mimetype = metadata.mimetype
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+
+    let protocol = 0
+    if ('protocol' in params)
+      protocol = params.protocol
+
+    if (protocol != 0)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL, "Unsupported NFT Protocol")
+
+    let obj = {
+      'filename' : filename,
+      'mimetype' : mimetype
+    }
+
+    let rqdata = []
+    let tags = this._getNFTStringForObject(obj, params.data) 
+    console.log("tagsss")
+    console.log(tags)
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+        'protocol': protocol,
+        'stripe' : tags[i]['stripe'],
+        'mirror' : tags[i]['mirror1'],
+        'mirror2' : tags[i]['mirror2']
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Created successfully"
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("nft/insert", rqdata, 'POST', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create NFT token. Too many error responses from RAIDA")
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiNFTInsert", rv)
+
+    return mainPromise
+  }
+
+  // Read NFT
+  async apiNFTRead(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTRead", rv)
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+
+    let rqdata = []
+    console.log("tagsss")
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i],
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "NFT downloaded successfully",
+      'data' : null,
+      'protocol' : 0,
+      'metadata' : {}
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let mparts = []
+    for (let i = 0; i < this._totalServers; i++)
+        mparts[i] = null
+
+    let rqs = this._launchRequests("nft/read", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+          console.log("SR")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+
+        if (serverResponse.status == "success") {
+          console.log("SUCCESS")
+          if (!('stripe' in serverResponse) || !('mirror' in serverResponse) || !('mirror2' in serverResponse))  {
+            e++
+            return
+          }
+
+          mparts[rIdx] = {
+            'stripe' : serverResponse.stripe,
+            'mirror' : serverResponse.mirror,
+            'mirror2' : serverResponse.mirror2,
+          }
+
+          a++
+          /*if (!('data' in serverResponse)) {
+          }
+
+          a++
+          return
+          */
+        }
+
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to download NFT token. Too many error responses from RAIDA")
+
+      let odata = this._getNFTObjectFromString(mparts)
+      if (odata == null) {
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_FAILED_TO_BUILD_MESSAGE_FROM_CHUNKS, "Failed to build message from RAIDA chunks. Some are missing")
+      }
+
+      rv.metadata = odata.metadata
+      rv.data = odata.data
+
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiNFTInsert", rv)
+
+    return mainPromise
   }
 
   /*** INTERNAL FUNCTIONS. Use witch caution ***/
@@ -3223,6 +3390,64 @@ class RaidaJS {
     return data
   }
 
+  _getNFTStringForObject(obj, data) {
+    let str = "[general]\n"
+    for (let key in obj) {
+      str += key + "=" + obj[key] + "\n"
+    }
+
+    let mstr = this._b64EncodeUnicode(str) 
+    let finalStr = mstr + this.options.nftMetadataSeparator + data  
+
+    let fdata = this._splitMessage(finalStr)
+
+    return fdata
+
+  }
+
+  _getNFTObjectFromString(mparts) {
+    console.log("MEssage assembling")
+    console.log(mparts)
+    let data = this._assembleMessage(mparts)
+    if (data == null)
+      return null
+
+    console.log("MEssage assembled")
+    console.log(data)
+
+    let vals = data.split(this.options.nftMetadataSeparator)
+    if (vals.length != 2) 
+      return null
+
+    console.log(vals)
+
+    let metadata
+    try {
+      metadata = this._b64DecodeUnicode(vals[0]) 
+    } catch (e) {
+      console.log("Failed to decode strange message: " + vals[0])
+      return null
+    }
+
+    data = this._parseINIString(metadata)
+    if (data == null) {
+      console.log("Failed to parse INI: " + data)
+      return null
+    }
+
+    if (!('general' in data)) {
+      console.log("No general section in INI")
+      return null
+    }
+
+    let rv =  {
+      'metadata' : data['general'],
+      'data' : vals[1]
+    }
+
+    return rv
+  }
+
   _getStripesMirrorsForObjectMemo(guid, memo, amount, from) {
     let str = "[general]\n"
 
@@ -3251,6 +3476,7 @@ class RaidaJS {
 
     return d
   }
+
 
 
   _splitMessage(message) {
@@ -4013,10 +4239,17 @@ RaidaJS.ERR_PARAM_INVALID_AMOUNT = 0x1006
 RaidaJS.ERR_PARAM_INVALID_EVENT_CODE = 0x1007
 RaidaJS.ERR_PARAM_INVALID_INITIATOR_TYPE = 0x1008
 RaidaJS.ERR_PARAM_INVALID_TIMESTAMP = 0x1009
+RaidaJS.ERR_PARAM_MISSING_DATA = 0x1010
+RaidaJS.ERR_PARAM_INVALID_DATA = 0x1011
+RaidaJS.ERR_PARAM_MISSING_FILENAME = 0x1012
+RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL = 0x1013
+RaidaJS.ERR_PARAM_MISSING_METADATA = 0x1014
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
+RaidaJS.ERR_RESPONSE_FAILED_TO_BUILD_MESSAGE_FROM_CHUNKS = 0x2002
 
+// Network
 RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 
 
