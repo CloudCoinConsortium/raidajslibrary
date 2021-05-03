@@ -1548,19 +1548,19 @@ According to the standards above the CSV file must have 11 comma-separated field
 
 <em>field#0</em> is always "TransferToSkywallet"
 
-field#1 is always "stack"
+<em>field#1</em> is always "stack"
 
-field#2 holds the amount to transfer
+<em>field#2</em> holds the amount to transfer
 
-field#3 through field#7 are zeroes
+<em>field#3</em> through <em>field#7</em> are zeroes
 
-field#8 must hold a recipient skywallet address
+<em>field#8</em> must hold a recipient skywallet address
 
-field#9 is a memo
+<em>field#9</em> is a memo
 
-field#10 holds key-value metadata. Optional.
+<em>field#10</em> holds key-value metadata. Optional.
 
-field#11 can be "ready" or "skip"
+<em>field#11</em> can be "ready" or "skip"
 
 Exapmle of a CSV file
 ```csv
