@@ -2338,7 +2338,7 @@ class RaidaJS {
 
           mparts[rIdx] = {
             'stripe' : serverResponse.stripe,
-            'mirror' : serverResponse.mirror,
+            'mirror1' : serverResponse.mirror,
             'mirror2' : serverResponse.mirror2,
           }
 
