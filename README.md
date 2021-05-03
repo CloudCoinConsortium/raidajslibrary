@@ -1545,13 +1545,21 @@ The apiBillPay function can be used to transfer CloudCoins from a skywallet to m
 https://github.com/CloudCoinConsortium/CloudCoin/tree/master/Merchant%20Tools/BillPay
 
 According to the standards above the CSV file must have 11 comma-separated fields:
-field#0 is always "TransferToSkywallet"
+
+<em>field#0</em> is always "TransferToSkywallet"
+
 field#1 is always "stack"
+
 field#2 holds the amount to transfer
+
 field#3 through field#7 are zeroes
+
 field#8 must hold a recipient skywallet address
+
 field#9 is a memo
+
 field#10 holds key-value metadata. Optional.
+
 field#11 can be "ready" or "skip"
 
 Exapmle of a CSV file
