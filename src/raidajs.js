@@ -2378,6 +2378,10 @@ class RaidaJS {
 
       rv.metadata = odata.metadata
       rv.data = odata.data
+      if ('proofdata' in odata) {
+        rv.proofdata = odata.proofdata
+        rv.protocol = 1
+      }
 
 
       return rv
