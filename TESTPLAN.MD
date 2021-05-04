@@ -41,7 +41,7 @@ in a successful test r.code is expected to be 0x0. apiShowRecords can be used to
 #### testing
 automated test running 'let r = await raidaJS.apiEcho()'
 #### method
-turn on/off connecting to specific or many raida.
+turn on/off connecting to specific or many raida. implemented with callbacks that reject responses from certain raida
 check r.onlineServers and r.details[] for expected Results
 #### expected
 with no connection to Raida2, r.onlineServers == 24, and r.details[2] == NULL
@@ -51,4 +51,25 @@ are to be expected
 
 ### apiDetect
 #### testing
-automated test await raidaJS.apiDetect(params) using fake params to check responses
+automated test 'let r = await raidaJS.apiDetect(params)' using fake params to check responses
+#### method
+fake sn and an will be sent to ensure proper responses. then if test coin data is supplied that info will be used in tests
+#### expected
+expecting r.status == 'done' r.result.coinSN0 info to match given params. if testing for errors r.errorText should match the error that's being tested
+
+
+### apiNFTInsert
+#### testing
+automated test let r = await apiNFTInsert(params).
+#### methods
+test coin needs to be provided. false info will also be given to test error codes. test coin and image data will be hard coded into the test.
+#### expected
+expect appropriate error codes to show up in r.code. 0x0 for success. apiNFTRead test will be used for verification
+
+### apiNFTRead
+#### testing
+automated test let r = await apiNFTRead(params) following test of apiNFTInsert
+#### methods
+use same test coin as the test for apiNFTInsert.
+#### expected
+expected return data should match the data given in the apiNFTInsert test. r.code should always be 0x0 if test was successful
