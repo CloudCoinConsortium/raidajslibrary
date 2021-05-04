@@ -181,7 +181,10 @@ let options = {
 	ddnsServer: "ddns.cloudcoin.global",
 
   // Maximum coins to deal at a time
-  maxCoinsPerIteraiton: 200
+  maxCoinsPerIteraiton: 200,
+
+  // Maximum size for NFT Token and ID Proof Picture. Default is 6Mb
+  maxNFTSize: 6000000,
 
   // Sentry DSN. If passed the library will report errors to Sentry
   sentryDSN: "https://b332c30ba22b4dd199765eb244dd776c@o565766.ingest.sentry.io/5710548"
@@ -1372,7 +1375,15 @@ let c = r.apiShowRecords(trdata, () => {}).then(response => {
 
 #### apiNFTInsert
 
-Function uploads an NFT token to the RAIDA and assotiates it with a CloudCoin
+Function uploads an NFT token to the RAIDA and assotiates it with a CloudCoin. The caller can include an optional ID Proof picture (jpeg or png).
+The function can receive a protocol version.
+
+Two protocol versions are supported:
+
+0 - Data is passed as a base64-encoded message which is further split into 25 chunks with two mirrors each
+
+1 - The same is protocol 0 but it also accepts ID Proof Picture as a parameter
+
 
 Input:
 ```js
@@ -1389,7 +1400,10 @@ Input:
   // Base64 data
   "data" : string,
 
-  // Protocol version. Default is 0 which is the only protocol supported now
+  // Base64 data for ID Proof Picture
+  "proofdata": string,
+
+  // Protocol version. Only 0 and 1 are supported
   "protocol" : 0,
 
   // Metadata
@@ -1405,6 +1419,9 @@ Metadata Object structure depends on the protocol version. The structure for v.0
 
   // MIME Content-Type. Optional. Default is application/octet-stream
   "mimetype" : string
+
+  // MIME type of the ID Proof. Optional. Default is image/jpeg
+  "proofmimetype" : string
 }
 ```
 
@@ -1466,6 +1483,9 @@ Output:
 
   // Data, base64 encoded
   "data": string,
+
+  // Base64 data for ID Proof Picture
+  "proofdata": string,
 
   // Protocol version
   "protocol": integer,

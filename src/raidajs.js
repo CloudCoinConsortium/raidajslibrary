@@ -40,6 +40,7 @@ class RaidaJS {
       maxFailedNumToBeCounterfeit: 12,
       syncThreshold: 13,
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
+      maxNFTSize: 6000000,
       sentryDSN: null
     , ...options}
 
@@ -2201,6 +2202,8 @@ class RaidaJS {
   async apiNFTInsert(params, callback = null) {
     this.addBreadCrumbEntry("apiNFTInsert", rv)
 
+    let size = 0
+
     if (!('coin' in params))
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
 
@@ -2215,6 +2218,7 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_METADATA, "Filename is missing")
 
     let filename = metadata.filename
+    let proofmimetype = "image/jpeg"
     let mimetype = "application/octet-stream"
     if ('mimetype' in metadata)
       mimetype = metadata.mimetype
@@ -2227,18 +2231,33 @@ class RaidaJS {
     if ('protocol' in params)
       protocol = params.protocol
 
-    if (protocol != 0)
+    if (protocol != 0 && protocol != 1)
       return this._getErrorCode(RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL, "Unsupported NFT Protocol")
+
+    size += params.data.length
+    let proofdata = null
+    if (protocol == 1) {
+      if (!('proofdata' in params))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_NFT_MISSING_ID_PROOF, "ID Proof Picture is missing")
+
+      if ('proofmimetype' in metadata)
+        proofmimetype = metadata.proofmimetype
+
+      proofdata = params.proofdata
+      size += proofdata.length
+    }
+
+    if (size > this.options.maxNFTSize)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_NFT_SIZE_IS_TOO_BIG, "The size of picture and ID proof is too big")
 
     let obj = {
       'filename' : filename,
-      'mimetype' : mimetype
+      'mimetype' : mimetype,
+      'proofmimetype' : proofmimetype
     }
 
     let rqdata = []
-    let tags = this._getNFTStringForObject(obj, params.data) 
-    console.log("tagsss")
-    console.log(tags)
+    let tags = this._getNFTStringForObject(obj, params.data, proofdata) 
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
         'sn' : coin.sn,
@@ -2297,7 +2316,6 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rqdata = []
-    console.log("tagsss")
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
         'sn' : coin.sn,
@@ -2343,12 +2361,6 @@ class RaidaJS {
           }
 
           a++
-          /*if (!('data' in serverResponse)) {
-          }
-
-          a++
-          return
-          */
         }
 
         if (serverResponse.status == "fail") {
@@ -3390,7 +3402,7 @@ class RaidaJS {
     return data
   }
 
-  _getNFTStringForObject(obj, data) {
+  _getNFTStringForObject(obj, data, proofdata) {
     let str = "[general]\n"
     for (let key in obj) {
       str += key + "=" + obj[key] + "\n"
@@ -3398,7 +3410,10 @@ class RaidaJS {
 
     let mstr = this._b64EncodeUnicode(str) 
     let finalStr = mstr + this.options.nftMetadataSeparator + data  
+    if (proofdata != null)
+      finalStr += this.options.nftMetadataSeparator + proofdata
 
+    console.log(finalStr)
     let fdata = this._splitMessage(finalStr)
 
     return fdata
@@ -3406,20 +3421,13 @@ class RaidaJS {
   }
 
   _getNFTObjectFromString(mparts) {
-    console.log("MEssage assembling")
-    console.log(mparts)
     let data = this._assembleMessage(mparts)
     if (data == null)
       return null
 
-    console.log("MEssage assembled")
-    console.log(data)
-
     let vals = data.split(this.options.nftMetadataSeparator)
-    if (vals.length != 2) 
+    if (vals.length != 2 && vals.length != 3) 
       return null
-
-    console.log(vals)
 
     let metadata
     try {
@@ -3443,6 +3451,10 @@ class RaidaJS {
     let rv =  {
       'metadata' : data['general'],
       'data' : vals[1]
+    }
+
+    if (vals.length == 3) {
+      rv.proofdata = vals[2]
     }
 
     return rv
@@ -4244,6 +4256,8 @@ RaidaJS.ERR_PARAM_INVALID_DATA = 0x1011
 RaidaJS.ERR_PARAM_MISSING_FILENAME = 0x1012
 RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL = 0x1013
 RaidaJS.ERR_PARAM_MISSING_METADATA = 0x1014
+RaidaJS.ERR_PARAM_NFT_MISSING_ID_PROOF = 0x1015
+RaidaJS.ERR_PARAM_NFT_SIZE_IS_TOO_BIG = 0x1016
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
