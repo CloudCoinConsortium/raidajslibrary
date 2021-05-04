@@ -77,6 +77,10 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiNFTDelete](README.md#apiNFTDelete)
 
+[apiBillPay](README.md#apiBillPay)
+
+[apiBillPayList](README.md#apiBillList)
+
 
 ## Installing
 
@@ -1530,6 +1534,160 @@ let data = {
 let c = r.apiNFTDelete(data, () => {}).then(response => {
   if (response.code != RaidaJS.ERR_NO_ERROR) {
     console.log("Token has been deleted")
+  }
+}
+```
+
+#### apiBillPay
+
+The apiBillPay function can be used to transfer CloudCoins from a skywallet to multiple skywallets at once. The functions accepts a CSV file that follows the BillPay standard
+
+https://github.com/CloudCoinConsortium/CloudCoin/tree/master/Merchant%20Tools/BillPay
+
+According to the standards above the CSV file must have 11 comma-separated fields:
+
+<em>field#0</em> is always "TransferToSkywallet"
+
+<em>field#1</em> is always "stack"
+
+<em>field#2</em> holds the amount to transfer
+
+<em>field#3</em> through <em>field#7</em> are zeroes
+
+<em>field#8</em> must hold a recipient skywallet address
+
+<em>field#9</em> is a memo
+
+<em>field#10</em> holds key-value metadata. Optional.
+
+<em>field#11</em> can be "ready" or "skip"
+
+Exapmle of a CSV file
+```csv
+email, stack, 100, 0,0,0,0,0, alex.skywallet.cc, Car payment,, ready
+email, stack, 150, 0,0,0,0,0, john.skywallet.cc, My debt,, ready
+email, stack, 21150, 0,0,0,0,0, roller.skywallet.cc, Chargeback,, ready
+```
+
+The function uses the Local Storage to keep track of sent payments. It is possible to use the same CSV file again to re-send unset payments if an error occurs. It is necesseary to pass a BillPay ID to assosiate the state of the payment with the CSV file. If the ID is not passed it will be generated and the payment will be rendered as a new payment.
+
+Input:
+```js
+{
+  // ID CloudCoin (SN and AN must be passed) 
+  "coin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+
+  // Holds the CVS data above
+  "paydata" : string,
+
+  // ID of the BillPay. Optional, will be generated if empty
+  "id" : string
+}
+```
+
+Output:
+```js
+// CloudCoin
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. Can be RaidaJS.ERR_SENT_PARTIALLY 
+  "code" : integer,
+
+  // Amount sent,
+  "amount : integer,
+
+  // Recipients sent. Array of successful transfers
+  "recipients": [],
+
+  // Guid of the payment
+  "id" : string
+}
+```
+
+Recipient structure
+```js
+{
+  // Skywallet address
+  "address" : string,
+
+  // Status: "ready", "skip" or "sent"
+  "status" : string
+}
+```
+
+Example:
+```js
+let cc = {
+  "sn":3788106,
+   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
+}
+
+let data = {
+  "coin" : cc,
+  "paydata" : "email, stack, 100, 0,0,0,0,0, alex.skywallet.cc, Car payment,, ready\nemail, stack, 150, 0,0,0,0,0, john.skywallet.cc, My debt,, ready\nemail, stack, 21150, 0,0,0,0,0, roller.skywallet.cc, Chargeback,, ready",
+  "id": "f2494e21fcd4e54a5acd7be6f2be6e50"
+
+}
+let c = r.apiBillPay(data, () => {}).then(response => {
+  if (response.code != RaidaJS.ERR_NO_ERROR) {
+    console.log("Billpay sent")
+    return
+  }
+
+  if (response.code == RaidaJS.ERR_SENT_PARTIALLY) {
+    console.log("Only " + response.amount + " CloudCoins sent. Try again later using the same ID: " + response.id)
+    console.log("Recipients NOT sent:")
+    for (let i = 0; i < response.recipients; i++) {
+      if (response.recipients[i].status == "ready")
+        console.log(response.recipients[i].address + ",")
+    }
+  }
+}
+```
+
+
+#### apiBillPayList
+
+The function show the status of previous BillPay payments.
+
+Input:
+```js
+{
+  // ID of the BillPay. Optional, will be generated if empty
+  "id" : string
+}
+```
+
+Output:
+```js
+// CloudCoin
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
+  "code" : integer,
+
+  // Amount sent,
+  "amount : integer,
+
+  // Array of recipients sent.
+  "recipitents": [],
+}
+```
+
+
+
+Example:
+```js
+let data = {
+  "id": "f2494e21fcd4e54a5acd7be6f2be6e50"
+}
+let c = r.apiBillPayList(data, () => {}).then(response => {
+  for (let i = 0; i < response.recipients; i++) {
+    console.log(response.recipients[i].address + ": " + response.recipients[i].status + "<br>")
   }
 }
 ```
