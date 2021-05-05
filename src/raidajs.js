@@ -586,7 +586,7 @@ class RaidaJS {
     let rquery = this.options.defaultRaidaForQuery
     let ticket = response.tickets[rquery]
     if (ticket == 'error')
-      return this._getError("Failed to get ticket from RAIDA" + rquery)
+      return this._getError("Failed to get an ID Token to register your account. Please inform support@CloudCoin.global about this problem. The most likely cause is that our server needs to have ID Tokens added. You will be able to register once the ID Tokens have been added. " + rquery)
   
 
     let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
