@@ -1582,14 +1582,16 @@ According to the standards above the CSV file must have 11 comma-separated field
 
 <em>field#11</em> can be "ready" or "skip"
 
-Exapmle of a CSV file
+Example of a CSV file
 ```csv
-email, stack, 100, 0,0,0,0,0, alex.skywallet.cc, Car payment,, ready
-email, stack, 150, 0,0,0,0,0, john.skywallet.cc, My debt,, ready
-email, stack, 21150, 0,0,0,0,0, roller.skywallet.cc, Chargeback,, ready
+TransferToSkywallet, stack, 100, 0,0,0,0,0, alex.skywallet.cc, Car payment,, ready
+TransferToSkywallet, stack, 150, 0,0,0,0,0, john.skywallet.cc, My debt,, ready
+TransferToSkywallet, stack, 21150, 0,0,0,0,0, roller.skywallet.cc, Chargeback,, ready
 ```
 
 The function uses the Local Storage to keep track of sent payments. It is possible to use the same CSV file again to re-send unset payments if an error occurs. It is necesseary to pass a BillPay ID to assosiate the state of the payment with the CSV file. If the ID is not passed it will be generated and the payment will be rendered as a new payment.
+
+if the ID is passed and the corresponding object exists in the LocalStorage then 'paydata' will be ignored and taken from the LocalStorage instead
 
 Input:
 ```js
@@ -1607,7 +1609,7 @@ Input:
   "paydata" : string,
 
   // ID of the BillPay. Optional, will be generated if empty
-  "id" : string
+  "guid" : string
 }
 ```
 
@@ -1615,7 +1617,7 @@ Output:
 ```js
 // CloudCoin
 {
-  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. Can be RaidaJS.ERR_SENT_PARTIALLY 
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. Can be RaidaJS.ERR_BILLPAY_SENT_PARTIALLY 
   "code" : integer,
 
   // Amount sent,
@@ -1625,7 +1627,7 @@ Output:
   "recipients": [],
 
   // Guid of the payment
-  "id" : string
+  "guid" : string
 }
 ```
 
@@ -1635,8 +1637,11 @@ Recipient structure
   // Skywallet address
   "address" : string,
 
-  // Status: "ready", "skip" or "sent"
-  "status" : string
+  // Status: "skip", "error" or "sent"
+  "status" : string,
+
+  // Message (Error description or success)
+  "message" : string
 }
 ```
 
@@ -1690,11 +1695,17 @@ Output:
   // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
   "code" : integer,
 
+  // Total Amount,
+  "amounttotal": integer,
+
+  // ID
+  "guid" : string,
+
   // Amount sent,
   "amount : integer,
 
   // Array of recipients sent.
-  "recipitents": [],
+  "recipients": [],
 }
 ```
 

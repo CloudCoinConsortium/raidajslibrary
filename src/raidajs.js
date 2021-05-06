@@ -41,6 +41,7 @@ class RaidaJS {
       syncThreshold: 13,
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
       maxNFTSize: 6000000,
+      billpayKey: "billpay",
       sentryDSN: null
     , ...options}
 
@@ -1628,6 +1629,220 @@ class RaidaJS {
     return rv
   }
 
+
+  // BillPay
+  async apiBillPay(params, callback = null) {
+    this.addBreadCrumbEntry("apiBillPay", params)
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+
+    let guid = this._generatePan()
+    if ('guid' in params) {
+      guid = params['guid']
+      if (!this._validateGuid(guid)) {
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
+      }
+    }
+
+    let paydata = {}
+    let v = this._getBillPayCachedObject(guid)
+    if (v != null) {
+      paydata = v
+      console.log("cached")
+      console.log(paydata)
+    } else {
+      if (!('paydata' in params))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_MISSING_PAYDATA, "Paydata is missing")
+
+      let id = this.genene
+      if (!('paydata' in params))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_MISSING_PAYDATA, "Paydata is missing")
+
+      let paydataArray = params.paydata.split("\n")
+      for (let i = 0; i < paydataArray.length; i++) {
+        let item = paydataArray[i]
+        let line = i + 1
+
+        let els = item.split(",")
+        let method = els[0].trim()
+        let fformat = els[1].trim()
+        if (method != "TransferToSkywallet")
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_INVALID_METHOD, "Invalid method. Line " + line)
+
+        if (fformat != "stack")
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_FILE_FORMAT, "Only stack format supported. Line " + line)
+
+
+        let amount = els[2].trim()
+        try {
+          amount = parseInt(amount)
+        } catch (e) { 
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT, "Incorrect Amount. Line " + line)
+        }
+
+        let d1 = els[3].trim()
+        let d5 = els[4].trim()
+        let d25 = els[5].trim()
+        let d100 = els[6].trim()
+        let d250 = els[7].trim()
+
+        if (amount < 0 || d1 != 0 || d5 != 0 || d25 != 0 || d100 != 0 || d250 != 0) {
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT, "Incorrect Amount. Amount must be positive and Denominations must be zero. Line " + line)
+        }
+
+        let to = els[8].trim()
+        let memo = els[9].trim()
+        let state = els[11].trim()
+        if (state != "ready" && state != "skip")
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS, "Invalid status. Line " + line)
+
+        if (to in paydata)
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE, "Duplicated value for " + to + ". Line " + line)
+
+        paydata[to] = {
+          'amount' : amount,
+          'state' : state,
+          'memo' : memo
+        }
+      }
+    }
+
+    let ok, errors
+
+    let rv = {
+      code: RaidaJS.ERR_NO_ERROR,
+      amount: 0,
+      recipients: [],
+      guid: guid
+    }
+
+    for (let to in paydata) {
+      let item = paydata[to]
+      let recipient = {
+        "address" : to,
+        "status" : "ready"
+      }
+      let state = item.state
+      if (state == "skip" || state == "sent") {
+        recipient.status = state
+        rv.recipients.push(recipient)
+        continue
+      }
+
+      let params = {
+        'sn' : coin.sn,
+        'an' : coin.an,
+        'to' : to,
+        'amount' : item.amount,
+        'memo' : item.memo
+      }
+
+      let lrv = await this.apiTransfer(params, callback)
+      console.log("xdone " +to)
+      console.log(rv)
+      if (lrv.status == "error") {
+        recipient.status = "error"
+        recipient.message = lrv.errorText
+        paydata[to].state = "ready"
+        rv.recipients.push(recipient)
+        rv.code = RaidaJS.ERR_BILLPAY_SENT_PARTIALLY
+        continue
+      }
+
+      paydata[to].state = "sent"
+      recipient.status = "sent"
+      recipient.message = "Success"
+      rv.amount += item.amount
+      rv.recipients.push(recipient)
+    }
+
+    this._saveBillPayCachedObject(guid, paydata)
+    return rv
+
+  }
+
+  apiBillPayList(params) {
+    if (!('guid' in params)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_GUID, "GUID is required")
+
+    let guid = params.guid
+    if (!this._validateGuid(guid)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
+
+    let obj = this._getBillPayCachedObject(guid)
+    if (obj == null)
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_RECORD_NOT_FOUND, "BillPay List not found")
+
+    let rv = {
+      code: RaidaJS.ERR_NO_ERROR,
+      amount: 0,
+      amounttotal: 0,
+      guid: guid,
+      recipients: []
+    }
+
+    rv.recipients = obj
+    for (let to in obj) {
+      let item = obj[to]
+      if (item.state == "sent")
+        rv.amount += item.amount
+
+      rv.amounttotal += item.amount
+    }
+
+
+    return rv
+  }
+
+  _saveBillPayCachedObject(guid, paydata) {
+    let key = this.options.billpayKey
+    let v = localStorage.getItem(key)
+    if (v == null) 
+      return
+
+    let obj = null
+    try {
+      obj = JSON.parse(v)
+    } catch(e) {
+      return null
+    }
+
+    obj[guid] = paydata
+
+    v = JSON.stringify(obj)
+    console.log(v)
+
+    localStorage.setItem(key, v)
+  }
+
+  _getBillPayCachedObject(guid) {
+    let key = this.options.billpayKey
+
+    let v = localStorage.getItem(key)
+    if (v == null) {
+      let obj = JSON.stringify({})
+      localStorage.setItem(key, obj)
+      return null
+    }
+
+    let obj = null
+    try {
+      obj = JSON.parse(v)
+    } catch(e) {
+      return null
+    }
+
+    if (!(guid in obj))
+      return null
+
+    return obj[guid]
+  }
+
   // Transfer
   async apiTransfer(params, callback = null) {
     this.addBreadCrumbEntry("apiTransfer", params)
@@ -1674,8 +1889,6 @@ class RaidaJS {
       from = "SN " + coin.sn
 
     let tags = this._getObjectMemo(guid, memo, params.amount, from)
-
-    
 
     let gcRqs = await this._getCoins(coin, callback)
     let sns = Object.keys(gcRqs.coins)
@@ -4262,14 +4475,27 @@ RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL = 0x1013
 RaidaJS.ERR_PARAM_MISSING_METADATA = 0x1014
 RaidaJS.ERR_PARAM_NFT_MISSING_ID_PROOF = 0x1015
 RaidaJS.ERR_PARAM_NFT_SIZE_IS_TOO_BIG = 0x1016
+RaidaJS.ERR_PARAM_BILLPAY_MISSING_PAYDATA = 0x1017
+RaidaJS.ERR_PARAM_BILLPAY_INVALID_PAYDATA = 0x1018
+RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_METHOD = 0x1019
+RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_FILE_FORMAT = 0x1020
+RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT = 0x1021
+RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS = 0x1022
+RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE = 0x1023
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
 RaidaJS.ERR_RESPONSE_FAILED_TO_BUILD_MESSAGE_FROM_CHUNKS = 0x2002
+RaidaJS.ERR_RESPONSE_RECORD_NOT_FOUND = 0x2003
+
+// Funds
+RaidaJS.ERR_NOT_ENOUGH_CLOUDCOINS = 0x4001
 
 // Network
 RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 
+// Billpay
+RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
 
 // Export to the Window Object if we are in browser
 if (_isBrowser) {
