@@ -1684,7 +1684,7 @@ Input:
 ```js
 {
   // ID of the BillPay. Optional, will be generated if empty
-  "id" : string
+  "guid" : string
 }
 ```
 
@@ -1714,7 +1714,7 @@ Output:
 Example:
 ```js
 let data = {
-  "id": "f2494e21fcd4e54a5acd7be6f2be6e50"
+  "guid": "f2494e21fcd4e54a5acd7be6f2be6e50"
 }
 let c = r.apiBillPayList(data, () => {}).then(response => {
   for (let i = 0; i < response.recipients; i++) {
