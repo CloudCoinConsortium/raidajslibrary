@@ -1353,7 +1353,7 @@ SNS Item array
 "yes", "yes", "no", "yes", "yes", 
 "yes", "yes", "no", "yes", "yes", 
 "yes", "yes", "no", "yes", "yes", 
-"yes", "yes", "no", "yes", "yes", 
+"yes", "yes", "no", "yes", "yes"
 ]
 ```
 
