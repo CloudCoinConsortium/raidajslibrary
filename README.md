@@ -1329,14 +1329,21 @@ Output:
 
   ],
 
-  // Array of Serial Numbers. Each item is an array of 25 items itself. 
-  "sns" : [
-
-  ]
+  // Object of Serial Numbers. The key in the object is Serial Number. The value in the object is an array of 25 numbers
+  "sns" : object
 }
 ```
 
-"SNS" item structure
+"SNS" object structure
+```js
+{
+  1234 : ["yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes"],
+  4567 : ["yes", "no", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes"],
+  154567 : ["no", "no", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes"]
+}
+```
+
+SNS Item array
 ```js
 // Array of 25 booleans. 'True'. Array index is a RAIDA server number. Array value says whether the coin exists on the RAIDA server
 // "yes" - coin is present on the RAIDA server
@@ -1350,6 +1357,7 @@ Output:
 ]
 ```
 
+
 Example:
 ```js
 let cc = {
@@ -1359,14 +1367,16 @@ let cc = {
 
 let trdata = {
   "coin" : cc,
-  "start_ts" : 1619359363,
-  "order_by" : "guid",
-  "order_asc" : false
 }
-let c = r.apiShowRecords(trdata, () => {}).then(response => {
+let c = r.apiHealthCheck(trdata, () => {}).then(response => {
   if (response.code != RaidaJS.ERR_NO_ERROR) {
-    for (let record in response.records) {
-      console.log("Transaction " + record.guid + " amount: " + record.amount)
+    console.log("Balance: " + response.balance)
+    for (let i = 0; i < 25; i++) {
+      console.log("raida " + i + " balance:" + r.balances[i] + ", content balance " + r.show_balances[i])
+      for (let sn in response.sns) {
+        let arr = response.sns[sn]
+        console.log("SN #" + sn + " present on this raida: " + response.sns[sn][i])
+      }
     }
   }
 }
