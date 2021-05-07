@@ -2448,6 +2448,9 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL, "Unsupported NFT Protocol")
 
     size += params.data.length
+    if (size == 0) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA, "Data is empty")
+    }
     let proofdata = null
     if (protocol == 1) {
       if (!('proofdata' in params))
@@ -4482,6 +4485,7 @@ RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_FILE_FORMAT = 0x1020
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT = 0x1021
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS = 0x1022
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE = 0x1023
+RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA = 0x1024
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
