@@ -782,11 +782,93 @@ class RaidaJS {
     return mainPromise
   }
 
+  // SuperFix
+  async _realSuperFix(rIdx, coins, callback = null) {
+    let rqdata = this._formRequestData(coins)
+    for (let i = 0; i < this._totalServers; i++)
+      rqdata[i]['b'] = 't'
+
+    let rv = {
+      'fixedcoins' : []
+    }
+
+    rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
+    let resultData = await this._getGenericBriefMainPromise(rqs, coins)
+    console.log("mdata")
+    console.log(resultData)
+    if (resultData.status != "done") {
+      rv.notfixed = coins.length
+      return rv
+    }
+
+    if (!('tickets' in resultData)) {
+      return rv
+    }
+
+    console.log(resultData)
+    let sns = []
+    let pans = []
+    let tickets = []
+    for (let sn in resultData['result']) {
+      let coin = resultData['result'][sn]
+      if (coin.result != this.__frackedResult) {
+        continue
+      }
+
+      sns.push(coin.sn)
+      pans.push(coin.an[rIdx])
+    }
+
+    if (sns.length == 0)
+      return rv
+
+    for (let i = 0; i < this._totalServers; i++) {
+      let ticket = resultData.tickets[i]
+
+      if (!ticket || i == rIdx) {
+        tickets[i] = false
+        continue
+      }
+
+      tickets[i] = ticket
+    }
+
+    rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata[i] = {
+        'sn' : sns,
+        'pan' : pans,
+        'r' : tickets
+      }
+    }
+
+    let a, f, e
+    a = f = e = 0
+    console.log("Doing sfix")
+    console.log(rqdata)
+    let rqs = this._launchRequests("super_fix", rqdata, 'GET', callback, [rIdx])
+    let sfixResultData = await this._getGenericBriefMainPromise(rqs, coins)
+    if (sfixResultData.status != "done") {
+      return rv
+    }
+
+    for (let sn in sfixResultData.result) {
+      let result = sfixResultData.result[sn]
+
+      if (result.authentic == 1) {
+        rv.fixedcoins.push(sn)
+      }
+    }
+
+    return rv
+  }
+
   // FixFracked
   async apiFixfracked(params, callback = null) {
     this.addBreadCrumbEntry("apiFixFracked", params)
 
     let coins = []
+    let superfixCoins = []
 
     // Filter out fracked coins
     for (let k in params) {
@@ -806,14 +888,64 @@ class RaidaJS {
 
       coin.pownArray = coin.pownstring.split("")
       coin.pownstring = ""
+
+      let fc = 0
+      let needSuperfix = false
       for (let x = 0; x < this._totalServers; x++) {
-        /*if (coin.pownArray[x] == 'f') {
-          coin.an[x] = this._generatePan()
-          coin.pan[x] = coin.an[x]
+        if (coin.pownArray[x] == 'f') {
+          fc++
+          if (fc == 5) {
+            superfixCoins.push(coin)
+            needSuperfix = true
+            break
+          }
+          //coin.an[x] = this._generatePan()
+          //coin.pan[x] = coin.an[x]
+        } else {
+          fc = 0
         }
-        */
       }
+
+      if (needSuperfix)
+        continue
+
       coins.push(coin)
+    }
+
+    let rv = {
+      status: 'done',
+      totalNotes: coins.length,
+      fixedNotes: 0,
+      result : {},
+    }
+
+    // Coins for Superfix. Very slow.
+    if (superfixCoins.length > 0) {
+      for (let i = 0; i < this._totalServers; i++) {
+        let ctfix = []
+        for (let j = 0; j < superfixCoins.length; j++) {
+          if (superfixCoins[j].pownArray[i] != 'f')
+            continue;
+
+          ctfix.push(superfixCoins[j])
+        }
+
+        if (ctfix.length != 0) {
+          // Doing SuperFix
+          let srv = await this._realSuperFix(i, ctfix, callback)
+
+          for (let v = 0; v < srv.fixedcoins.length; v++) {
+            let sn = srv.fixedcoins[v]
+            // Find coin by SN
+            for (let c = 0; c < superfixCoins.length; c++) {
+              if (superfixCoins[c].sn == sn) {
+                superfixCoins[c].an[i] = superfixCoins[c].pan[i]
+                superfixCoins[c].pownArray[i] = 'p'
+              }
+            }
+          }
+        }
+      }
     }
 
     // Round 1
@@ -845,12 +977,6 @@ class RaidaJS {
       }
     }
 
-    let rv = {
-      status: 'done',
-      totalNotes: coins.length,
-      fixedNotes: 0,
-      result : {},
-    }
 
     // Form the result after all fixings are done
     let a, c, e
@@ -880,6 +1006,35 @@ class RaidaJS {
 
       rv.result[coins[i].sn] = coins[i]
     }
+
+    // Append SuperFix results
+    for (let i = 0; i < superfixCoins.length; i++) {
+      a = c = e = 0
+      // Go over pownArray
+      for (let j = 0; j < superfixCoins[i].pownArray.length; j++) {
+        if (superfixCoins[i].pownArray[j] == 'p')
+          a++;
+        else if (superfixCoins[i].pownArray[j] == 'f')
+          c++;
+        else 
+          e++;
+
+        superfixCoins[i].pownstring += superfixCoins[i].pownArray[j]
+        superfixCoins[i].errors = e
+        superfixCoins[i].authentic = a
+        superfixCoins[i].counterfeit = c
+      }
+
+      delete superfixCoins[i].pownArray
+      delete superfixCoins[i].pan
+      if (c == 0 && e == 0) {
+        superfixCoins[i].result = "fixed"
+        rv.fixedNotes++
+      }
+
+      rv.result[superfixCoins[i].sn] = superfixCoins[i]
+    }
+
 
     this.addBreadCrumbReturn("apiFixFracked", rv)
     return rv
@@ -2520,6 +2675,61 @@ class RaidaJS {
     return mainPromise
   }
 
+  // Delete NFT
+  async apiNFTDelete(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTDelete", rv)
+
+    let size = 0
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        'sn' : coin.sn,
+        'an' : coin.an[i]
+      })
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Deleted successfully"
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("nft/delete", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to delete NFT token. Too many error responses from RAIDA")
+
+      return rv
+    })
+
+    this.addBreadCrumbReturn("apiNFTDelete", rv)
+
+    return mainPromise
+  }
+
   // Read NFT
   async apiNFTRead(params, callback = null) {
     this.addBreadCrumbEntry("apiNFTRead", rv)
@@ -2993,7 +3203,8 @@ class RaidaJS {
         errorNotes: 0,
         frackedNotes: 0,
         result : [],
-        details : []
+        details : [],
+        tickets: []
       }
   
       // Return value
@@ -3027,6 +3238,7 @@ class RaidaJS {
           })
           return
         }
+
         if (serverResponse === "network") {
           Object.keys(rcoins).map(sn => {
             rcoins[sn].errors++;
@@ -3044,6 +3256,11 @@ class RaidaJS {
           }
           return
         }
+
+        if ('ticket' in sr) {
+          rv.tickets[raidaIdx] = sr.ticket
+        }
+
 
         let s = sr.status
         if (sr.status == 'allpass') {
@@ -3064,7 +3281,6 @@ class RaidaJS {
           }
           return
         }
-
 
         if (sr.status == 'mixed') {
           let message = sr.message
@@ -3095,12 +3311,12 @@ class RaidaJS {
             }
           }
 
-
+/*
           for (let i = 0; i < coins.length; i++) {
             let sn = coins[i].sn
             rcoins[sn].counterfeit = this._totalServers
             rcoins[sn].pownstring = "f".repeat(this._totalServers)
-          }
+          }*/
           return
         }
 
