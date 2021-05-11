@@ -1,5 +1,43 @@
 # Here are the test plans for each of our raidajs functions:
 
+
+### apiNFTInsert
+#### testing
+use nodejs to automate test: let r = await apiNFTInsert(params).
+#### methods
+start with testing for error codes. false and missing info will also be given to test error codes.
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
+3. no metadata given (code 0x1014)
+4. no filename within metadata (code 0x1014)
+5. no data given (code 0x1010)
+6. empty data (code 0x1024)
+7. too much data (code 0x1016)
+8. unsupported protocol (code 0x1013)
+9. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided. test coin and image data will be hard coded into the test.
+10. successful nft insert (code 0x0)
+#### expected
+expect appropriate error codes to show up in r.code. 0x0 for success. apiNFTRead test will be used for verification
+
+### apiNFTRead
+#### testing
+use nodejs to automate test: let r = await apiNFTRead(params), following the test of apiNFTInsert
+#### methods
+test for error codes using false and missing info
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
+3. fake/counterfeit coin (code 0x2001)
+use same test coin as the test for apiNFTInsert.
+4. successful nft read (code 0x0)
+#### expected
+expected return data should match the data given in the apiNFTInsert test. r.code should always be 0x0 if test was successful
+
+
+
+
+
 ### apiCreateRecord
 #### testing
 automate 'let r = await raidaJS.apiCreateRecord(data)'
@@ -56,20 +94,3 @@ automated test 'let r = await raidaJS.apiDetect(params)' using fake params to ch
 fake sn and an will be sent to ensure proper responses. then if test coin data is supplied that info will be used in tests
 #### expected
 expecting r.status == 'done' r.result.coinSN0 info to match given params. if testing for errors r.errorText should match the error that's being tested
-
-
-### apiNFTInsert
-#### testing
-automated test let r = await apiNFTInsert(params).
-#### methods
-test coin needs to be provided. false info will also be given to test error codes. test coin and image data will be hard coded into the test.
-#### expected
-expect appropriate error codes to show up in r.code. 0x0 for success. apiNFTRead test will be used for verification
-
-### apiNFTRead
-#### testing
-automated test let r = await apiNFTRead(params) following test of apiNFTInsert
-#### methods
-use same test coin as the test for apiNFTInsert.
-#### expected
-expected return data should match the data given in the apiNFTInsert test. r.code should always be 0x0 if test was successful
