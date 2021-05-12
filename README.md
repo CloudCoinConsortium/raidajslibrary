@@ -897,8 +897,7 @@ Data returned
 
 ```js
 {
-  status : "done"  // "done" or "error"
-  message : ""     // Information
+  code: RaidaJS.ERR_NO_ERROR
 }
 ```
 
