@@ -83,6 +83,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiBillPayList](README.md#apiBillList)
 
+[apiGenerateCard](README.md#apiGenerateCard)
+
 
 ## Installing
 
@@ -187,6 +189,9 @@ let options = {
 
   // Maximum size for NFT Token and ID Proof Picture. Default is 6Mb
   maxNFTSize: 6000000,
+
+  // Default URL for Debit Card PNG template
+  urlCardTemplate: "https://cloudcoinconsortium.com/img/card.png",
 
   // Sentry DSN. If passed the library will report errors to Sentry
   sentryDSN: "https://b332c30ba22b4dd199765eb244dd776c@o565766.ingest.sentry.io/5710548"
@@ -1795,6 +1800,76 @@ let data = {
 let c = r.apiBillPayList(data, () => {}).then(response => {
   for (let i = 0; i < response.recipients; i++) {
     console.log(response.recipients[i].address + ": " + response.recipients[i].status + "<br>")
+  }
+}
+```
+
+#### apiGenerateCard
+
+The function generates a PNG Debit Card, writes the Debit Card data on top of it and embeds a CloudCoin in the Card
+
+Input:
+```js
+{
+  // ID CloudCoin (SN and AN must be passed) 
+  "coin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+
+  // Credit Card Number
+  "card_number" : integer,
+
+  // Template URL. Optional. If omitted the dafault value from the constructor will be used (https://cloudcoinconsortium.com/img/card.png)
+  "urlCardTemplate" : string,
+
+  // Expiration Date MM/YY
+  "expiration_date" : string,
+
+  // SkyWallet Name (e.g. my.skywallet.cc)
+  "name": string,
+
+  // CVV
+  "cvv" : string
+}
+```
+
+Output:
+```js
+// CloudCoin
+{
+
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
+  "code" : integer,
+
+  // Base64-encode PNG Card Data
+  "data": string
+}
+```
+
+
+
+Example:
+```js
+let cc = {
+  "sn":3788106,
+   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
+}
+
+let data = {
+  "coin": cc,
+  "card_number": 4012913767549423,
+  "cvv": 1234,
+  "name": "my.skywallet.cc",
+  "expiration_date": "07/24"
+}
+let c = r.apiGenerateCard(data, () => {}).then(response => {
+  if (response.code == RaidaJS.ERR_NO_ERROR) {
+    let image = new Image()
+    image.src = "data:image/png;base64," + response.data
   }
 }
 ```

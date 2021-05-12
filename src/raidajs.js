@@ -43,6 +43,7 @@ class RaidaJS {
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
       maxNFTSize: 6000000,
       billpayKey: "billpay",
+      urlCardTemplate: "https://cloudcoinconsortium.com/img/card.png",
       sentryDSN: null
     , ...options}
 
