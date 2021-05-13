@@ -52,12 +52,13 @@ module.exports = function(options) {
 					use: ['babel-loader', 'eslint-loader'],
 				}
 			]
-		},
+		}
 
-    externals : { canvas: {} }
 	}
 
-
+  if (!isWeb) {
+    config.externals = { canvas: {} }
+  }
 	config.plugins.push(new CleanWebpackPlugin());
 
 
