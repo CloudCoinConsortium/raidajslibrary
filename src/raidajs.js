@@ -2,6 +2,8 @@ import axios from 'axios'
 import qs from 'qs'
 import CryptoJS from 'crypto-js'
 
+import { createCanvas, loadImage } from 'canvas'
+
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
 
@@ -1375,6 +1377,129 @@ class RaidaJS {
     }
 
     return rv
+  }
+
+  // Generates a PNG Card
+  async apiGenerateCard(params, callback = null) {
+    this.addBreadCrumbEntry("apiGenerateCard", params)
+
+    if (!('cardnumber' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_CARD_NUMBER, "Card Number is not defined")
+
+    if (!('cvv' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_CVV, "CVV is not defined")
+
+    if (!('username' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "Username is not defined")
+
+    let username = params['username']
+    if (!('expiration_date' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE, "Expiration Date is not defined")
+
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve DNS")
+
+    let cardnumber = params['cardnumber']
+    let cvv = params['cvv']
+    if (!this._validateCard(cardnumber, cvv))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Invalid Card or CVV")
+
+    let ed = params['expiration_date']
+    if (!/^\d{2}\/\d{2}/.test(ed))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE, "Invalid Expiration Date")
+
+     
+    let cardData = await this.apiGetCCByCardData(params) 
+    if (cardData.status != 'done')
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Failed to Generate CloudCoin")
+
+    let cc = cardData.cc
+    let url = this.options.urlCardTemplate
+    if ('url_card_template' in params)
+      url = params['url_card_template']
+
+    let response
+    try {
+      let imgAx = axios.create()
+      response = await imgAx.get(url, {
+        responseType: 'arraybuffer'
+      })
+    } catch (e) {
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE, "Failed to get PNG template from " + url)
+    }
+
+    if (response.status != 200)
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE, "Invalid Code " + response.status)
+
+    if (response.headers['content-type'] != "image/png")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE, "Downloaded template is not a PNG file")
+
+    let data = new Uint8Array(response.data)
+    data = "data:image/png;base64," + this._base64ArrayBuffer(data)
+
+    // Draw
+    let ip = 0
+    ip = "1." + ((cc.sn >> 16) & 0xff) + "." + ((cc.sn >> 8) & 0xff) + "." + ((cc.sn) & 0xff)
+    let ddata = await this.apiDrawCardData(data, username, cardnumber, cvv, ed, ip)
+
+    // Embed Stack
+    let esparams = {
+      coins: [cc],
+      template: ddata
+    }
+    
+    let bdata = await this.embedInImage(esparams)
+    if ('status' in params && params.status == 'error')
+      return this._getErrorCode(RaidaJS.ERR_FAILED_TO_EMBED_STACK, "Failed to embed stack")
+
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : 'Card Generated',
+      'data' : bdata
+    }
+
+    return rv
+
+  }
+  
+  async apiDrawCardData(data, username, cardnumber, cvv, ed, ip) {
+    let canvas = createCanvas(700, 906)
+    let context = canvas.getContext('2d')
+
+
+    let pm = loadImage(data).then(image => {
+      context.drawImage(image, 0, 0);
+      context.lineWidth = 1;
+      context.fillStyle = "#FFFFFF";
+      context.lineStyle = "#FFFFFF";
+      context.font = "bold 48px 'Overpass Mono'";
+      context.fillText(cardnumber, 64, 285);
+      context.font = "35px sans-serif";
+      context.fillText(ed, 450, 362);
+      context.font = "50px sans-serif";
+      context.fillText(username, 64, 425);
+      context.fillStyle = "#dddddd";
+      context.lineStyle = "#dddddd";
+      context.font = "bold 17px 'Overpass Mono'";
+      context.fillText("Keep these numbers secret. Do not give to merchants.", 64, 320);
+      context.lineWidth = 1;
+      context.fillStyle = "#000000";
+      context.lineStyle = "#000000";
+      context.font = "35px sans-serif";
+      context.fillText( "CVV (Keep Secret): " + cvv, 64, 675);
+      context.fillStyle = "#FFFFFF";
+      context.lineStyle = "#FFFFFF";
+      context.font = "18px sans-serif";
+      context.fillText( "IP " + ip, 174, 736);
+     
+      return canvas.toDataURL()
+    })
+
+
+
+    return pm
   }
 
   // embed stack into image
@@ -4805,11 +4930,17 @@ RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS = 0x1022
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE = 0x1023
 RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA = 0x1024
 RaidaJS.ERR_PARAM_MISSING_DNS_NAME = 0x1025
+RaidaJS.ERR_PARAM_MISSING_CARD_NUMBER = 0x1026
+RaidaJS.ERR_PARAM_INVALID_CARD = 0x1027
+RaidaJS.ERR_PARAM_MISSING_CVV = 0x1028
+RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE = 0x1029
+RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE = 0x1030
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
 RaidaJS.ERR_RESPONSE_FAILED_TO_BUILD_MESSAGE_FROM_CHUNKS = 0x2002
 RaidaJS.ERR_RESPONSE_RECORD_NOT_FOUND = 0x2003
+RaidaJS.ERR_FAILED_TO_EMBED_STACK = 0x2004
 
 // Funds
 RaidaJS.ERR_NOT_ENOUGH_CLOUDCOINS = 0x4001
@@ -4819,6 +4950,8 @@ RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 RaidaJS.ERR_FAILED_TO_GET_TICKETS = 0x5002
 RaidaJS.ERR_DNS_RECORD_ALREADY_EXISTS = 0x5003
 RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE = 0x5004
+RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE = 0x5005
+RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE = 0x506
 
 // Billpay
 RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
