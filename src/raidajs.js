@@ -2,6 +2,8 @@ import axios from 'axios'
 import qs from 'qs'
 import CryptoJS from 'crypto-js'
 
+import { createCanvas, loadImage } from 'canvas'
+
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
 
@@ -29,6 +31,7 @@ class RaidaJS {
       changeMakerId: 2,
       debug: false,
       defaultRaidaForQuery: 7,
+      defaultRaidaForBackupQuery: 14,
       ddnsServer: "ddns.cloudcoin.global",
       // max coins to transfer at a time
       maxCoins: 20000,
@@ -42,6 +45,7 @@ class RaidaJS {
       freeCoinURL: "https://cloudcoin.global/freecoin.php",
       maxNFTSize: 6000000,
       billpayKey: "billpay",
+      urlCardTemplate: "https://cloudcoinconsortium.com/img/card.png",
       sentryDSN: null
     , ...options}
 
@@ -612,45 +616,63 @@ class RaidaJS {
     return mainPromise
   }
 
-  // Register DNS
-  async apiRegisterSkyWallet(params, callback = null) {
-    this.addBreadCrumbEntry("apiRegisterSkyWallet", params)
-
-    if (!('name' in params) || !('coin' in params))
-      return this._getError("Invalid params")
-
-    let coin = params['coin']
-    if (!this._validateCoin(coin)) {
-      return this._getError("Failed to validate coin")
-    }
-
-    let name = await this._resolveDNS(params['name'])
-    if (name != null) 
-      return this._getError("DNS name already exists")
-
-    name = params['name']
-    let response = await this.apiGetticket(params['coin'], callback)
+  async _getDefaultTicket(cc, callback) {
+    let response = await this.apiGetticket(cc, callback)
     if (response.status != "done")
-      return this._getError("Failed to get tickets")
-
-    if (callback != null)
-      callback(0, "register_dns")
+      return null
 
     let rquery = this.options.defaultRaidaForQuery
     let ticket = response.tickets[rquery]
-    if (ticket == 'error')
-      return this._getError("Failed to get an ID Token to register your account. Please inform support@CloudCoin.global about this problem. The most likely cause is that our server needs to have ID Tokens added. You will be able to register once the ID Tokens have been added. " + rquery)
-  
+    if (ticket == 'error' || ticket == 'network') {
+      rquery = this.options.defaultRaidaForBackupQuery
+      ticket = response.tickets[rquery]
+      console.log("doing backup tickets")
+      if (ticket == 'error' || ticket == 'network') {
+        return null
+      }
+    }
 
-    let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
+    return [ticket, rquery]
+  }
+
+  // Delete DNS
+  async apiDeleteSkyWallet(params, callback = null) {
+    this.addBreadCrumbEntry("apiDeleteSkyWallet", params)
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    if (!('name' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "DNS Name in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+    }
+
+    let tdata = await this._getDefaultTicket(params['coin'], callback)
+    if (tdata == null) {
+       return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
+    }
+
+    if (callback != null)
+      callback(0, "deleting_dns")
+
+    let ticket = tdata[0]
+    let rquery = tdata[1]
+    let name = params['name']
+
+    console.log("got delete ticket " + ticket)
+
+    let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns_delete.php?"
     url += "sn=" + coin.sn + "&username=" + name + "&ticket=" + ticket + "&raidanumber=" + rquery
-    response = await this._axInstance.get(url)
+    let response = await this._axInstance.get(url)
     if (response.status != 200)
-      return this._getError("DNSService returned wrong code: " + response.status)
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong code: " + response.status)
 
     let data = response.data
     if (!('status' in data)) 
-      return this._getError("DNSService returned wrong data. No status found")
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong data. No status found")
 
     if (data.status != 'success') {
       let msg = data.status
@@ -659,13 +681,91 @@ class RaidaJS {
           msg += " " + data.errors[0]['message']
         }
       }
-      return this._getError("DNSService returned incorrect status: " + msg)
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned incorrect status: " + msg)
+    }
+
+    this.addBreadCrumbReturn("apiDeleteSkyWallet", "done")
+    return {
+      // Legacy
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Registered Successfully"
+    }
+
+  }
+
+  // Register DNS
+  async apiRegisterSkyWallet(params, callback = null) {
+    this.addBreadCrumbEntry("apiRegisterSkyWallet", params)
+
+    if (!('coin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
+
+    if (!('name' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "DNS Name in missing")
+
+    let coin = params['coin']
+    if (!this._validateCoin(coin)) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
+    }
+
+    if (callback != null)
+      callback(0, "resolve_dns")
+
+    let name = await this._resolveDNS(params['name'])
+    if (name != null) {
+      if ('overwrite' in params && params['overwrite'] == true) {
+        let rv = await this.apiDeleteSkyWallet(params, callback)
+        if (rv.code != RaidaJS.ERR_NO_ERROR) {
+          return rv
+        }
+      } else {
+        return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_ALREADY_EXISTS, "DNS name already exists")
+      }
+    }
+
+    name = params['name']
+        console.log("waited3")
+
+    let tdata = await this._getDefaultTicket(params['coin'], callback)
+    if (tdata == null) {
+        return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
+    }
+
+    let ticket = tdata[0]
+    let rquery = tdata[1]
+
+    console.log("got ticket " + ticket)
+
+    if (callback != null)
+      callback(0, "register_dns")
+
+    let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
+    url += "sn=" + coin.sn + "&username=" + name + "&ticket=" + ticket + "&raidanumber=" + rquery
+    let response = await this._axInstance.get(url)
+    if (response.status != 200)
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong code: " + response.status)
+
+    let data = response.data
+    if (!('status' in data)) 
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong data. No status found")
+
+    if (data.status != 'success') {
+      let msg = data.status
+      if ('errors' in data) {
+        if (data.errors.length != 0) {
+          msg += " " + data.errors[0]['message']
+        }
+      }
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned incorrect status: " + msg)
     }
 
     this.addBreadCrumbReturn("apiRegisterSkyWallet", "done")
     return {
+      // Legacy
       'status' : 'done',
-      'message' : 'SkyWallet has been successfully registered'
+
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Registered Successfully"
     }
   }
 
@@ -1098,7 +1198,7 @@ class RaidaJS {
       return this._getError("Email is not defined")
 
     let password = params['password']
-    let email = params['password']
+    let email = params['email']
     if (password.length < this.options.minPasswordLength)
       return this._getError("Password length must be at least 16 characters")
 
@@ -1277,6 +1377,129 @@ class RaidaJS {
     }
 
     return rv
+  }
+
+  // Generates a PNG Card
+  async apiGenerateCard(params, callback = null) {
+    this.addBreadCrumbEntry("apiGenerateCard", params)
+
+    if (!('cardnumber' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_CARD_NUMBER, "Card Number is not defined")
+
+    if (!('cvv' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_CVV, "CVV is not defined")
+
+    if (!('username' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "Username is not defined")
+
+    let username = params['username']
+    if (!('expiration_date' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE, "Expiration Date is not defined")
+
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve DNS")
+
+    let cardnumber = params['cardnumber']
+    let cvv = params['cvv']
+    if (!this._validateCard(cardnumber, cvv))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Invalid Card or CVV")
+
+    let ed = params['expiration_date']
+    if (!/^\d{2}\/\d{2}/.test(ed))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE, "Invalid Expiration Date")
+
+     
+    let cardData = await this.apiGetCCByCardData(params) 
+    if (cardData.status != 'done')
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Failed to Generate CloudCoin")
+
+    let cc = cardData.cc
+    let url = this.options.urlCardTemplate
+    if ('url_card_template' in params)
+      url = params['url_card_template']
+
+    let response
+    try {
+      let imgAx = axios.create()
+      response = await imgAx.get(url, {
+        responseType: 'arraybuffer'
+      })
+    } catch (e) {
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE, "Failed to get PNG template from " + url)
+    }
+
+    if (response.status != 200)
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE, "Invalid Code " + response.status)
+
+    if (response.headers['content-type'] != "image/png")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE, "Downloaded template is not a PNG file")
+
+    let data = new Uint8Array(response.data)
+    data = "data:image/png;base64," + this._base64ArrayBuffer(data)
+
+    // Draw
+    let ip = 0
+    ip = "1." + ((cc.sn >> 16) & 0xff) + "." + ((cc.sn >> 8) & 0xff) + "." + ((cc.sn) & 0xff)
+    let ddata = await this.apiDrawCardData(data, username, cardnumber, cvv, ed, ip)
+
+    // Embed Stack
+    let esparams = {
+      coins: [cc],
+      template: ddata
+    }
+    
+    let bdata = await this.embedInImage(esparams)
+    if ('status' in params && params.status == 'error')
+      return this._getErrorCode(RaidaJS.ERR_FAILED_TO_EMBED_STACK, "Failed to embed stack")
+
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : 'Card Generated',
+      'data' : bdata
+    }
+
+    return rv
+
+  }
+  
+  async apiDrawCardData(data, username, cardnumber, cvv, ed, ip) {
+    let canvas = createCanvas(700, 906)
+    let context = canvas.getContext('2d')
+
+
+    let pm = loadImage(data).then(image => {
+      context.drawImage(image, 0, 0);
+      context.lineWidth = 1;
+      context.fillStyle = "#FFFFFF";
+      context.lineStyle = "#FFFFFF";
+      context.font = "bold 48px 'Overpass Mono'";
+      context.fillText(cardnumber, 64, 285);
+      context.font = "35px sans-serif";
+      context.fillText(ed, 450, 362);
+      context.font = "50px sans-serif";
+      context.fillText(username, 64, 425);
+      context.fillStyle = "#dddddd";
+      context.lineStyle = "#dddddd";
+      context.font = "bold 17px 'Overpass Mono'";
+      context.fillText("Keep these numbers secret. Do not give to merchants.", 64, 320);
+      context.lineWidth = 1;
+      context.fillStyle = "#000000";
+      context.lineStyle = "#000000";
+      context.font = "35px sans-serif";
+      context.fillText( "CVV (Keep Secret): " + cvv, 64, 675);
+      context.fillStyle = "#FFFFFF";
+      context.lineStyle = "#FFFFFF";
+      context.font = "18px sans-serif";
+      context.fillText( "IP " + ip, 174, 736);
+     
+      return canvas.toDataURL()
+    })
+
+
+
+    return pm
   }
 
   // embed stack into image
@@ -2429,6 +2652,74 @@ class RaidaJS {
     return d
   }
 
+  // Recovers a SkyWallet
+  async apiRecoverIDCoin(params, callback) {
+    this.addBreadCrumbEntry("apiRecoverIDCoin", params)
+    if (!('paycoin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "PayCoin in missing")
+
+    let coin = params['paycoin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate paycoin")
+
+    if (!('skywallet_name' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "Skywallet Name is missing")
+
+    if (!('email' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_EMAIL, "Email is missing")
+
+    let email = params['email']
+    let username = params['skywallet_name']
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn: coin.sn,
+        an: coin.an[i],
+        sns: [sn],
+        email: email,
+      })
+    }
+
+    let rv = {
+      code: RaidaJS.ERR_NO_ERROR,
+      text: "Recovery Request has been sent"
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("recover_by_email", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to send request. Too many error responses from RAIDA")
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiRecoverIDCoin", rv)
+
+    return mainPromise
+  }
+
+  // Shows Balance
   async apiShowBalance(coin, callback) {
     this.addBreadCrumbEntry("apiShowBalance", coin)
 
@@ -4385,6 +4676,10 @@ class RaidaJS {
   _getErrorCode(code, msg) {
     this.addBreadCrumbError("Returning Error Code To Client: " + code + ": " + msg)
     return {
+      // Legacy
+      'status' : 'error',
+      'errorText': msg,
+
       'code' : code,
       'text' : msg
     }
@@ -4702,17 +4997,30 @@ RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT = 0x1021
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS = 0x1022
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE = 0x1023
 RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA = 0x1024
+RaidaJS.ERR_PARAM_MISSING_DNS_NAME = 0x1025
+RaidaJS.ERR_PARAM_MISSING_CARD_NUMBER = 0x1026
+RaidaJS.ERR_PARAM_INVALID_CARD = 0x1027
+RaidaJS.ERR_PARAM_MISSING_CVV = 0x1028
+RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE = 0x1029
+RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE = 0x1030
+RaidaJS.ERR_PARAM_MISSING_EMAIL = 0x1031
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
 RaidaJS.ERR_RESPONSE_FAILED_TO_BUILD_MESSAGE_FROM_CHUNKS = 0x2002
 RaidaJS.ERR_RESPONSE_RECORD_NOT_FOUND = 0x2003
+RaidaJS.ERR_FAILED_TO_EMBED_STACK = 0x2004
 
 // Funds
 RaidaJS.ERR_NOT_ENOUGH_CLOUDCOINS = 0x4001
 
 // Network
 RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
+RaidaJS.ERR_FAILED_TO_GET_TICKETS = 0x5002
+RaidaJS.ERR_DNS_RECORD_ALREADY_EXISTS = 0x5003
+RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE = 0x5004
+RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE = 0x5005
+RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE = 0x506
 
 // Billpay
 RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
