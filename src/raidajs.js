@@ -1198,7 +1198,7 @@ class RaidaJS {
       return this._getError("Email is not defined")
 
     let password = params['password']
-    let email = params['password']
+    let email = params['email']
     if (password.length < this.options.minPasswordLength)
       return this._getError("Password length must be at least 16 characters")
 
@@ -2652,6 +2652,74 @@ class RaidaJS {
     return d
   }
 
+  // Recovers a SkyWallet
+  async apiRecoverIDCoin(params, callback) {
+    this.addBreadCrumbEntry("apiRecoverIDCoin", params)
+    if (!('paycoin' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "PayCoin in missing")
+
+    let coin = params['paycoin']
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate paycoin")
+
+    if (!('skywallet_name' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "Skywallet Name is missing")
+
+    if (!('email' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_EMAIL, "Email is missing")
+
+    let email = params['email']
+    let username = params['skywallet_name']
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn: coin.sn,
+        an: coin.an[i],
+        sns: [sn],
+        email: email,
+      })
+    }
+
+    let rv = {
+      code: RaidaJS.ERR_NO_ERROR,
+      text: "Recovery Request has been sent"
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let rqs = this._launchRequests("recover_by_email", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to send request. Too many error responses from RAIDA")
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiRecoverIDCoin", rv)
+
+    return mainPromise
+  }
+
+  // Shows Balance
   async apiShowBalance(coin, callback) {
     this.addBreadCrumbEntry("apiShowBalance", coin)
 
@@ -4935,6 +5003,7 @@ RaidaJS.ERR_PARAM_INVALID_CARD = 0x1027
 RaidaJS.ERR_PARAM_MISSING_CVV = 0x1028
 RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE = 0x1029
 RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE = 0x1030
+RaidaJS.ERR_PARAM_MISSING_EMAIL = 0x1031
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001

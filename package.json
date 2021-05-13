@@ -1,6 +1,6 @@
 {
   "name": "raidajs",
-  "version": "0.3.39",
+  "version": "0.3.40",
   "description": "RAIDA JavaScript Library",
   "main": "lib/raidajs.js",
   "scripts": {
@@ -57,6 +57,7 @@
     "eslint-loader": "^4.0.2",
     "kind-of": "^6.0.3",
     "minimist": ">=1.2.2",
+    "node-loader": "^2.0.0",
     "object-assign": "^4.1.1",
     "path": "^0.12.7",
     "uglifyjs-webpack-plugin": "^2.2.0",
