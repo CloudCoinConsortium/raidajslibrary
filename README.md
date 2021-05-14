@@ -85,6 +85,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiGenerateCard](README.md#apiGenerateCard)
 
+[apiRecoverIDCoin](README.md#apiRecoverIDCoin)
+
 
 ## Installing
 
@@ -1811,26 +1813,17 @@ The function generates a PNG Debit Card, writes the Debit Card data on top of it
 Input:
 ```js
 {
-  // ID CloudCoin (SN and AN must be passed) 
-  "coin" : {
-    // Serial Number
-    "sn" : interger,
-
-    // Array of 25 Authenticity Numbers
-    "an" : []
-  },
-
   // Credit Card Number
-  "card_number" : integer,
+  "cardnumber" : integer,
 
   // Template URL. Optional. If omitted the dafault value from the constructor will be used (https://cloudcoinconsortium.com/img/card.png)
-  "urlCardTemplate" : string,
+  "url_card_template" : string,
 
   // Expiration Date MM/YY
   "expiration_date" : string,
 
   // SkyWallet Name (e.g. my.skywallet.cc)
-  "name": string,
+  "username": string,
 
   // CVV
   "cvv" : string
@@ -1839,9 +1832,7 @@ Input:
 
 Output:
 ```js
-// CloudCoin
 {
-
   // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
   "code" : integer,
 
@@ -1854,22 +1845,71 @@ Output:
 
 Example:
 ```js
-let cc = {
-  "sn":3788106,
-   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
-}
-
 let data = {
-  "coin": cc,
-  "card_number": 4012913767549423,
+  "cardnumber": 4012913767549423,
   "cvv": 1234,
-  "name": "my.skywallet.cc",
+  "username": "my.skywallet.cc",
   "expiration_date": "07/24"
 }
+
 let c = r.apiGenerateCard(data, () => {}).then(response => {
   if (response.code == RaidaJS.ERR_NO_ERROR) {
     let image = new Image()
     image.src = "data:image/png;base64," + response.data
+  }
+}
+```
+
+
+#### apiRecoverIDCoin
+
+The function recovers a lost ID coin. The user must pay 1 CloudCoin to restore the coin. 
+
+Input:
+```js
+{
+  // Payment Coin. Must be 1 CC 
+  "paycoin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+
+  // Name of the SkyWallet to restore
+  "skywallet_name" : integer,
+
+  // The email where the ID coin will be sent. Must be the same email that was used as a recovery one
+  "email" : string,
+}
+```
+
+Output:
+```js
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
+  "code" : integer,
+}
+```
+
+
+
+Example:
+```js
+let cc = {
+  "sn":3788106,
+   "an":["2c4b523bfa2b54a3c2cfec376336ef6e","dc1edbe0708e179e84e6ee0185849811","1b32715dea8bd66c6136f2bb226a9783","cf4a451a23d256299f306e0170632e9c","7bee1781698bfd26a40d384e3e9ba233","57a59cc3fe0a9e2b0ef55d9ee7d83aa0","8741aba5f9ada55cd4cc7ad9ff8cfc5e","27a940f79e5bb895218dc6fee619439a","6d7611020258dc07544255aecb05f94e","8fd75c4a543107c762473cb5c6814b25","b8fb577d62bee5e47622084deec2dc72","2dddefde6b2da5f85d8a50af78a8c6ef","0152c280f2b1df572e679edc5bf5aae4","213bce1b1e301b90e82189ba0a908e89","2f35eda22494903e5c680856304610b1","64bdfe44432444514e8234fa115b9352","6943424a235be73f86a065fe97756b03","e037963736d439d4bc72efa49aa4f2e5","da555eaad78e610e5beb51ec5d051781","47849f44ee8ee1d0d41782ca21dacdc3","4ec1fea2c736e8e82e1836cef7512cdb","de9ec5865fa289a09059ab8a87e73ac4","fb5fca0a5196333023043f080a6fb666","c8df8adefe8b25103358df30491c5409","dae2b572756a596fa8c97f55e8712854"]
+}
+let data = {
+  "paycoin": cc,
+  "skywallet_name": "my.skywallet.cc",
+  "email": "my@recoveryemail.com"
+}
+
+let c = r.apiRecoverIDCoin(data, () => {}).then(response => {
+  if (response.code == RaidaJS.ERR_NO_ERROR) {
+    console.log("Recovery Request has been sent")
   }
 }
 ```

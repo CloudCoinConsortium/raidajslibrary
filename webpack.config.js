@@ -10,6 +10,7 @@ var assign = require('object-assign');
 module.exports = function(options) {
 	console.log(options)
 
+
 	let isProd = options.production == 'prod'
 	let isWeb = options.web == 'web'
 	let outdir, filename;
@@ -51,7 +52,9 @@ module.exports = function(options) {
 					use: ['babel-loader', 'eslint-loader'],
 				}
 			]
-		}
+		},
+
+    externals : { canvas: {} }
 	}
 
 
