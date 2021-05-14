@@ -43,7 +43,7 @@ expected return data should match the data given in the apiNFTInsert test. r.cod
 automate 'let r = await raidaJS.apiCreateRecord(data)'
 #### methods
 use invalid params to test error codes
-info for coin, mount, memo, initiator_id, initiator_description_url, initiator_image_url can be fabricated. each event_code and initiator_type will be used in the tests. let guid be generated. a test coin may need to be provided
+info for coin, amount, memo, initiator_id, initiator_description_url, initiator_image_url can be fabricated. each event_code and initiator_type will be used in the tests. let guid be generated. a test coin may need to be provided
 #### expected
 if invalid params are used, their associated error codes are expected in r.code
 in a successful test r.code is expected to be 0x0. the following test of apiShowRecords can be used to check if recorded data matches what was provided and the guid that was generated. manually confirming RAIDA's data may be necessary if unexpected results
