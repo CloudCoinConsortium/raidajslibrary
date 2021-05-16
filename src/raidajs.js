@@ -2618,7 +2618,7 @@ class RaidaJS {
       return rv
     })
 
-    return rv
+    return rqs
   }
 
   // Get Free Coin
@@ -2857,25 +2857,88 @@ class RaidaJS {
       rv.balances = balances
       rv.raidaStatuses = rv.raidaStatuses.join("")
 
-
+      let thiz = this
       if (Object.keys(balances).length > 1) {
-        console.log("NEED FIX TRANSFER " + Object.keys(balances).length )
-          /*
-    lrv = await this.apiShowCoins(coin, callback)
-    if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
-      rv.sns = lrv.coinsPerRaida
-    }
+        let fnpm = async function() {
+          let response = await thiz.apiShowCoins(coin, callback)
+          if (!('code' in response) || response.code != RaidaJS.ERR_NO_ERROR) 
+            return rv
 
-  async apiFixTransfer(coinsPerRaida, callback) {
-    */
-      }
+          let h = {}
+          let iters = thiz.options.maxCoinsPerIteraiton
+          for (let k in response.coinsPerRaida) {
+            h[k] = response.coinsPerRaida[k]
+
+            iters++
+            if (iters >= thiz.options.maxCoinsPerIteraiton) {
+              console.log("calling fix_transferrr")
+              console.log(h)
+              await thiz.apiFixTransferSync(response.coinsPerRaida)
+
+              h = {}
+              iters = 0
+            }
+          }
+
+          if (needFix) {
+            console.log("fixed1")
+            rv.triedToFix = true
+            coin.pownstring = rv.raidaStatuses
+            coin.result = thiz.__frackedResult
+            let fresponse = await thiz.apiFixfracked([coin], callback)
+            if (fresponse.status != 'done')
+              return rv
+
+            if (fresponse.fixedNotes == 1) {
+              rv.fixedCoin = true
+            }
+            console.log("fixed2")
+          }
+
+          console.log("sd done")
+          console.log(response)
+
+        }().then(response => {
+          console.log("rddd")
+          console.log(response)
+
+          return rv
+        })
+
+        return fnpm
 /*
-    let pm = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        this._fixTransfer()
-      }, 500)
-    })
+        console.log("NEED FIX TRANSFER " + Object.keys(balances).length)
+        let ftrpm = this.apiShowCoins(coin, callback).then(response => {
+          if (('code' in response) && response.code == RaidaJS.ERR_NO_ERROR) {
+
 */
+
+/*
+*/
+            /*
+            let ftrpm2 = this.apiFixTransferSync(response.coinsPerRaida).then(response => {
+              if (needFix) {
+                  if (response.status != 'done')
+                    return rv
+
+                  if (response.fixedNotes == 1) {
+                    rv.fixedCoin = true
+                  }
+
+                  return rv
+                })
+                return fpm
+              }
+
+              return rv
+            })
+            return ftrpm2
+          }
+        })
+        return ftrpm
+          */
+      }
+
       if (needFix) {
         rv.triedToFix = true
         coin.pownstring = rv.raidaStatuses
@@ -2889,15 +2952,12 @@ class RaidaJS {
           }
 
           return rv
-
         })
 
         return fpm
       }
 
       this.addBreadCrumbReturn("apiShowBalance", rv)     
-
-
 
       return rv
 
