@@ -383,10 +383,10 @@ class RaidaJS {
 
     let ts = 0
     if ('start_ts' in params) {
+      ts = params['start_ts']
       if (ts < 0 || ts > 1919445247) {
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_TIMESTAMP, "Invalid Timestamp")
       }
-      ts = params['start_ts']
     }
 
     let rqdata = []
@@ -474,6 +474,10 @@ class RaidaJS {
         e++
       })
 
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to read statements. Too many error responses from RAIDA")
+
       for (let statement_id in statements) {
         let item = statements[statement_id]
         let odata = this._getDataFromObjectMemo(item.mparts)
@@ -489,9 +493,6 @@ class RaidaJS {
       this._syncAdd(serverResponses, "statement_id", "statements/sync/sync_add")
       this._syncDelete(serverResponses, "statement_id", "statements/sync/sync_delete")
 
-      let result = this._gradeCoin(a, f, e)
-      if (!this._validResult(result))
-        return this._getError("Failed to get statements. Too many error responses from RAIDA")
 
       return rv
     })
@@ -831,7 +832,16 @@ class RaidaJS {
 
       })
 
-      rv.sns = Object.keys(rv.sns).filter(item => rv.sns[item] > (this._totalServers - this.options.maxFailedRaidas) )
+      rv.sns = Object.keys(rv.sns).filter(item => {
+        let a = rv.sns[item]
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) 
+          return true
+
+        return false
+      })
+
       for (let sn of rv.sns)
         rv.total += this.getDenomination(sn)
 
@@ -1586,6 +1596,7 @@ class RaidaJS {
   async apiSend(params, callback = null) {
     this.addBreadCrumbEntry("apiSend", params)
 
+    this._rarr = {}
     //this.addSentryError("superError", 19, {'xxx':'yyy'})
 
     if (!'coins' in params) {
@@ -2474,23 +2485,39 @@ class RaidaJS {
 
       let mnrv = { d1 : {}, d5 : {}, d25 : {}, d100 : {}}
       for (let sn in nrv.d1) {
-        if (nrv.d1[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+        let a = nrv.d1[sn]
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) {
           mnrv.d1[sn] = sn
+        }
       }
 
       for (let sn in nrv.d5) {
-        if (nrv.d5[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+        let a = nrv.d5[sn]
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) {
           mnrv.d5[sn] = sn
+        }
       }
 
       for (let sn in nrv.d25) {
-        if (nrv.d25[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+        let a = nrv.d25[sn]
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) {
           mnrv.d25[sn] = sn
+        }
       }
 
       for (let sn in nrv.d100) {
-        if (nrv.d100[sn] >= this._totalServers - this.options.maxFailedRaidas) 
+        let a = nrv.d100[sn]
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) {
           mnrv.d100[sn] = nrv.d100[sn]
+        }
       }
 
       this.addBreadCrumbReturn("showChange", mnrv)     
@@ -2740,8 +2767,11 @@ class RaidaJS {
     let rv = {
       code: RaidaJS.ERR_NO_ERROR,
       balances: [],
+      balance: 0,
       balancesPerRaida: [],
-      raidaStatuses: []
+      raidaStatuses: [],
+      triedToFix: false,
+      fixedCoin: false
     }
     for (let i = 0; i < this._totalServers; i++) {
       rv.raidaStatuses[i] = "u"
@@ -2749,34 +2779,41 @@ class RaidaJS {
     }
 
     let balances = {}
+    let ra, re, rf
+    ra = re = rf = 0
     let rqs = this._launchRequests("show_transfer_balance", rqdata, 'GET', callback).then(response => {
       this._parseMainPromise(response, 0, rv, (response, rIdx) => {
         if (response == "network") {
           rv.raidaStatuses[rIdx] = "n"
           rv.balancesPerRaida[rIdx] = null
+          re++
           return
         }
         if (response == "error") {
           rv.raidaStatuses[rIdx] = "e"
           rv.balancesPerRaida[rIdx] = null
+          re++
           return
         }
 
         if (!('status' in response)) {
           rv.raidaStatuses[rIdx] = "e"
           rv.balancesPerRaida[rIdx] = null
+          re++
           return
         }
 
         if (response.status == "fail") {
           rv.raidaStatuses[rIdx] = "f"
           rv.balancesPerRaida[rIdx] = null
+          rf++
           return
         }
 
         if (response.status !== "pass") {
           rv.raidaStatuses[rIdx] = "e"
           rv.balancesPerRaida[rIdx] = null
+          re++
           return
         }
 
@@ -2789,12 +2826,79 @@ class RaidaJS {
         }
 
         balances[b]++
+        ra++
       })
 
+      // Check if Fracked
+      let needFix = false
+      let rresult = this._gradeCoin(ra, rf, re)
+      if (rresult == this.__frackedResult) {
+        needFix = true
+      }
+
+      
+      let max = 0
+      let balance = -1
+      for (let k in balances) {
+        if (max < balances[k]) {
+          max = balances[k]
+          balance = k
+        }
+      }
+
+      let a = max
+      let f = this._totalServers - a
+      let result = this._gradeCoin(a, f, 0)
+      if (!this._validResult(result)) 
+        balance = -1
+
+
+      rv.balance = balance
       rv.balances = balances
       rv.raidaStatuses = rv.raidaStatuses.join("")
 
+
+      if (Object.keys(balances).length > 1) {
+        console.log("NEED FIX TRANSFER " + Object.keys(balances).length )
+          /*
+    lrv = await this.apiShowCoins(coin, callback)
+    if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
+      rv.sns = lrv.coinsPerRaida
+    }
+
+  async apiFixTransfer(coinsPerRaida, callback) {
+    */
+      }
+/*
+    let pm = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        this._fixTransfer()
+      }, 500)
+    })
+*/
+      if (needFix) {
+        rv.triedToFix = true
+        coin.pownstring = rv.raidaStatuses
+        coin.result = this.__frackedResult
+        let fpm = this.apiFixfracked([coin], callback).then(response => {
+          if (response.status != 'done')
+            return rv
+
+          if (response.fixedNotes == 1) {
+            rv.fixedCoin = true
+          }
+
+          return rv
+
+        })
+
+        return fpm
+      }
+
       this.addBreadCrumbReturn("apiShowBalance", rv)     
+
+
+
       return rv
 
     })
@@ -2804,8 +2908,16 @@ class RaidaJS {
 
   // Resolves a SkyWallet
   async apiResolveSkyWallet(hostname) {
-    return this._resolveDNS(hostname)
+    let sn = await this._resolveDNS(hostname)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
 
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'sn' : sn
+    }
+
+    return rv
   }
 
   // Health Check
@@ -2830,17 +2942,7 @@ class RaidaJS {
     let lrv = await this.apiShowBalance(coin, callback)
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
       rv.balances = lrv.balancesPerRaida
-      let max = 0
-      let balance = -1
-      for (let k in lrv.balances) {
-        if (max < lrv.balances[k]) {
-          max = lrv.balances[k]
-          balance = k
-        }
-      }
-
-      rv.balance = balance
-
+      rv.balance = lrv.balance
     }
 
     lrv = await this.apiShowCoins(coin, callback)
@@ -3349,7 +3451,10 @@ class RaidaJS {
         }
       }
       for (let sn in rv.coins) {
-        if (rv.coins[sn].passed >= this._totalServers - this.options.maxFailedRaidas) {
+        let a = rv.coins[sn].passed
+        let f = this._totalServers - a
+        let result = this._gradeCoin(a, f, 0)
+        if (this._validResult(result)) {
           nrv.coins[sn] = {
             denomination: this.getDenomination(sn)
           }

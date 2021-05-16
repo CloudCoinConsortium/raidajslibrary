@@ -851,9 +851,23 @@ Data returned
 
 ```js
 {
-  balances: {}	// Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
-  raidaStatuses: "ppppppppppppppppppppppppp" // pownstring
-  balancesPerRaida: [], // Array of balances for each RAIDA server
+  // Hashmap of balances. Keys are the balances and values are the number of Raida servers that voted for this balance. Raida servers may disagree about the balance. In this case there will be multiple keys
+  balances: {},
+
+  // Pownstring
+  raidaStatuses: "ppppppppppppppppppppppppp". 
+
+  // Array of balances for each RAIDA server
+  balancesPerRaida: [],
+
+  // 'Winner' balance. It is -1 if the balance can't be reliably determined
+  balance: integer,
+
+  // Flag showing that FrackFixer was called during the call
+  triedToFix: boolean,
+
+  // If FrackFixed was called the flag show the result of fixing
+  fixedCoin: boolean
 }
 ```
 
