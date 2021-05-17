@@ -87,6 +87,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiRecoverIDCoin](README.md#apiRecoverIDCoin)
 
+[apiRestoreCard](README.md#apiRestoreCard)
+
 
 ## Installing
 
@@ -1924,6 +1926,65 @@ let data = {
 let c = r.apiRecoverIDCoin(data, () => {}).then(response => {
   if (response.code == RaidaJS.ERR_NO_ERROR) {
     console.log("Recovery Request has been sent")
+  }
+}
+```
+
+
+#### apiRestoreCard
+
+Given username, email and password the function returns a PNG Credit Card along with the CardNumber, CVV and expiration date
+
+Input:
+```js
+{
+  // Username
+  "username" : string,
+
+  // Password
+  "password": string,
+
+  // Recovery Email
+  "email" : string
+}
+```
+
+Output:
+```js
+{
+  // Always RaidaJS.ERR_NO_ERROR (0x0) if the response is successful. 
+  "code" : integer,
+
+  // Base64-encode PNG Card Data
+  "data": string,
+
+  // CloudCoin
+  "coin" : object,
+
+  // cardnumber
+  "cardnumber" : integer,
+
+  // cvv
+  "cvv" : integer
+
+  // Expiration Date MM/YY
+  "expiration_date" : string,
+}
+```
+
+
+
+Example:
+```js
+let data = {
+  "username": "my.skywallet.cc",
+  "password": "mypassword123",
+  "email": "myemail@domain.com"
+}
+
+let c = r.apiRestoreCardcoverIDCoin(data, () => {}).then(response => {
+  if (response.code == RaidaJS.ERR_NO_ERROR) {
+    console.log("CardNumber " + response.cardnumber + ", CVV " + response.cvv)
   }
 }
 ```

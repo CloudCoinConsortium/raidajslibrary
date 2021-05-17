@@ -1389,6 +1389,76 @@ class RaidaJS {
     return rv
   }
 
+  // Restore Card
+  async apiRestoreCard(params, callback = null) {
+    if (!('username' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DNS_NAME, "Username is not defined")
+
+    let username = params['username']
+    let sn = await this._resolveDNS(username)
+    if (sn == null)
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
+
+    params.sn = sn
+    let rv = await this.apiCreateCCForRegistration(params) 
+    if (rv.status != "done")
+      return rv
+
+    let precardNumber = "401" + rv.rand
+    let reverse = precardNumber.split("").reverse().join("");
+    let total = 0;
+    for (let i = 0; i < reverse.length; i++) {
+      let num = parseInt(reverse.charAt(i))
+      if ((i + 3) % 2) {
+        num *= 2
+        if (num > 9)
+          num -= 9
+      }
+
+      total += num;
+    }
+
+    let remainder = 10 - (total % 10);
+    if (remainder == 10)
+      remainder = 0
+
+    let cardNumber = precardNumber + remainder
+    if (!this._validateCard(cardNumber, rv.cvv))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Invalid Card")
+
+    let fiveYearsFromNow = new Date();
+    fiveYearsFromNow.setFullYear(fiveYearsFromNow.getFullYear() + 5);
+    let month = fiveYearsFromNow.getMonth() + 1;
+    if (month < 10)
+      month = "0" + month
+
+    let year = fiveYearsFromNow.getFullYear().toString().substr(-2);
+    let ed = month + '/' + year
+
+    let data = {
+      'cardnumber' : cardNumber,
+      'cvv': rv.cvv,
+      'username' : username,
+      'expiration_date' : ed
+    }
+
+    let res = await this.apiGenerateCard(data, callback)
+    if (res.code != RaidaJS.ERR_NO_ERROR)
+      return res
+
+    rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'cardnumber' : cardNumber,
+      'cvv': rv.cvv,
+      'expiration_date': ed,
+      'data': ''
+    }
+
+
+    return rv
+
+  }
+
   // Generates a PNG Card
   async apiGenerateCard(params, callback = null) {
     this.addBreadCrumbEntry("apiGenerateCard", params)
@@ -1416,7 +1486,7 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Invalid Card or CVV")
 
     let ed = params['expiration_date']
-    if (!/^\d{2}\/\d{2}/.test(ed))
+    if (!/^\d{1,2}\/\d{2}/.test(ed))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE, "Invalid Expiration Date")
 
      
@@ -2881,7 +2951,6 @@ class RaidaJS {
           }
 
           if (needFix) {
-            console.log("fixed1")
             rv.triedToFix = true
             coin.pownstring = rv.raidaStatuses
             coin.result = thiz.__frackedResult
@@ -2892,51 +2961,12 @@ class RaidaJS {
             if (fresponse.fixedNotes == 1) {
               rv.fixedCoin = true
             }
-            console.log("fixed2")
           }
-
-          console.log("sd done")
-          console.log(response)
-
         }().then(response => {
-          console.log("rddd")
-          console.log(response)
-
           return rv
         })
 
         return fnpm
-/*
-        console.log("NEED FIX TRANSFER " + Object.keys(balances).length)
-        let ftrpm = this.apiShowCoins(coin, callback).then(response => {
-          if (('code' in response) && response.code == RaidaJS.ERR_NO_ERROR) {
-
-*/
-
-/*
-*/
-            /*
-            let ftrpm2 = this.apiFixTransferSync(response.coinsPerRaida).then(response => {
-              if (needFix) {
-                  if (response.status != 'done')
-                    return rv
-
-                  if (response.fixedNotes == 1) {
-                    rv.fixedCoin = true
-                  }
-
-                  return rv
-                })
-                return fpm
-              }
-
-              return rv
-            })
-            return ftrpm2
-          }
-        })
-        return ftrpm
-          */
       }
 
       if (needFix) {
