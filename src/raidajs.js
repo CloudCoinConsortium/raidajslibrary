@@ -3104,10 +3104,20 @@ class RaidaJS {
     if (size > this.options.maxNFTSize)
       return this._getErrorCode(RaidaJS.ERR_PARAM_NFT_SIZE_IS_TOO_BIG, "The size of picture and ID proof is too big")
 
+    let title = ""
+    let description = ""
+    if ('title' in metadata)
+      title = metadata.title
+
+    if ('description' in metadata)
+      description = metadata.description
+
     let obj = {
       'filename' : filename,
       'mimetype' : mimetype,
-      'proofmimetype' : proofmimetype
+      'proofmimetype' : proofmimetype,
+      'title' : title,
+      'description' : description
     }
 
     let rqdata = []

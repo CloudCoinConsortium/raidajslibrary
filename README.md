@@ -1521,6 +1521,12 @@ Metadata Object structure depends on the protocol version. The structure for v.0
 
   // MIME type of the ID Proof. Optional. Default is image/jpeg
   "proofmimetype" : string
+
+  // Title (Optional)
+  "title" : string,
+
+  // Description (Optional)
+  "description": string
 }
 ```
 
