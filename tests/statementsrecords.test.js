@@ -1,4 +1,3 @@
-const puppeteer = require('puppeteer')
 const RaidaJS = require('raidajs').default
 const expect = require('chai').expect
 
