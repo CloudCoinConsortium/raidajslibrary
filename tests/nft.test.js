@@ -1,6 +1,7 @@
-const puppeteer = require('puppeteer')
-const RaidaJS = require('raidajs').default
+//const puppeteer = require('puppeteer')
+const RaidaJS = require('../lib/raidajs').default
 const expect = require('chai').expect
+
 
 
 describe('raidajs nft insert / read error codes', () => {
@@ -108,7 +109,7 @@ expect(r.code).to.equal(0x2001);
 })
 
 describe('raidajs nft insert / read error codes', () => {
-  raidajs
+  let raidajs
   let coin
   let data
   let metadata

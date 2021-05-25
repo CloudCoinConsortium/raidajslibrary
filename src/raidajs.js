@@ -2,7 +2,6 @@ import axios from 'axios'
 import qs from 'qs'
 import CryptoJS from 'crypto-js'
 
-import { createCanvas, loadImage } from 'canvas'
 
 import * as Sentry from "@sentry/browser";
 import { Integrations } from "@sentry/tracing";
@@ -15,8 +14,6 @@ let _isBrowser = false
 if (typeof(process.browser) !== 'undefined' && process.browser) {
   _isBrowser = true
 }
-
-
 
 class RaidaJS {
   // Contrustor
@@ -1545,11 +1542,20 @@ class RaidaJS {
   }
   
   async apiDrawCardData(data, username, cardnumber, cvv, ed, ip) {
-    let canvas = createCanvas(700, 906)
+    let c
+    try {
+      c  = await require('canvas')
+      if (!c)
+        return this._getErrorCode(RaidaJS.ERR_NO_CANVAS_MODULE, "Canvas module not found")
+    } catch(e) {
+        return this._getErrorCode(RaidaJS.ERR_NO_CANVAS_MODULE, "Canvas module not found")
+    }
+
+    let canvas = c.createCanvas(700, 906)
     let context = canvas.getContext('2d')
 
 
-    let pm = loadImage(data).then(image => {
+    let pm = c.loadImage(data).then(image => {
       context.drawImage(image, 0, 0);
       context.lineWidth = 1;
       context.fillStyle = "#FFFFFF";
@@ -5229,6 +5235,9 @@ RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE = 0x506
 
 // Billpay
 RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
+
+// Modules
+RaidaJS.ERR_NO_CANVAS_MODULE = 0x7001
 
 // Export to the Window Object if we are in browser
 if (_isBrowser) {
