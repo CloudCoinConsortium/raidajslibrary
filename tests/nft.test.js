@@ -1,5 +1,4 @@
-//const puppeteer = require('puppeteer')
-const RaidaJS = require('../lib/raidajs').default
+const RaidaJS = require('raidajs').default
 const expect = require('chai').expect
 
 
@@ -141,6 +140,7 @@ metadata = { "filename": "test.jpg"}
   expect(r.code).to.equal(0x0);
   })
   it('nftread (code 0x0)', async function(){
+    coin.sn = 6379371
 params = {"coin": coin, "protocol" : 0}
 r = await raidajs.apiNFTRead(params)
 expect(r.code).to.equal(0x0);

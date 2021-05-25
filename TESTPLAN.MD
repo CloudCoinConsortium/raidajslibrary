@@ -1,6 +1,7 @@
 # Here are the test plans for each of our raidajs functions:
 
 
+# NFT
 ### apiNFTInsert
 #### testing
 use nodejs to automate test: let r = await apiNFTInsert(params).
@@ -37,7 +38,7 @@ expected return data should match the data given in the apiNFTInsert test. r.cod
 
 
 
-
+# statements and records
 ### apiCreateRecord
 #### testing
 automate 'let r = await raidaJS.apiCreateRecord(data)'
@@ -71,26 +72,38 @@ if invalid params are used, their associated error codes are expected in r.code
 in a successful test r.code is expected to be 0x0. apiShowRecords can be used to confirm that the test record is deleted
 
 
-
-
-
-
-### apiEcho
+# Bill Pay
+### apiBillPay
 #### testing
-automated test running 'let r = await raidaJS.apiEcho()'
-#### method
-turn on/off connecting to specific or many raida. implemented with callbacks that reject responses from certain raida
-check r.onlineServers and r.details[] for expected Results
+use nodejs to automate test: let r = await apiBillPay(params).
+#### methods
+start with testing for error codes. false and missing info will also be given to test error codes.
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
+3. no paydata given (code 0x1017)
+4. invalid paydata method (code 0x1019)
+5. invalid paydata fileformat  (code 0x1020)
+6. invalid paydata amount: written in text (code 0x1021)
+7. invalid paydata denominations (code 0x1021)
+7. invalid paydata status (code 0x1022)
+8. invalid guid (code 0x1004)
+
+
+
+for a successful test coin needs to be provided. test coin and image data will be hard coded into the test.
+10. successful Bill pay (code 0x0)
 #### expected
-with no connection to Raida2, r.onlineServers == 24, and r.details[2] == NULL
-are to be expected
+expect appropriate error codes to show up in r.code. 0x0 for success. apiBillPayList test will be used for verification
 
-
-
-### apiDetect
+### apiBillPayList
 #### testing
-automated test 'let r = await raidaJS.apiDetect(params)' using fake params to check responses
-#### method
-fake sn and an will be sent to ensure proper responses. then if test coin data is supplied that info will be used in tests
+use nodejs to automate test: let r = await apiBillPayList(params), following the test of apiBillPay
+#### methods
+test for error codes using false and missing info
+1. no guid given (code 0x1003)
+2. invalid guid (code 0x1004)
+3. no record made (code 0x2003)
+use same guid as the test for apiBillPay.
+4. successful bill pay list (code 0x0)
 #### expected
-expecting r.status == 'done' r.result.coinSN0 info to match given params. if testing for errors r.errorText should match the error that's being tested
+expected return data should match the data given in the apiBillPay test. r.code should always be 0x0 if test was successful
