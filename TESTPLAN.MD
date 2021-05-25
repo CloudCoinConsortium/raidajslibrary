@@ -72,7 +72,38 @@ in a successful test r.code is expected to be 0x0. apiShowRecords can be used to
 
 
 
+### apiBillPay
+#### testing
+use nodejs to automate test: let r = await apiBillPay(params).
+#### methods
+start with testing for error codes. false and missing info will also be given to test error codes.
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
+3. no paydata given (code 0x1017)
+4. invalid paydata method (code 0x1019)
+5. invalid paydata fileformat  (code 0x1020)
+6. invalid paydata amount  (code 0x1021)
+7. invalid paydata status (code 0x1022)
+8. invalid guid (code 0x1004)
 
+
+for a successful test coin needs to be provided. test coin and image data will be hard coded into the test.
+10. successful nft insert (code 0x0)
+#### expected
+expect appropriate error codes to show up in r.code. 0x0 for success. apiBillPayList test will be used for verification
+
+### apiBillPayList
+#### testing
+use nodejs to automate test: let r = await apiBillPayList(params), following the test of apiBillPay
+#### methods
+test for error codes using false and missing info
+1. no guid given (code 0x1003)
+2. invalid guid (code 0x1004)
+3. no record made (code 0x2003)
+use same guid as the test for apiBillPay.
+4. successful nft read (code 0x0)
+#### expected
+expected return data should match the data given in the apiBillPay test. r.code should always be 0x0 if test was successful
 
 
 ### apiEcho

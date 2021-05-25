@@ -4,7 +4,8 @@ const expect = require('chai').expect
 
 
 describe('bill pay error codes', () => {
-
+  let browser
+  let page
   let raidajs
   let coin
   let paydata
@@ -13,6 +14,14 @@ describe('bill pay error codes', () => {
   let guid
 
     before(async function(){
+      browser = await puppeteer.launch({
+        headless: true,
+        slowMo:10,
+        devtools: false,
+        })
+        page = await browser.newPage()
+        await page.setDefaultTimeout(10000)
+        await page.setDefaultNavigationTimeout(20000)
       raidajs = new RaidaJS({timeout: 20000, debug: true})
       coin = {
   	sn: 20,
@@ -35,6 +44,7 @@ describe('bill pay error codes', () => {
 
     })
     after(async function() {
+        await browser.close()
     })
     beforeEach(async function(){
 
@@ -108,7 +118,8 @@ describe('bill pay error codes', () => {
 })
 
 describe('bill pay', () => {
-
+  let browser
+  let page
   let raidajs
   let coin
   let amount
@@ -118,6 +129,14 @@ describe('bill pay', () => {
   let guid
 
     before(async function(){
+      browser = await puppeteer.launch({
+        headless: false,
+        slowMo:10,
+        devtools: false,
+        })
+        page = await browser.newPage()
+        await page.setDefaultTimeout(10000)
+        await page.setDefaultNavigationTimeout(20000)
       raidajs = new RaidaJS({timeout: 20000, debug: true})
       coin = {
   	sn: 6379371,
@@ -132,6 +151,7 @@ describe('bill pay', () => {
 
     })
     after(async function() {
+        await browser.close()
     })
     beforeEach(async function(){
 
