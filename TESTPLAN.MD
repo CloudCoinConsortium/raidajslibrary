@@ -147,30 +147,107 @@ expected return data should match the data given in the apiBillPay test. r.code 
 # Account Maintenence
 ### apiHealthCheck
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful health check (code 0x0)
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
 
 ### apiFixFracked
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful health check (code 0x0)
+
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
 
 ### apiRegisterSkyWallet
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful register skywallet (code 0x0)
+
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
 
 ### apiGenerateCard
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful Generate Card (code 0x0)
+
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
 
 ### apiRecoverID
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful Recover ID (code 0x0)
+
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
 
 ### apiDeleteSkyWallet
 #### methods
+tests for error codes:
+1. no coin given (code 0x1001)
+2. empty coin param (code 0x1002)
 
+4. fake/counterfeit coin (code 0x2001)
+
+for a successful test coin needs to be provided, hard coded into the test.
+5. successful Delete skywallet (code 0x0)
+
+
+testing for less that ideal conditions
+6. test with 3 raida down
+7. test with fracked coin (2 bad AN)
 #### expected
+expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. should still be functional with only a few raida down or slightly fracked coin.
