@@ -2,6 +2,8 @@
 
 # Universal Tests
 These are the test plans apply to every method in the library that uses a CloudCoin
+#### how we're testing
+we use nodejs and mocha to create automated tests of each function
 #### methods
 tests for error codes:
 1. no coin given (code 0x1001)
