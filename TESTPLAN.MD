@@ -24,6 +24,7 @@ Everything below covers the tests that need to be specifically done on each meth
 ### apiNFTInsert
 #### methods
 tests for error codes:
+
 7. no metadata given (code 0x1014)
 8. no filename within metadata (code 0x1014)
 9. no data given (code 0x1010)
@@ -37,7 +38,7 @@ tests for error codes:
 ### apiNFTRead
 #### methods
 tests for error codes:
-
+(nothing new from universal tests)
 #### expected
 
 
@@ -49,6 +50,7 @@ tests for error codes:
 #### methods
 tests for error codes:
 info for coin, amount, memo, initiator_id, initiator_description_url, initiator_image_url can be preset.
+
 7. no amount given (code 0x1005)
 8. invalid event code (code 0x1007)
 9. invalid initiator type (code 0x1008)
@@ -66,6 +68,7 @@ the following test of apiShowRecords can be used to check if recorded data match
 ### apiShowRecords
 #### methods
 tests for error codes:
+
 7. invalid timestamp: negative number (code 0x1009)
 8. invalid timestamp: string (code 0x1009)
 
@@ -78,6 +81,7 @@ in a successful test expect for r.records to hold data matching that of the test
 ### apiDeleteRecord
 #### methods
 tests for error codes:
+
 7. invalid guid: short (code 0x1004)
 8. invalid guid: integer (code 0x1004)
 9. no guid (code 0x1003)
@@ -94,6 +98,7 @@ apiShowRecords can be used to confirm that the test record is deleted.
 ### apiBillPay
 #### methods
 tests for error codes:
+
 7. no paydata given (code 0x1017)
 8. invalid paydata method (code 0x1019)
 9. invalid paydata fileformat  (code 0x1020)
@@ -109,6 +114,7 @@ apiBillPayList test will be used for verification.
 ### apiBillPayList
 #### methods
 tests for error codes:
+
 7. no guid given (code 0x1003)
 8. invalid guid: short (code 0x1004)
 9. invalid guid: integer (code 0x1004)
