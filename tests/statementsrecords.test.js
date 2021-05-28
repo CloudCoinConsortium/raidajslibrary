@@ -7,13 +7,14 @@ describe('test statements and records error codes', () => {
   let raidajs
   let coin
   let amount
-  let event_code
+  let event_codes
   let initiator_type
   let memo
   let initiator_id
   let r
   let params
   let guid
+
 
     before(async function(){
       raidajs = new RaidaJS({timeout: 20000, debug: true})
@@ -34,8 +35,8 @@ describe('test statements and records error codes', () => {
   	"00000000000000000000000000000000"]
   }
   amount = 1
-  event_code = 'send'
-  initiator_type = 'self'
+  event_codes = ['send', 'receive', 'transfer_out', 'transfer_in', 'break', 'break_in_bank', 'join', 'join_in_bank', 'unknown']
+  initiator_types = ['self', 'other_know', 'other_anonymous', 'unknown']
   guid = "0123456789ABCDEF0123456789ABCDEF"
 
     })
@@ -47,7 +48,7 @@ describe('test statements and records error codes', () => {
     afterEach(async function(){})
 
     it('CreateRecord should fail with no coin (code 0x1001)', async function(){
-    params = { "amount": amount, "event_code" : event_code}
+    params = { "amount": amount, "event_code" : event_codes[0]}
     r = await raidajs.apiCreateRecord(params)
     expect(r.code).to.equal(0x1001);
     })
@@ -57,7 +58,7 @@ describe('test statements and records error codes', () => {
     expect(r.code).to.equal(0x1002);
     })
     it('CreateRecord should fail with no amount (code 0x1005)', async function(){
-    params = {"coin": coin, "event_code": event_code}
+    params = {"coin": coin, "event_code": event_codes[0]}
     r = await raidajs.apiCreateRecord(params)
     expect(r.code).to.equal(0x1005);
     })
@@ -71,8 +72,13 @@ describe('test statements and records error codes', () => {
     r = await raidajs.apiCreateRecord(params)
     expect(r.code).to.equal(0x1008);
     })
-    it('CreateRecord should fail with invalid guid (code 0x1004)', async function(){
-    params = {"coin": coin, "amount": amount, "event_code":event_code, "guid": "GHIJKLMONPQRS"}
+    it('CreateRecord should fail with invalid short guid (code 0x1004)', async function(){
+    params = {"coin": coin, "amount": amount, "event_code":event_codes[0], "guid": "GHIJKLMONPQRS"}
+    r = await raidajs.apiCreateRecord(params)
+    expect(r.code).to.equal(0x1004);
+    })
+    it('CreateRecord should fail with invalid integer guid (code 0x1004)', async function(){
+    params = {"coin": coin, "amount": amount, "event_code":event_codes[0], "guid": 564894894}
     r = await raidajs.apiCreateRecord(params)
     expect(r.code).to.equal(0x1004);
     })
@@ -91,8 +97,13 @@ describe('test statements and records error codes', () => {
     r = await raidajs.apiShowRecords(params)
     expect(r.code).to.equal(0x1002);
     })
-    it('ShowRecords should fail with invalid timestamp (code 0x1009)', async function(){
+    it('ShowRecords should fail with invalid timestamp: negative number (code 0x1009)', async function(){
     params = {"coin": coin, "start_ts": -1}
+    r = await raidajs.apiShowRecords(params)
+    expect(r.code).to.equal(0x1009);
+    })
+    it('ShowRecords should fail with invalid timestamp: string (code 0x1009)', async function(){
+    params = {"coin": coin, "start_ts": "one"}
     r = await raidajs.apiShowRecords(params)
     expect(r.code).to.equal(0x1009);
     })
@@ -111,8 +122,13 @@ describe('test statements and records error codes', () => {
     r = await raidajs.apiDeleteRecord(params)
     expect(r.code).to.equal(0x1002);
     })
-    it('DeleteRecord should fail with invalid guid (code 0x1004)', async function(){
+    it('DeleteRecord should fail with invalid short guid (code 0x1004)', async function(){
     params = {"coin": coin,  "guid": "GHIJKLMONPQRS"}
+    r = await raidajs.apiDeleteRecord(params)
+    expect(r.code).to.equal(0x1004);
+    })
+    it('DeleteRecord should fail with invalid integer guid (code 0x1004)', async function(){
+    params = {"coin": coin,  "guid": 6616194456}
     r = await raidajs.apiDeleteRecord(params)
     expect(r.code).to.equal(0x1004);
     })
@@ -134,13 +150,13 @@ describe('test statements and records', () => {
   let raidajs
   let coin
   let amount
-  let event_code
+  let event_codes
   let initiator_type
   let memo
   let initiator_id
   let r
   let params
-  let guid
+  let test_guids = []
 
     before(async function(){
       raidajs = new RaidaJS({timeout: 20000, debug: true})
@@ -153,9 +169,8 @@ describe('test statements and records', () => {
   			"1ec5dc4999402b8d920a12dcaf4b4656", "02564c374274f05febe083efeceae760", "06788e278f3f6dcb7bd2e8709628da5f", "9b4c3e1b900365eaf3f8355df59a7e0e", "1deb3cbd698f0b4daf34a9a4906fe176"]
   }
   amount = 1
-  event_code = 'send'
-  initiator_type = 'self'
-  guid = "0123456789ABCDEF0123456789ABCDEF"
+  event_codes = ['send', 'receive', 'transfer_out', 'transfer_in', 'break', 'break_in_bank', 'join', 'join_in_bank', 'unknown']
+  initiator_types = ['self', 'other_know', 'other_anonymous', 'unknown']
 
     })
     after(async function() {
@@ -165,21 +180,31 @@ describe('test statements and records', () => {
     })
     afterEach(async function(){})
 
-    it('createrecord (code 0x0)', async function(){
-    params = {"coin": coin, "amount": amount}
+    it('createrecord: send/self (code 0x0)', async function(){
+    params = {"coin": coin, "amount": amount, "event_code": event_codes[0]}
     r = await raidajs.apiCreateRecord(params)
     expect(r.code).to.equal(0x0);
-    guid = r.guid
+    test_guids[0] = r.guid
+    })
+    it('createrecord: other_know/receive (code 0x0)', async function(){
+    params = {"coin": coin, "amount": amount, "event_code": event_codes[1], "initiator_type":initiator_types[1]}
+    r = await raidajs.apiCreateRecord(params)
+    expect(r.code).to.equal(0x0);
+    test_guids[1] = r.guid
     })
     it('showrecords (code 0x0)', async function(){
       coin.sn = 6379371
     params = {"coin": coin}
     r = await raidajs.apiShowRecords(params)
     expect(r.code).to.equal(0x0);
-    //expect(r.metadata.filename).to.include("test.jpg");
   })
-  it('deleterecord (code 0x0)', async function(){
-  params = {"coin": coin, "guid": guid}
+  it('deleterecord 1 (code 0x0)', async function(){
+  params = {"coin": coin, "guid": test_guids[0]}
+  r = await raidajs.apiDeleteRecord(params)
+  expect(r.code).to.equal(0x0);
+  })
+  it('deleterecord 2 (code 0x0)', async function(){
+  params = {"coin": coin, "guid": test_guids[1]}
   r = await raidajs.apiDeleteRecord(params)
   expect(r.code).to.equal(0x0);
   })
