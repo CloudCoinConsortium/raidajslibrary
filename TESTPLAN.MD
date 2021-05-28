@@ -11,9 +11,11 @@ tests for error codes:
 3. fake/counterfeit coin (code 0x2001)
 
 for a successful test coin needs to be provided, hard coded into the test.
+
 4. successful operation (code 0x0)
 
 testing for less that ideal conditions
+
 5. test with 3 raida down
 6. test with fracked coin (2 bad AN)
 #### expected
