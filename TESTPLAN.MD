@@ -128,3 +128,68 @@ use same guid as the test for apiBillPay.
 
 #### expected
 expected return data should match the data given in the apiBillPay test.
+
+
+
+# Account Maintenence
+### apiHealthCheck
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+#### expected
+
+### apiFixFracked
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+#### expected
+
+
+### apiRegisterSkyWallet
+#### methods
+tests for error codes:
+7. missing dns name (code 0x1025)
+8. dns record already exists (code 0x5003)
+9. failed to get tickets (code 0x5002)
+10. incorrect dns response (code 0x5004)
+
+incorrect responses from dns will be created using promises
+#### expected
+
+
+### apiGenerateCard
+#### methods
+tests for error codes:
+7. missing card number (code 0x1027)
+8. missing cvv (code 0x1028)
+9. missing dns name (code 0x1025)
+10. missing expiration (code 0x1029)
+11. invalid card from wrong cvv (code 0x1027)
+12. invalid expiration (code 0x1030)
+13. invalid card unable to get cloudcoin (code 0x1027)
+14. invalid http response (code 0x5005)
+15. invalid http content type (code 0x506)
+16. failed to embed stack (code 0x2004)
+
+will use promises to manipulate http responses
+#### expected
+
+
+### apiRecoverID
+#### methods
+tests for error codes:
+7. missing dns name (code 0x1025)
+8. missing email (code 0x1031)
+9. can't find dns (code 0x5001)
+
+#### expected
+
+
+### apiDeleteSkyWallet
+#### methods
+tests for error codes:
+7. missing dns name (code 0x1025)
+9. failed to get tickets (code 0x5002)
+10. incorrect dns response (code 0x5004)
+
+#### expected
