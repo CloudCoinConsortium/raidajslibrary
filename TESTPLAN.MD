@@ -193,3 +193,32 @@ tests for error codes:
 10. incorrect dns response (code 0x5004)
 
 #### expected
+
+
+
+
+# Accounts
+### apiResolveSkywallet
+#### methods
+tests for error codes:
+7. can't find dns (code 0x5001)
+
+#### expected
+
+### apiRestoreCard
+#### methods
+tests for error codes:
+7. missing dns name (code 0x1025)
+8. can't find dns (code 0x5001)
+9. invalid card (code 0x1027)
+#### expected
+
+
+### apiGetFreeCoin
+#### methods
+tests for error codes:
+7. no response
+8. fail to get coin
+
+will give a fake response to test error
+#### expected
