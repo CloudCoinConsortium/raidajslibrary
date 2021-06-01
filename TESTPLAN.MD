@@ -246,3 +246,29 @@ tests for error codes:
 run same tests as apiFixTransfer
 
 #### expected
+
+
+# Transfer Transfer Again
+### apiTransfer
+#### methods
+tests for error codes:
+7. missing 'to' param
+8. can't find dns that's being transfered to
+9. missing amount
+10. invalid guid
+11. not enough cloudcoin
+12. surpass coin transfer amount limit
+
+#### expected
+expecting error messages instead of codes
+
+### apiViewReceipt
+#### methods
+tests for error codes:
+7. missing account
+8. missing tag
+9. account invalid due to invalid SN
+10. invalid GUID
+
+#### expected
+expecting error messages instead of codes
