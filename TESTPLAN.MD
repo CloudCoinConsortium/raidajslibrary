@@ -166,7 +166,7 @@ tests for error codes:
 10. missing expiration (code 0x1029)
 11. invalid card from wrong cvv (code 0x1027)
 12. invalid expiration (code 0x1030)
-13. invalid card unable to get cloudcoin (code 0x1027)
+13. invalid cardnumber (code 0x1025)
 14. invalid http response (code 0x5005)
 15. invalid http content type (code 0x506)
 16. failed to embed stack (code 0x2004)
