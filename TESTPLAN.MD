@@ -267,7 +267,7 @@ tests for error codes:
 7. missing account
 8. missing tag
 9. account invalid due to invalid SN
-10. invalid GUID
+10. invalid tag
 
 #### expected
 expecting error messages instead of codes
