@@ -235,8 +235,7 @@ tests for error codes:
 ### apiShowBalance
 #### methods
 tests for error codes:
-7. invalid timestamp: negative number (code 0x1009)
-8. invalid timestamp: string (code 0x1009)
+(nothing new from universal tests)
 
 #### expected
 
