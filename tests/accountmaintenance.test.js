@@ -361,22 +361,22 @@ guid = r.guid
 })
 
 it('Register SkyWallet (code 0x0) with fracked coin', async function(){
-params = { "coin": coin, "name": name, "overwrite": false}
+params = { "coin": fracked, "name": name, "overwrite": false}
 r = await raidajs.apiRegisterSkyWallet(params)
 expect(r.code).to.equal(0x0);
 })
 it('GenerateCard (code 0x0) with fracked coin', async function(){
-params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
+params = {"coin": fracked, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
 r = await raidajs.apiGenerateCard(params)
 expect(r.code).to.equal(0x0);
 })
 it('RecoverID (code 0x0) with fracked coin', async function(){
-params = { "paycoin": coin, "skywallet_name": name, "email": email}
+params = { "paycoin": fracked, "skywallet_name": name, "email": email}
 r = await raidajs.apiRecoverIDCoin(params)
 expect(r.code).to.equal(0x0);
 })
 it('apiDeleteSkyWallet (code 0x0) with fracked coin', async function(){
-params = { "coin": coin, "name" : name}
+params = { "coin": fracked, "name" : name}
 r = await raidajs.apiDeleteSkyWallet(params)
 expect(r.code).to.equal(0x0);
 })
