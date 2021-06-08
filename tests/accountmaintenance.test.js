@@ -42,7 +42,6 @@ describe('account maintenance error codes', () => {
   	"00000000000000000000000000000000","00000000000000000000000000000000",
   	"00000000000000000000000000000000"]
   }
-  paydata = "TransferToSkywallet, stack, 100, 0,0,0,0,0, sergiy.skywallet.cc, test,, ready"
   guid = "0123456789ABCDEF0123456789ABCDEF"
   name = "jsautotest"
   cardnumber = 4014567890123456
@@ -241,12 +240,17 @@ describe('account maintenance error codes', () => {
 describe('account maintenance', () => {
 
   let raidajs
+  let fracked
+  let fix
   let coin
-  let amount
-  let paydata
   let r
   let params
   let guid
+  let name
+  let cardnumber
+  let expiration
+  let cvv
+  let email
 
     before(async function(){
       raidajs = new RaidaJS({timeout: 20000, debug: true})
@@ -274,8 +278,13 @@ an: ["0", "ff35a13ebb2c0f710d5bdf3ddf5bd4fb", "83f301143151aee59b2735692e605a42"
 			"210df1ce1c387784caffbebc494da4c3", "3a7be639657c70228d927de1f9194885", "1a9d9efd07ec64b5130f876180d39f87", "8b9c5aa8378be0ca9981e1a7126bc26e", "12b1c59b60e1a6fb35b1db34c3aaacaa",
 			"bc15dd7516c53d5b77dc1f030623e02a", "2eb074b2b54a1c61e5a7eb2ad271d635", "69a4d83fe06d3fd3d2e9bedc47fdaaba", "a7f1e4de32ada340e813cb7e241b65f4", "0528293e2a67b7bcd2c8033d7536d28b"]
 }
-  paydata = "TransferToSkywallet, stack, 100, 0,0,0,0,0, sergiy.skywallet.cc, test,, ready"
+
   guid = "0123456789ABCDEF0123456789ABCDEF"
+  name = "jsautotest"
+  cardnumber = 4014567890123456
+  expiration = "06/21"
+  cvv = "2194"
+  email = "chernyshovtesero@protonmail.com"
 
     })
     after(async function() {
