@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer')
+const LocalStorage = require('node-localstorage').LocalStorage
 const RaidaJS = require('raidajs').default
 const expect = require('chai').expect
 
@@ -9,8 +9,6 @@ function callback3Rdown (rID, url, data){
 }
 
 describe('bill pay error codes', () => {
-  let browser
-  let page
   let raidajs
   let coin
   let paydata
@@ -20,17 +18,8 @@ describe('bill pay error codes', () => {
 
 
     before(async function(){
-      browser = await puppeteer.launch({
-        headless: true,
-        slowMo:10,
-        devtools: false,
-        })
-        page = await browser.newPage()
-        await page.setDefaultTimeout(10000)
-        await page.setDefaultNavigationTimeout(20000)
-        await page.goto('http://pownesium.com')
-        await page.waitForTimeout(1000)
 
+        localStorage = new LocalStorage('./scratch')
       raidajs = new RaidaJS({timeout: 20000, debug: true})
       coin = {
   	sn: 20,
@@ -53,7 +42,7 @@ describe('bill pay error codes', () => {
 
     })
     after(async function() {
-        await browser.close()
+
     })
     beforeEach(async function(){
 
@@ -132,8 +121,7 @@ describe('bill pay error codes', () => {
 })
 
 describe('bill pay', () => {
-  let browser
-  let page
+
   let raidajs
   let coin
   let amount
@@ -144,17 +132,8 @@ describe('bill pay', () => {
   let fracked
 
     before(async function(){
-      browser = await puppeteer.launch({
-        headless: true,
-        slowMo:10,
-        devtools: false,
-        })
-        page = await browser.newPage()
-        await page.setDefaultTimeout(10000)
-        await page.setDefaultNavigationTimeout(20000)
       raidajs = new RaidaJS({timeout: 20000, debug: true})
-      await page.goto('http://pownesium.com')
-      await page.waitForTimeout(1000)
+            localStorage = new LocalStorage('./scratch')
       coin = {
   	sn: 6379371,
   	an: ["c04b49b2475d4a6db759bd5f2165e9bb", "4ee73a648030c38321cedbde88b3f1f0", "fb6703f8dc959c77aaecf688f41d120f", "1a40be3f128fef6b71e05b96b59783fa", "8fdc9689c0075496b29d2aeacfd66a80",
@@ -176,7 +155,7 @@ an: ["0", "0", "0", "1a40be3f128fef6b71e05b96b59783fa", "8fdc9689c0075496b29d2ae
 
     })
     after(async function() {
-        await browser.close()
+
     })
     beforeEach(async function(){
 

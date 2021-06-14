@@ -240,7 +240,7 @@ tests for error codes:
 #### expected
 
 
-### apiFixSyncTransfer
+### apiFixTransferSync
 #### methods
 run same tests as apiFixTransfer
 
@@ -271,3 +271,90 @@ tests for error codes:
 
 #### expected
 expecting error messages instead of codes
+
+
+
+# Everything else
+### apiDetect
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiSend
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiReceive
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### embedImage
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### extractStack
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiGetTicket
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiShowCoins
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiShowCoinsAsArray
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### GetCCByUsernameAndPassword
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiCreatCCForRegistration
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiGetCCByCardData
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected
+
+### apiPay
+#### methods
+tests for error codes:
+(nothing new from universal tests)
+
+#### expected

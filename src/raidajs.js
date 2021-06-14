@@ -1717,7 +1717,7 @@ class RaidaJS {
         nns: [],
         ans: [],
         pans: [], 
-        denomination: [],
+        dn: [],
         to_sn: to,
         tag: tags[i]
       })
@@ -1768,7 +1768,7 @@ class RaidaJS {
             nns: [],
             ans: [],
             pans: [], 
-            denomination: [],
+            dn: [],
             to_sn: to,
             tag: tags[i]
           })
