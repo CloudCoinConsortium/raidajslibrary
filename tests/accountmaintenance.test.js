@@ -2,7 +2,7 @@ const RaidaJS = require('raidajs').default
 const expect = require('chai').expect
 
 function callback3Rdown (rID, url, data){
-  if(rID < 3){
+  if(url != "register_dns" && url != "resolve_dns" && url != "deleting_dns" && rID < 3){
     throw new error
   }
 }
@@ -74,11 +74,11 @@ describe('account maintenance error codes', () => {
     })
     it('FixFracked should fail with no coin', async function(){
     params = {}
-    r = await raidajs.apiFixFracked(params)
+    r = await raidajs.apiFixfracked(params)
     })
     it('FixFracked should fail with no coin data', async function(){
     params = {"coin": {}}
-    r = await raidajs.apiFixFracked(params)
+    r = await raidajs.apiFixfracked(params)
     })
     it('RegisterSkyWallet should fail with no coin (code 0x1001)', async function(){
     params = { "name": name, "overwrite": false}
@@ -101,26 +101,16 @@ describe('account maintenance error codes', () => {
     expect(r.code).to.equal(0x5003);
     })
 
-    it('RegisterSkyWallet should fail with fake coin (code 0x2001)', async function(){
+    it('RegisterSkyWallet should fail with fake coin (code 0x5002)', async function(){
   params = {"coin": coin, "name": name, "overwrite": false}
   r = await raidajs.apiRegisterSkyWallet(params)
-  expect(r.code).to.equal(0x2001);
+  expect(r.code).to.equal(0x5002);
     })
 
-    it('GenerateCard should fail with no coin (code 0x1001)', async function(){
-    params = { "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
-    r = await raidajs.apiGenerateCard(params)
-    expect(r.code).to.equal(0x1001);
-    })
-    it('GenerateCard should fail with no coin data (code 0x1002)', async function(){
-    params = {"cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv,"coin": {}}
-    r = await raidajs.apiGenerateCard(params)
-    expect(r.code).to.equal(0x1002);
-    })
-    it('GenerateCard should fail with no card number (code 0x1027)', async function(){
+    it('GenerateCard should fail with no card number (code 0x1026)', async function(){
   params = {"coin": coin,  "expiration_date": expiration, "username": name, "cvv": cvv}
   r = await raidajs.apiGenerateCard(params)
-  expect(r.code).to.equal(0x1027);
+  expect(r.code).to.equal(0x1026);
     })
     it('GenerateCard should fail with no cvv (code 0x1028)', async function(){
   params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name}
@@ -153,12 +143,12 @@ describe('account maintenance error codes', () => {
   expect(r.code).to.equal(0x2001);
     })
     it('GenerateCard should fail with invalid template http (code 0x5005)', async function(){
-  params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
+  params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv, "url_card_template": ""}
   r = await raidajsnotemplate.apiGenerateCard(params)
   expect(r.code).to.equal(0x5005);
     })
     it('GenerateCard should fail with invalid template content type (code 0x506)', async function(){
-  params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
+  params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv, "url_card_template": "https://cloudcoinconsortium.com/css/icons/fl-icons.ttf"}
   r = await raidajswrongtemplate.apiGenerateCard(params)
   expect(r.code).to.equal(0x506);
     })
@@ -167,11 +157,7 @@ describe('account maintenance error codes', () => {
   r = await raidajs.apiGenerateCard(params)
   expect(r.code).to.equal(0x2004);
     })
-    it('GenerateCard should fail with fake coin (code 0x2001)', async function(){
-  params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": name, "cvv": cvv}
-  r = await raidajs.apiGenerateCard(params)
-  expect(r.code).to.equal(0x2001);
-    })
+
     it('RecoverID should fail with no coin (code 0x1001)', async function(){
     params = { "skywallet_name": name, "email": email}
     r = await raidajs.apiRecoverIDCoin(params)
@@ -213,7 +199,7 @@ describe('account maintenance error codes', () => {
     expect(r.code).to.equal(0x1002);
     })
     it('DeleteSkywallet should fail with no dns name (code 0x1025)', async function(){
-  params = {"coin": coin, "name" : name}
+  params = {"coin": coin}
   r = await raidajs.apiDeleteSkyWallet(params)
   expect(r.code).to.equal(0x1025);
     })
@@ -264,7 +250,7 @@ describe('account maintenance', () => {
   }
   fracked = {
 sn: 6379371,
-an: ["0", "0", "0", "1a40be3f128fef6b71e05b96b59783fa", "8fdc9689c0075496b29d2aeacfd66a80",
+an: ["00000000000000000000000000000000", "00000000000000000000000000000000", "00000000000000000000000000000000", "1a40be3f128fef6b71e05b96b59783fa", "8fdc9689c0075496b29d2aeacfd66a80",
     "545dfb26ebe1b895092d3807c681f66f", "953a1ce55b88b5a77187060b523dfa67", "1e54c731f14542709a3052229678c62c", "8149f6bf4d20894c886c8cf091de95b9", "69a211dcbc25b97d118bda253f6e7f8f",
     "26baf733abaf4061286bfa71ba9745af", "303178a75598069e723b6768c11f1c33", "e176b009c37f95c9a8175942c06585a3", "e60a32d2a2703737320be8dbb9a3d8fd", "dbf1fd07c49f1430a889503d03ac66f1",
     "be4d8eebb87e53f84106095fad565c3b", "24a6dd7b1b87dabc16cca0c4d23c6604", "9eedfb16c9246940d0611ae2d283c248", "edd1402c3cfcf04998b032c0f546b835", "9977047c09e5df53c9fae7f412823665",
@@ -302,7 +288,7 @@ an: ["0", "ff35a13ebb2c0f710d5bdf3ddf5bd4fb", "83f301143151aee59b2735692e605a42"
     })
     it('FixFracked (code ?)', async function(){
     params = {"coin": fix}
-    r = await raidajs.apiFixFracked(params)
+    r = await raidajs.apiFixfracked(params)
   })
   it('Register SkyWallet (code 0x0)', async function(){
   params = {"coin": coin, "name": name, "overwrite": false}
