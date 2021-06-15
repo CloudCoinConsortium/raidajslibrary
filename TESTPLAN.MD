@@ -59,6 +59,16 @@ tests for error codes:
 tests for error codes:
 info for coin, amount, memo, initiator_id, initiator_description_url, initiator_image_url can be preset.
 
+
+Test Number |  Title | Code
+---|---|---
+7 | No Amount Given | 0x1005
+8 | Invalid Event Code | 0x1007
+9 | Invalid Initiator Type | 0x1008
+10 | Invalid GUID: Short | 0x1004
+11 | Invalid GUID: Integer | 0x1004
+
+
 7. no amount given (code 0x1005)
 8. invalid event code (code 0x1007)
 9. invalid initiator type (code 0x1008)
