@@ -2,7 +2,7 @@
 
 
 ## Table of Contents
-[Universal Tests](TESTPLAN.MD#Universal Tests)
+[Universal Tests](TESTPLAN.MD#UniversalTests)
 
 # Universal Tests
 These are the test plans apply to every method in the library that uses a CloudCoin
