@@ -17,7 +17,6 @@ describe('accounts error codes', () => {
   let name
   let nocard
   let password
-  let guid
   let email
 
     before(async function(){
@@ -54,8 +53,8 @@ describe('accounts error codes', () => {
 
 
     it('ResolveSkywallet should fail with invalid dns (code 0x5001)', async function(){
-  params = {"name": "name"}
-  r = await raidajs.apiResolveSkywallet(params)
+  params = "name"
+  r = await raidajs.apiResolveSkyWallet(params)
   expect(r.code).to.equal(0x5001);
     })
 
@@ -137,8 +136,8 @@ password = "55123400"
     afterEach(async function(){})
 
     it('ResolveSkywallet (code 0x0)', async function(){
-    params = {"name": name}
-    r = await raidajs.apiResolveSkywallet(params)
+    params = name
+    r = await raidajs.apiResolveSkyWallet(params)
     expect(r.code).to.equal(0x0);
     guid = r.guid
     })
@@ -157,8 +156,8 @@ password = "55123400"
 
   //raida down
   it('ResolveSkywallet (code 0x0) with 3 raida down', async function(){
-  params = {"name": name}
-  r = await raidajs.apiResolveSkywallet(params, callback3Rdown)
+  params =  name
+  r = await raidajs.apiResolveSkyWallet(params, callback3Rdown)
   expect(r.code).to.equal(0x0);
   guid = r.guid
   })
