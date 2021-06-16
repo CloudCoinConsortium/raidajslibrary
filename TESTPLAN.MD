@@ -23,9 +23,9 @@
 
 # Universal Tests
 These are the test plans apply to every method in the library that uses a CloudCoin.
-#### How We're Testing
+## How We're Testing:
 We use nodeJS and mocha to create automated tests of each function.
-#### Tests Ran
+## Tests Ran:
 Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
@@ -41,7 +41,7 @@ Test Number |  Title
 ---|---
 5 | Test with 3 RAIDA Down
 6 | Test with Fracked Coin (3 Bad AN)
-#### Results Expected
+## Results Expected:
 Expect appropriate error codes to show up in r.code. r.code should always be 0x0 if testing a sucessful run.
 
 Tests running with a few RAIDA down or slightly fracked coin should still return a 0x0 code.
@@ -50,8 +50,8 @@ Tests running with a few RAIDA down or slightly fracked coin should still return
 Everything below covers the tests that need to be specifically done on each method, that isn't already covered above.
 
 # NFT
-### apiNFTInsert
-#### Tests Ran
+## apiNFTInsert
+### Tests Ran:
 Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
@@ -63,7 +63,9 @@ Test Number |  Title | Code
 11 | Too Much Data | 0x1016
 12 | Unsupported Protocol | 0x1013
 
-#### Results Expected
+### Results Expected:
+
+Something will go here. 
 
 
 ### apiNFTRead
