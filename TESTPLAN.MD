@@ -84,6 +84,7 @@ Test Number |  Title | Code
 Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
+1-6 | Universal Tests | 0x0
 7 | No Amount Given | 0x1005
 8 | Invalid Event Code | 0x1007
 9 | Invalid Initiator Type | 0x1008
