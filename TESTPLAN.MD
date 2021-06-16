@@ -2,14 +2,22 @@
 
 
 ## Table of Contents
-[Universal Tests](TESTPLAN.MD#UniversalTests)
+[Universal Tests](TESTPLAN.MD#Universal Tests)
+
 [NFT](TESTPLAN.MD#NFT)
+
 [Statements and Records](TESTPLAN.MD#Statements&Records)
+
 [Bill Pay](TESTPLAN.MD#BillPay)
+
 [Account Maintenance](TESTPLAN.MD#AccountMaintenance)
+
 [Accounts](TESTPLAN.MD#Accounts)
+
 [Balance and AutoSync](TESTPLAN.MD#Balance&AutoSync)
+
 [Transfer](TESTPLAN.MD#Transfer)
+
 [Everything Else](TESTPLAN.MD#EverythingElse)
 
 
