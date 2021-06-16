@@ -3,6 +3,15 @@
 
 ## Table of Contents
 [Universal Tests](TESTPLAN.MD#UniversalTests)
+[NFT](TESTPLAN.MD#NFT)
+[Statements and Records](TESTPLAN.MD#Statements&Records)
+[Bill Pay](TESTPLAN.MD#BillPay)
+[Account Maintenance](TESTPLAN.MD#AccountMaintenance)
+[Accounts](TESTPLAN.MD#Accounts)
+[Balance and AutoSync](TESTPLAN.MD#Balance&AutoSync)
+[Transfer](TESTPLAN.MD#Transfer)
+[Everything Else](TESTPLAN.MD#EverythingElse)
+
 
 # Universal Tests
 These are the test plans apply to every method in the library that uses a CloudCoin
@@ -10,6 +19,8 @@ These are the test plans apply to every method in the library that uses a CloudC
 we use nodejs and mocha to create automated tests of each function
 #### methods
 tests for error codes:
+Test Number |  Title | Code
+---|---|---
 1. no coin given (code 0x1001)
 2. empty coin param (code 0x1002)
 3. fake/counterfeit coin (code 0x2001)
@@ -32,13 +43,14 @@ Everything below covers the tests that need to be specifically done on each meth
 ### apiNFTInsert
 #### methods
 tests for error codes:
-
-7. no metadata given (code 0x1014)
-8. no filename within metadata (code 0x1014)
-9. no data given (code 0x1010)
-10. empty data (code 0x1024)
-11. too much data (code 0x1016)
-12. unsupported protocol (code 0x1013)
+Test Number |  Title | Code
+---|---|---
+7 | no metadata given | 0x1014
+8 | no filename within metadata | 0x1014
+9 | no data given |  0x1010
+10 | empty data | 0x1024
+11 | too much data | 0x1016
+12 | unsupported protocol | 0x1013
 
 #### expected
 
@@ -53,7 +65,7 @@ tests for error codes:
 
 
 
-# statements and records
+# Statements & Records
 ### apiCreateRecord
 
 #### methods
@@ -75,7 +87,7 @@ Test Number |  Title | Code
 9 | Invalid Initiator Type | 0x1008
 10 | Invalid GUID: Short | 0x1004
 11 | Invalid GUID: Integer | 0x1004
-12 | Successful record created, send/self | code 0x0
+12 | Successful record created, send/self | 0x0
 13 | Successful record created, other_know/receive | 0x0
 
 NOTE: Multiple test for success will be ran. Each event_code and initiator_type will be used in the tests. let the guid be generated. for successful a tests coin will be provided.
@@ -146,7 +158,7 @@ expected return data should match the data given in the apiBillPay test.
 
 
 
-# Account Maintenence
+# Account Maintenance
 ### apiHealthCheck
 #### methods
 tests for error codes:
@@ -262,7 +274,7 @@ run same tests as apiFixTransfer
 #### expected
 
 
-# Transfer Transfer Again
+# Transfer
 ### apiTransfer
 #### methods
 tests for error codes:
