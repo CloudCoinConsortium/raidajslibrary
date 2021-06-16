@@ -42,7 +42,9 @@ Test Number |  Title
 5 | Test with 3 RAIDA down
 6 | Test with fracked coin (2 bad AN)
 #### Results Expected
-Expect appropriate error codes to show up in r.code (indicated in parentheses). r.code should always be 0x0 if test was successful. Should still be functional with only a few raida down or slightly fracked coin.
+Expect appropriate error codes to show up in r.code. r.code should always be 0x0 if testing a sucessful run.
+
+Tests running with a few RAIDA down or slightly fracked coin should still return a 0x0 code.
 
 # Specific Tests
 Everything below covers the tests that need to be specifically done on each method, that isn't already covered above.
