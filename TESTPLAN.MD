@@ -102,8 +102,8 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. invalid timestamp: negative number (code 0x1009)
-8. invalid timestamp: string (code 0x1009)
+7 | invalid timestamp: negative number | 0x1009
+8 | invalid timestamp: string | 0x1009
 
 a test record will be created with apiCreateRecord and the info from that record will be used for the automated test.
 
@@ -117,13 +117,13 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. invalid guid: short (code 0x1004)
-8. invalid guid: integer (code 0x1004)
-9. no guid (code 0x1003)
+7 | invalid guid: short | 0x1004
+8 | invalid guid: integer | 0x1004
+9 | no guid | 0x1003
 
 data shall be the same as provided in the previous tests, guid used should be the one generated and returned by the apiCreateRecord test
-10. successful record deleted, send/self (code 0x0)
-11. successful record deleted, other_know/receive (code 0x0)
+10 | successful record deleted, send/self | 0x0)
+11 | successful record deleted, other_know/receive | 0x0)
 
 #### Results Expected
 apiShowRecords can be used to confirm that the test record is deleted.
@@ -136,14 +136,14 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. no paydata given (code 0x1017)
-8. invalid paydata method (code 0x1019)
-9. invalid paydata fileformat  (code 0x1020)
-10. invalid paydata amount: written in text (code 0x1021)
-11. invalid paydata amount: negative number (code 0x1021)
-12. invalid paydata denominations aren't 0 (code 0x1021)
-13. invalid paydata status (code 0x1022)
-14. invalid guid (code 0x1004)
+7 | no paydata given | 0x1017
+8 | invalid paydata method | 0x1019
+9 | invalid paydata fileformat  | 0x1020
+10 | invalid paydata amount: written in text | 0x1021
+11 | invalid paydata amount: negative number | 0x1021
+12 | invalid paydata denominations aren't 0 | 0x1021
+13 | invalid paydata status | 0x1022
+14 | invalid guid | 0x1004
 
 #### Results Expected
 apiBillPayList test will be used for verification.
@@ -154,10 +154,10 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. no guid given (code 0x1003)
-8. invalid guid: short (code 0x1004)
-9. invalid guid: integer (code 0x1004)
-10. no record made (code 0x2003)
+7 | no guid given | 0x1003
+8 | invalid guid: short | 0x1004
+9 | invalid guid: integer | 0x1004
+10 | no record made | 0x2003
 
 use same guid as the test for apiBillPay.
 
@@ -188,10 +188,10 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing dns name (code 0x1025)
-8. dns record already exists (code 0x5003)
-9. failed to get tickets (code 0x5002)
-10. incorrect dns response (code 0x5004)
+7 | missing dns name | 0x1025
+8 | dns record already exists | 0x5003
+9 | failed to get tickets | 0x5002
+10 | incorrect dns response | 0x5004
 
 incorrect responses from dns will be created using promises
 #### Results Expected
@@ -203,16 +203,16 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing card number (code 0x1027)
-8. missing cvv (code 0x1028)
-9. missing dns name (code 0x1025)
-10. missing expiration (code 0x1029)
-11. invalid card from wrong cvv (code 0x1027)
-12. invalid expiration (code 0x1030)
-13. invalid cardnumber (code 0x1025)
-14. invalid http response (code 0x5005)
-15. invalid http content type (code 0x506)
-16. failed to embed stack (code 0x2004)
+7 | missing card number | 0x1027
+8 | missing cvv | 0x1028
+9 | missing dns name | 0x1025
+10 | missing expiration | 0x1029
+11 | invalid card from wrong cvv | 0x1027
+12 | invalid expiration | 0x1030
+13 | invalid cardnumber | 0x1025
+14 | invalid http response | 0x5005
+15 | invalid http content type | 0x506
+16 | failed to embed stack | 0x2004
 
 will use promises to manipulate http responses
 #### Results Expected
@@ -224,9 +224,9 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing dns name (code 0x1025)
-8. missing email (code 0x1031)
-9. can't find dns (code 0x5001)
+7 | missing dns name | 0x1025
+8 | missing email | 0x1031
+9 | can't find dns | 0x5001
 
 #### Results Expected
 
@@ -237,9 +237,9 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing dns name (code 0x1025)
-9. failed to get tickets (code 0x5002)
-10. incorrect dns response (code 0x5004)
+7 | missing dns name | 0x1025
+9 | failed to get tickets | 0x5002
+10 | incorrect dns response | 0x5004
 
 #### Results Expected
 
@@ -253,7 +253,7 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. can't find dns (code 0x5001)
+7 | can't find dns | 0x5001
 
 #### Results Expected
 
@@ -263,9 +263,9 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing dns name (code 0x1025)
-8. can't find dns (code 0x5001)
-9. invalid card (code 0x1027)
+7 | missing dns name | 0x1025
+8 | can't find dns | 0x5001
+9 | invalid card | 0x1027
 #### Results Expected
 
 
@@ -275,8 +275,8 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. no response
-8. fail to get coin
+7 | no response
+8 | fail to get coin
 
 will give a fake response to test error
 #### Results Expected
@@ -314,12 +314,12 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing 'to' param
-8. can't find dns that's being transfered to
-9. missing amount
-10. invalid guid
-11. not enough cloudcoin
-12. surpass coin transfer amount limit
+7 | missing 'to' param
+8 | can't find dns that's being transfered to
+9 | missing amount
+10 | invalid guid
+11 | not enough cloudcoin
+12 | surpass coin transfer amount limit
 
 #### Results Expected
 expecting error messages instead of codes
@@ -330,10 +330,10 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7. missing account
-8. missing tag
-9. account invalid due to invalid SN
-10. invalid tag
+7 | missing account
+8 | missing tag
+9 | account invalid due to invalid SN
+10 | invalid tag
 
 #### Results Expected
 expecting error messages instead of codes
