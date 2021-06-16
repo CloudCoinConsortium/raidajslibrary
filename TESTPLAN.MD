@@ -25,8 +25,7 @@
 These are the test plans apply to every method in the library that uses a CloudCoin.
 ## How We're Testing:
 We use nodeJS and mocha to create automated tests of each function.
-## Tests Ran:
-Tests for error codes:
+## Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1 | No Coin Given | 0x1001
@@ -34,6 +33,7 @@ Test Number |  Title | Code
 3 | Fake/Counterfeit Coin | 0x2001
 4 | Successful Operation | 0x0
 
+## Tests for Specific Conditions
 For a successful test coin needs to be provided, hard coded into the test.
 
 Testing for less that ideal conditions:
@@ -51,9 +51,7 @@ Everything below covers the tests that need to be specifically done on each meth
 
 # NFT
 ## apiNFTInsert
-### Tests To Run:
-
-Tests for error codes:
+### Tests for error codes:
 
 Test Number |  Title | Code
 ---|---|---
@@ -65,10 +63,10 @@ Test Number |  Title | Code
 11 | Too Much Data | 0x1016
 12 | Unsupported Protocol | 0x1013
 
-Tests for Specific Conditions:
+### Tests for Specific Conditions:
+No tests
 
 ### Results Expected:
-
 Something will go here. 
 
 
