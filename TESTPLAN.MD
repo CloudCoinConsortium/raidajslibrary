@@ -32,7 +32,7 @@ Test Number |  Title | Code
 1 | No coin given | 0x1001
 2 | Empty coin parameter | 0x1002
 3 | Fake/counterfeit coin | 0x2001
-4 | Successful operation | 0x0 
+4 | Successful operation | 0x0
 
 For a successful test coin needs to be provided, hard coded into the test.
 
@@ -53,6 +53,7 @@ Everything below covers the tests that need to be specifically done on each meth
 Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
+1-6 | Universal Tests | 0x0
 7 | no metadata given | 0x1014
 8 | no filename within metadata | 0x1014
 9 | no data given |  0x1010
