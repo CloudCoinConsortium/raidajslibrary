@@ -53,15 +53,15 @@ Everything below covers the tests that need to be specifically done on each meth
 ## apiNFTInsert
 ### Tests:
 
-Test Number |  Title | Expected Results | Note
+Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1-6 | Universal Tests | 0x0 | same thing
-7 | No Metadata Given | 0x1014 | same thing
-8 | No Filename Within Metadata | 0x1014 | same thing
-9 | No Data Given |  0x1010 | same thing
-10 | Empty Data Parameter | 0x1024 | same thing
-11 | Too Much Data | 0x1016 | same thing
-12 | Unsupported Protocol | 0x1013 | same thing
+1-6 | Universal Tests | 0x0 | Comming Soon
+7 | No Metadata Given | 0x1014 |  Comming Soon
+8 | No Filename Within Metadata | 0x1014 |  Comming Soon
+9 | No Data Given |  0x1010 |  Comming Soon
+10 | Empty Data Parameter | 0x1024 |  Comming Soon
+11 | Too Much Data | 0x1016 |  Comming Soon
+12 | Unsupported Protocol | 0x1013 | Comming Soon
 
 ### apiNFTRead
 #### Tests Ran
