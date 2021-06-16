@@ -2,7 +2,7 @@
 
 
 ## Table of Contents
-[Universal Tests](TESTPLAN.MD#Universal Tests)
+[Universal Tests](TESTPLAN.MD#Universal_Tests)
 
 [NFT](TESTPLAN.MD#NFT)
 
@@ -29,9 +29,9 @@ we use nodejs and mocha to create automated tests of each function
 tests for error codes:
 Test Number |  Title | Code
 ---|---|---
-1. no coin given (code 0x1001)
-2. empty coin param (code 0x1002)
-3. fake/counterfeit coin (code 0x2001)
+1 | no coin given | 0x1001
+2 | empty coin param | 0x1002
+3 | fake/counterfeit coin | 0x2001
 
 for a successful test coin needs to be provided, hard coded into the test.
 
