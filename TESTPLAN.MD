@@ -2,23 +2,23 @@
 
 
 ## Table of Contents
-[Universal Tests](TESTPLAN.MD#Universal_Tests)
+[Universal Tests](TESTPLAN.MD#Universal-Tests)
 
 [NFT](TESTPLAN.MD#NFT)
 
-[Statements and Records](TESTPLAN.MD#Statements&Records)
+[Statements and Records](TESTPLAN.MD#Statements-and-Records)
 
 [Bill Pay](TESTPLAN.MD#BillPay)
 
-[Account Maintenance](TESTPLAN.MD#AccountMaintenance)
+[Account Maintenance](TESTPLAN.MD#Account-Maintenance)
 
 [Accounts](TESTPLAN.MD#Accounts)
 
-[Balance and AutoSync](TESTPLAN.MD#Balance&AutoSync)
+[Balance and AutoSync](TESTPLAN.MD#Balance-and-AutoSync)
 
 [Transfer](TESTPLAN.MD#Transfer)
 
-[Everything Else](TESTPLAN.MD#EverythingElse)
+[Everything Else](TESTPLAN.MD#Everything-Else)
 
 
 # Universal Tests
@@ -73,7 +73,7 @@ tests for error codes:
 
 
 
-# Statements & Records
+# Statements and Records
 ### apiCreateRecord
 
 #### methods
@@ -259,7 +259,7 @@ will give a fake response to test error
 #### expected
 
 
-# Balance & AutoSync
+# Balance and AutoSync
 ### apiEcho
 #### methods
 tests for error codes:
