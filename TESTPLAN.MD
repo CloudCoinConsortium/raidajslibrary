@@ -51,8 +51,10 @@ Everything below covers the tests that need to be specifically done on each meth
 
 # NFT
 ## apiNFTInsert
-### Tests Ran:
+### Tests To Run:
+
 Tests for error codes:
+
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
@@ -62,6 +64,8 @@ Test Number |  Title | Code
 10 | Empty Data Parameter | 0x1024
 11 | Too Much Data | 0x1016
 12 | Unsupported Protocol | 0x1013
+
+Tests for Specific Conditions:
 
 ### Results Expected:
 
