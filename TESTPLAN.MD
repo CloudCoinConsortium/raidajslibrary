@@ -54,12 +54,12 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | no metadata given | 0x1014
-8 | no filename within metadata | 0x1014
-9 | no data given |  0x1010
-10 | empty data | 0x1024
-11 | too much data | 0x1016
-12 | unsupported protocol | 0x1013
+7 | No Metadata Given | 0x1014
+8 | No Filename Within Metadata | 0x1014
+9 | No Data Given |  0x1010
+10 | Empty Data Parameter | 0x1024
+11 | Too Much Data | 0x1016
+12 | Unsupported Protocol | 0x1013
 
 #### Results Expected
 
@@ -67,7 +67,9 @@ Test Number |  Title | Code
 ### apiNFTRead
 #### Tests Ran
 Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 #### Results Expected
 
 
@@ -97,7 +99,9 @@ the following test of apiShowRecords can be used to check if recorded data match
 ### apiShowRecords
 #### Tests Ran
 Tests for error codes:
-
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. invalid timestamp: negative number (code 0x1009)
 8. invalid timestamp: string (code 0x1009)
 
@@ -110,7 +114,9 @@ in a successful test expect for r.records to hold data matching that of the test
 ### apiDeleteRecord
 #### Tests Ran
 Tests for error codes:
-
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. invalid guid: short (code 0x1004)
 8. invalid guid: integer (code 0x1004)
 9. no guid (code 0x1003)
@@ -127,7 +133,9 @@ apiShowRecords can be used to confirm that the test record is deleted.
 ### apiBillPay
 #### Tests Ran
 Tests for error codes:
-
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. no paydata given (code 0x1017)
 8. invalid paydata method (code 0x1019)
 9. invalid paydata fileformat  (code 0x1020)
@@ -143,7 +151,9 @@ apiBillPayList test will be used for verification.
 ### apiBillPayList
 #### Tests Ran
 Tests for error codes:
-
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. no guid given (code 0x1003)
 8. invalid guid: short (code 0x1004)
 9. invalid guid: integer (code 0x1004)
@@ -159,20 +169,25 @@ Results Expected return data should match the data given in the apiBillPay test.
 # Account Maintenance
 ### apiHealthCheck
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 #### Results Expected
 
 ### apiFixFracked
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 #### Results Expected
 
 
 ### apiRegisterSkyWallet
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing dns name (code 0x1025)
 8. dns record already exists (code 0x5003)
 9. failed to get tickets (code 0x5002)
@@ -185,6 +200,9 @@ incorrect responses from dns will be created using promises
 ### apiGenerateCard
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing card number (code 0x1027)
 8. missing cvv (code 0x1028)
 9. missing dns name (code 0x1025)
@@ -203,6 +221,9 @@ will use promises to manipulate http responses
 ### apiRecoverID
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing dns name (code 0x1025)
 8. missing email (code 0x1031)
 9. can't find dns (code 0x5001)
@@ -213,6 +234,9 @@ Tests for error codes:
 ### apiDeleteSkyWallet
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing dns name (code 0x1025)
 9. failed to get tickets (code 0x5002)
 10. incorrect dns response (code 0x5004)
@@ -226,6 +250,9 @@ Tests for error codes:
 ### apiResolveSkywallet
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. can't find dns (code 0x5001)
 
 #### Results Expected
@@ -233,6 +260,9 @@ Tests for error codes:
 ### apiRestoreCard
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing dns name (code 0x1025)
 8. can't find dns (code 0x5001)
 9. invalid card (code 0x1027)
@@ -242,6 +272,9 @@ Tests for error codes:
 ### apiGetFreeCoin
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. no response
 8. fail to get coin
 
@@ -252,15 +285,17 @@ will give a fake response to test error
 # Balance and AutoSync
 ### apiEcho
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiShowBalance
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
@@ -276,6 +311,9 @@ run same tests as apiFixTransfer
 ### apiTransfer
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing 'to' param
 8. can't find dns that's being transfered to
 9. missing amount
@@ -289,6 +327,9 @@ expecting error messages instead of codes
 ### apiViewReceipt
 #### Tests Ran
 Tests for error codes:
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 7. missing account
 8. missing tag
 9. account invalid due to invalid SN
@@ -302,84 +343,96 @@ expecting error messages instead of codes
 # Everything else
 ### apiDetect
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiSend
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiReceive
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### embedImage
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### extractStack
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiGetTicket
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiShowCoins
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiShowCoinsAsArray
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### GetCCByUsernameAndPassword
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiCreatCCForRegistration
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiGetCCByCardData
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
 
 ### apiPay
 #### Tests Ran
-Tests for error codes:
-(nothing new from universal tests)
+Test Number |  Title | Code
+---|---|---
+1-6 | Universal Tests | 0x0
 
 #### Results Expected
