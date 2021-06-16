@@ -55,7 +55,12 @@ Everything below covers the tests that need to be specifically done on each meth
 
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1-6 | Universal Tests | 0x0 | Comming Soon
+1 | No Coin Given | 0x1001|  Comming Soon
+2 | Empty Coin Parameter | 0x1002|  Comming Soon
+3 | Fake/Counterfeit Coin | 0x2001|  Comming Soon
+4 | Successful Operation | 0x0|  Comming Soon
+5 | Test with 3 RAIDA Down|  Comming Soon
+6 | Test with Fracked Coin (3 Bad AN)|  Comming Soon
 7 | No Metadata Given | 0x1014 |  Comming Soon
 8 | No Filename Within Metadata | 0x1014 |  Comming Soon
 9 | No Data Given |  0x1010 |  Comming Soon
