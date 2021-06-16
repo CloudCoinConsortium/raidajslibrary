@@ -95,7 +95,7 @@ Test Number |  Title | Code
 
 
 #### Results Expected
-the following test of apiShowRecords can be used to check if recorded data matches what was provided and the guid that was generated. manually confirming RAIDA's data may be necessary if unResults Expected results.
+the following test of apiShowRecords can be used to check if recorded data matches what was provided and the guid that was generated. manually confirming RAIDA's data may be necessary if unexpected results.
 
 ### apiShowRecords
 #### Tests Ran
@@ -109,7 +109,7 @@ Test Number |  Title | Code
 a test record will be created with apiCreateRecord and the info from that record will be used for the automated test.
 
 #### Results Expected
-in a successful test expect for r.records to hold data matching that of the test record created. manually confirming RAIDA's data may be necessary if unResults Expected results.
+in a successful test expect for r.records to hold data matching that of the test record created. manually confirming RAIDA's data may be necessary if unexpected results.
 
 
 ### apiDeleteRecord
@@ -163,7 +163,7 @@ Test Number |  Title | Code
 use same guid as the test for apiBillPay.
 
 #### Results Expected
-Results Expected return data should match the data given in the apiBillPay test.
+Return data should match the data given in the apiBillPay test.
 
 
 
