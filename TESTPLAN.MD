@@ -29,18 +29,18 @@ We use nodeJS and mocha to create automated tests of each function.
 Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
-1 | No coin given | 0x1001
-2 | Empty coin parameter | 0x1002
-3 | Fake/counterfeit coin | 0x2001
-4 | Successful operation | 0x0
+1 | No Coin Given | 0x1001
+2 | Empty Coin Parameter | 0x1002
+3 | Fake/Counterfeit Coin | 0x2001
+4 | Successful Operation | 0x0
 
 For a successful test coin needs to be provided, hard coded into the test.
 
 Testing for less that ideal conditions:
 Test Number |  Title
 ---|---
-5 | Test with 3 RAIDA down
-6 | Test with fracked coin (2 bad AN)
+5 | Test with 3 RAIDA Down
+6 | Test with Fracked Coin (3 Bad AN)
 #### Results Expected
 Expect appropriate error codes to show up in r.code. r.code should always be 0x0 if testing a sucessful run.
 
@@ -97,7 +97,7 @@ Test Number |  Title | Code
 
 
 #### Results Expected
-the following test of apiShowRecords can be used to check if recorded data matches what was provided and the guid that was generated. manually confirming RAIDA's data may be necessary if unexpected results.
+the following test of apiShowRecords can be used to check if recorded data matches what was provided and the GUID that was generated. manually confirming RAIDA's data may be necessary if unexpected results.
 
 ### apiShowRecords
 #### Tests Ran
@@ -120,11 +120,11 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | invalid guid: short | 0x1004
-8 | invalid guid: integer | 0x1004
-9 | no guid | 0x1003
+7 | invalid GUID: short | 0x1004
+8 | invalid GUID: integer | 0x1004
+9 | no GUID | 0x1003
 
-data shall be the same as provided in the previous tests, guid used should be the one generated and returned by the apiCreateRecord test
+data shall be the same as provided in the previous tests, GUID used should be the one generated and returned by the apiCreateRecord test
 10 | successful record deleted, send/self | 0x0)
 11 | successful record deleted, other_know/receive | 0x0)
 
@@ -146,7 +146,7 @@ Test Number |  Title | Code
 11 | invalid paydata amount: negative number | 0x1021
 12 | invalid paydata denominations aren't 0 | 0x1021
 13 | invalid paydata status | 0x1022
-14 | invalid guid | 0x1004
+14 | invalid GUID | 0x1004
 
 #### Results Expected
 apiBillPayList test will be used for verification.
@@ -157,12 +157,12 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | no guid given | 0x1003
-8 | invalid guid: short | 0x1004
-9 | invalid guid: integer | 0x1004
+7 | no GUID given | 0x1003
+8 | invalid GUID: short | 0x1004
+9 | invalid GUID: integer | 0x1004
 10 | no record made | 0x2003
 
-use same guid as the test for apiBillPay.
+use same GUID as the test for apiBillPay.
 
 #### Results Expected
 Return data should match the data given in the apiBillPay test.
@@ -191,12 +191,12 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | missing dns name | 0x1025
-8 | dns record already exists | 0x5003
+7 | missing DNS name | 0x1025
+8 | DNS record already exists | 0x5003
 9 | failed to get tickets | 0x5002
-10 | incorrect dns response | 0x5004
+10 | incorrect DNS response | 0x5004
 
-incorrect responses from dns will be created using promises
+incorrect responses from DNS will be created using promises
 #### Results Expected
 
 
@@ -208,7 +208,7 @@ Test Number |  Title | Code
 1-6 | Universal Tests | 0x0
 7 | missing card number | 0x1027
 8 | missing cvv | 0x1028
-9 | missing dns name | 0x1025
+9 | missing DNS name | 0x1025
 10 | missing expiration | 0x1029
 11 | invalid card from wrong cvv | 0x1027
 12 | invalid expiration | 0x1030
@@ -227,9 +227,9 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | missing dns name | 0x1025
+7 | missing DNS name | 0x1025
 8 | missing email | 0x1031
-9 | can't find dns | 0x5001
+9 | can't find DNS | 0x5001
 
 #### Results Expected
 
@@ -240,9 +240,9 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | missing dns name | 0x1025
+7 | missing DNS name | 0x1025
 9 | failed to get tickets | 0x5002
-10 | incorrect dns response | 0x5004
+10 | incorrect DNS response | 0x5004
 
 #### Results Expected
 
@@ -256,7 +256,7 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | can't find dns | 0x5001
+7 | can't find DNS | 0x5001
 
 #### Results Expected
 
@@ -266,8 +266,8 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | missing dns name | 0x1025
-8 | can't find dns | 0x5001
+7 | missing DNS name | 0x1025
+8 | can't find DNS | 0x5001
 9 | invalid card | 0x1027
 #### Results Expected
 
@@ -317,10 +317,10 @@ Tests for error codes:
 Test Number |  Title | Code
 ---|---|---
 1-6 | Universal Tests | 0x0
-7 | missing 'to' param
-8 | can't find dns that's being transfered to
+7 | missing 'to' Parameter
+8 | can't find DNS that's being transfered to
 9 | missing amount
-10 | invalid guid
+10 | invalid GUID
 11 | not enough cloudcoin
 12 | surpass coin transfer amount limit
 
