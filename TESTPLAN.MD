@@ -21,7 +21,7 @@
 [Everything Else](TESTPLAN.MD#Everything-Else)
 
 
-# Universal Tests
+# Universal Info about Tests
 These are the test plans apply to every method in the library that uses a CloudCoin.
 ## How We're Testing:
 We use nodeJS and mocha to create automated tests of each function.
@@ -47,7 +47,6 @@ Expect appropriate error codes to show up in r.code. r.code should always be 0x0
 Tests running with a few RAIDA down or slightly fracked coin should still return a 0x0 code.
 
 # Specific Tests
-Everything below covers the tests that need to be specifically done on each method, that isn't already covered above.
 
 # NFT
 ## apiNFTInsert
