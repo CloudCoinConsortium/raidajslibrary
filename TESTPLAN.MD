@@ -156,16 +156,13 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | No GUID Given | 0x1003|  Coming Soon
-8 | Invalid GUID: Short | 0x1004|  Coming Soon
-9 | Invalid GUID: Integer | 0x1004|  Coming Soon
-10 | No Record Made | 0x2003|  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+4 | No GUID Given | 0x1003|  Coming Soon
+5 | Invalid GUID: Short | 0x1004|  Coming Soon
+6 | Invalid GUID: Integer | 0x1004|  Coming Soon
+7 | No Record Made | 0x2003|  Coming Soon
 
 
 
@@ -213,22 +210,19 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | Missing Card Number | 0x1027|  Coming Soon
-8 | Missing CVV | 0x1028|  Coming Soon
-9 | Missing DNS Name | 0x1025|  Coming Soon
-10 | Missing Expiration | 0x1029|  Coming Soon
-11 | Invalid Card from Wrong CVV | 0x1027|  Coming Soon
-12 | Invalid Expiration | 0x1030|  Coming Soon
-13 | Invalid Card Number | 0x1025|  Coming Soon
-14 | Invalid http Response | 0x5005|  Coming Soon
-15 | Invalid http Content Type | 0x506|  Coming Soon
-16 | Failed to Embed Stack | 0x2004|  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+4 | Missing Card Number | 0x1027|  Coming Soon
+5 | Missing CVV | 0x1028|  Coming Soon
+6 | Missing DNS Name | 0x1025|  Coming Soon
+7 | Missing Expiration | 0x1029|  Coming Soon
+8 | Invalid Card from Wrong CVV | 0x1027|  Coming Soon
+9 | Invalid Expiration | 0x1030|  Coming Soon
+10 | Invalid Card Number | 0x1025|  Coming Soon
+11 | Invalid http Response | 0x5005|  Coming Soon
+12 | Invalid http Content Type | 0x506|  Coming Soon
+13 | Failed to Embed Stack | 0x2004|  Coming Soon
 
 
 ### apiRecoverID
@@ -267,42 +261,33 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | Can't Find DNS | 0x5001|  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+4 | Can't Find DNS | 0x5001|  Coming Soon
 
 
 ### apiRestoreCard
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | Missing DNS Name | 0x1025|  Coming Soon
-8 | Can't Find DNS | 0x5001|  Coming Soon
-9 | Invalid Card | 0x1027|  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+4 | Missing DNS Name | 0x1025|  Coming Soon
+5 | Can't Find DNS | 0x5001|  Coming Soon
+6 | Invalid Card | 0x1027|  Coming Soon
 
 
 ### apiGetFreeCoin
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | No Response| ? |  Coming Soon
-8 | Fail to get Coin| ? |  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+4 | No Response| ? |  Coming Soon
+5 | Fail to get Coin| ? |  Coming Soon
 
 
 
@@ -311,12 +296,9 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
-1 | No Coin Given | 0x1001|  Coming Soon
-2 | Empty Coin Parameter | 0x1002|  Coming Soon
-3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
-4 | Successful Operation | 0x0|  Coming Soon
-5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
-6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+1 | Successful Operation | 0x0|  Coming Soon
+2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+3 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
 
 
 ### apiShowBalance
