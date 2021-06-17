@@ -124,11 +124,11 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | Invalid GUID: Short | 0x1004
-8 | Invalid GUID: Integer | 0x1004
-9 | No GUID | 0x1003
-10 | Successful Record deleted, send/self | 0x0|  Coming Soon
-11 | Successful Record deleted, other_know/receive | 0x0|  Coming Soon
+7 | Invalid GUID: Short | 0x1004|  Coming Soon
+8 | Invalid GUID: Integer | 0x1004|  Coming Soon
+9 | No GUID | 0x1003|  Coming Soon
+10 | Successful Record Deleted, send/self | 0x0|  Coming Soon
+11 | Successful Record Deleted, other_know/receive | 0x0|  Coming Soon
 
 
 # Bill Pay
