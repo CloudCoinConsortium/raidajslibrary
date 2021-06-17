@@ -2,7 +2,7 @@
 
 
 ## Table of Contents
-[Universal Tests](TESTPLAN.MD#Universal-Tests)
+[Universal Info About Tests](TESTPLAN.MD#Universal-Info-About-Tests)
 
 [NFT](TESTPLAN.MD#NFT)
 
@@ -18,7 +18,7 @@
 
 [Transfer](TESTPLAN.MD#Transfer)
 
-[Everything Else](TESTPLAN.MD#Everything-Else)
+[Everything Else](TESTPLAN.MD#Everything-Else-Incomplete)
 
 
 # Universal Info About Tests
