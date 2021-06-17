@@ -21,7 +21,7 @@
 [Everything Else](TESTPLAN.MD#Everything-Else)
 
 
-# Universal Info about Tests
+# Universal Info About Tests
 These are the test plans apply to every method in the library that uses a CloudCoin.
 ## How We're Testing:
 We use nodeJS and mocha to create automated tests of each function.
@@ -61,7 +61,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
 7 | No Metadata Given | 0x1014 |  Coming Soon
-8 | No Filename Within Metadata | 0x1014 |  Coming Soon
+8 | No FileName Within Metadata | 0x1014 |  Coming Soon
 9 | No Data Given |  0x1010 |  Coming Soon
 10 | Empty Data Parameter | 0x1024 |  Coming Soon
 11 | Too Much Data | 0x1016 |  Coming Soon
@@ -96,8 +96,8 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 9 | Invalid Initiator Type | 0x1008|  Coming Soon
 10 | Invalid GUID: Short | 0x1004|  Coming Soon
 11 | Invalid GUID: Integer | 0x1004|  Coming Soon
-12 | Successful record created, send/self | 0x0|  Coming Soon
-13 | Successful record created, other_know/receive | 0x0|  Coming Soon
+12 | Successful Record Created, send/self | 0x0|  Coming Soon
+13 | Successful Record Created, other_know/receive | 0x0|  Coming Soon
 
 
 ### apiShowRecords
@@ -110,8 +110,8 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | invalid timestamp: negative number | 0x1009|  Coming Soon
-8 | invalid timestamp: string | 0x1009|  Coming Soon
+7 | Invalid Timestamp: Negative Number | 0x1009|  Coming Soon
+8 | Invalid Timestamp: String | 0x1009|  Coming Soon
 
 
 ### apiDeleteRecord
@@ -124,11 +124,11 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | invalid GUID: short | 0x1004
-8 | invalid GUID: integer | 0x1004
-9 | no GUID | 0x1003
-10 | successful record deleted, send/self | 0x0|  Coming Soon
-11 | successful record deleted, other_know/receive | 0x0|  Coming Soon
+7 | Invalid GUID: Short | 0x1004
+8 | Invalid GUID: Integer | 0x1004
+9 | No GUID | 0x1003
+10 | Successful Record deleted, send/self | 0x0|  Coming Soon
+11 | Successful Record deleted, other_know/receive | 0x0|  Coming Soon
 
 
 # Bill Pay
@@ -142,14 +142,14 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | no paydata given | 0x1017|  Coming Soon
-8 | invalid paydata method | 0x1019|  Coming Soon
-9 | invalid paydata fileformat  | 0x1020|  Coming Soon
-10 | invalid paydata amount: written in text | 0x1021|  Coming Soon
-11 | invalid paydata amount: negative number | 0x1021|  Coming Soon
-12 | invalid paydata denominations aren't 0 | 0x1021|  Coming Soon
-13 | invalid paydata status | 0x1022|  Coming Soon
-14 | invalid GUID | 0x1004|  Coming Soon
+7 | No Paydata Given | 0x1017|  Coming Soon
+8 | Invalid Paydata Method | 0x1019|  Coming Soon
+9 | Invalid Paydata Fileformat  | 0x1020|  Coming Soon
+10 | Invalid Paydata Amount: Written in Text | 0x1021|  Coming Soon
+11 | Invalid Paydata Amount: Negative Number | 0x1021|  Coming Soon
+12 | Invalid Paydata Denominations Aren't 0 | 0x1021|  Coming Soon
+13 | Invalid Paydata Status | 0x1022|  Coming Soon
+14 | Invalid GUID | 0x1004|  Coming Soon
 
 
 ### apiBillPayList
@@ -162,10 +162,10 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | no GUID given | 0x1003|  Coming Soon
-8 | invalid GUID: short | 0x1004|  Coming Soon
-9 | invalid GUID: integer | 0x1004|  Coming Soon
-10 | no record made | 0x2003|  Coming Soon
+7 | No GUID Given | 0x1003|  Coming Soon
+8 | Invalid GUID: Short | 0x1004|  Coming Soon
+9 | Invalid GUID: Integer | 0x1004|  Coming Soon
+10 | No Record Made | 0x2003|  Coming Soon
 
 
 
@@ -203,10 +203,10 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing DNS name | 0x1025|  Coming Soon
-8 | DNS record already exists | 0x5003|  Coming Soon
-9 | failed to get tickets | 0x5002|  Coming Soon
-10 | incorrect DNS response | 0x5004|  Coming Soon
+7 | Missing DNS Name | 0x1025|  Coming Soon
+8 | DNS Record Already Exists | 0x5003|  Coming Soon
+9 | Failed to get Tickets | 0x5002|  Coming Soon
+10 | Incorrect DNS Response | 0x5004|  Coming Soon
 
 
 ### apiGenerateCard
@@ -219,16 +219,16 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing card number | 0x1027|  Coming Soon
-8 | missing cvv | 0x1028|  Coming Soon
-9 | missing DNS name | 0x1025|  Coming Soon
-10 | missing expiration | 0x1029|  Coming Soon
-11 | invalid card from wrong cvv | 0x1027|  Coming Soon
-12 | invalid expiration | 0x1030|  Coming Soon
-13 | invalid cardnumber | 0x1025|  Coming Soon
-14 | invalid http response | 0x5005|  Coming Soon
-15 | invalid http content type | 0x506|  Coming Soon
-16 | failed to embed stack | 0x2004|  Coming Soon
+7 | Missing Card Number | 0x1027|  Coming Soon
+8 | Missing CVV | 0x1028|  Coming Soon
+9 | Missing DNS Name | 0x1025|  Coming Soon
+10 | Missing Expiration | 0x1029|  Coming Soon
+11 | Invalid Card from Wrong CVV | 0x1027|  Coming Soon
+12 | Invalid Expiration | 0x1030|  Coming Soon
+13 | Invalid Card Number | 0x1025|  Coming Soon
+14 | Invalid http Response | 0x5005|  Coming Soon
+15 | Invalid http Content Type | 0x506|  Coming Soon
+16 | Failed to Embed Stack | 0x2004|  Coming Soon
 
 
 ### apiRecoverID
@@ -241,9 +241,9 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing DNS name | 0x1025|  Coming Soon
-8 | missing email | 0x1031|  Coming Soon
-9 | can't find DNS | 0x5001|  Coming Soon
+7 | Missing DNS Name | 0x1025|  Coming Soon
+8 | Missing Email | 0x1031|  Coming Soon
+9 | Can't Find DNS | 0x5001|  Coming Soon
 
 
 ### apiDeleteSkyWallet
@@ -256,9 +256,9 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing DNS name | 0x1025|  Coming Soon
-9 | failed to get tickets | 0x5002|  Coming Soon
-10 | incorrect DNS response | 0x5004|  Coming Soon
+7 | Missing DNS Name | 0x1025|  Coming Soon
+9 | Failed to get Tickets | 0x5002|  Coming Soon
+10 | Incorrect DNS Response | 0x5004|  Coming Soon
 
 
 
@@ -273,7 +273,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | can't find DNS | 0x5001|  Coming Soon
+7 | Can't Find DNS | 0x5001|  Coming Soon
 
 
 ### apiRestoreCard
@@ -286,9 +286,9 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing DNS name | 0x1025|  Coming Soon
-8 | can't find DNS | 0x5001|  Coming Soon
-9 | invalid card | 0x1027|  Coming Soon
+7 | Missing DNS Name | 0x1025|  Coming Soon
+8 | Can't Find DNS | 0x5001|  Coming Soon
+9 | Invalid Card | 0x1027|  Coming Soon
 
 
 ### apiGetFreeCoin
@@ -301,8 +301,8 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | no response| ? |  Coming Soon
-8 | fail to get coin| ? |  Coming Soon
+7 | No Response| ? |  Coming Soon
+8 | Fail to get Coin| ? |  Coming Soon
 
 
 
@@ -355,12 +355,12 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing 'to' Parameter | ? |  Coming Soon
-8 | can't find DNS that's being transfered to|?|  Coming Soon
-9 | missing amount|?|  Coming Soon
-10 | invalid GUID|?|  Coming Soon
-11 | not enough cloudcoin|?|  Coming Soon
-12 | surpass coin transfer amount limit|?|  Coming Soon
+7 | Missing 'to' Parameter | ? |  Coming Soon
+8 | Can't Find DNS That's Being Transfered to|?|  Coming Soon
+9 | Missing Amount|?|  Coming Soon
+10 | Invalid GUID|?|  Coming Soon
+11 | Not Enough CloudCoin|?|  Coming Soon
+12 | Surpass Coin Transfer Amount Limit|?|  Coming Soon
 
 
 ### apiViewReceipt
@@ -373,10 +373,10 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
-7 | missing account|?|  Coming Soon
-8 | missing tag|?|  Coming Soon
-9 | account invalid due to invalid SN|?|  Coming Soon
-10 | invalid tag|?|  Coming Soon
+7 | Missing Account|?|  Coming Soon
+8 | Missing Tag|?|  Coming Soon
+9 | account Invalid Due to Invalid SN|?|  Coming Soon
+10 | Invalid Tag|?|  Coming Soon
 
 
 
@@ -478,7 +478,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
 
 
-### GetCCByUsernameAndPassword
+### GetCCByUserNameAndPassword
 ### Tests:
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ---|---|---|---
