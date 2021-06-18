@@ -38,7 +38,7 @@ describe('accounts error codes', () => {
   	"00000000000000000000000000000000"]
   }
   guid = "0123456789ABCDEF0123456789ABCDEF"
-  name = "jsautotest.skywallet.cc"
+  name = "sergiy.skywallet.cc"
   nocard = "jsautotestnocard.skywallet.cc"
   email = "chernyshovtesero@protonmail.com"
   password = "55123400"
@@ -123,7 +123,7 @@ an: ["00000000000000000000000000000000", "00000000000000000000000000000000", "00
 }
 
 guid = "0123456789ABCDEF0123456789ABCDEF"
-name = "jsautotest.skywallet.cc"
+name = "sergiy.skywallet.cc"
 email = "chernyshovtesero@protonmail.com"
 password = "55123400"
 

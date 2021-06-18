@@ -53,18 +53,18 @@ describe('account maintenance error codes', () => {
     })
     it('ShowBalance should fail with no coin (code 0x1001)', async function(){
     params = { }
-    r = await raidajs.apiShowBalance(params)
+    r = await raidajs.apiShowBalance()
     expect(r.code).to.equal(0x1001);
     })
     it('ShowBalance should fail with no coin data (code 0x1002)', async function(){
-    params = { "coin" : {}}
+    params = { }
     r = await raidajs.apiShowBalance(params)
     expect(r.code).to.equal(0x1002);
     })
 
     it('ShowBalance should fail with fake coin (code 0x2001)', async function(){
   params = {"coin": coin}
-  r = await raidajs.apiShowBalance(params)
+  r = await raidajs.apiShowBalance(coin)
   expect(r.code).to.equal(0x2001);
     })
 
@@ -121,10 +121,8 @@ an: ["0", "ff35a13ebb2c0f710d5bdf3ddf5bd4fb", "83f301143151aee59b2735692e605a42"
     afterEach(async function(){})
 
     it('Echo (code 0x0)', async function(){
-    params = {}
-    r = await raidajs.apiHealthCheck(params)
+    r = await raidajs.apiEcho()
     expect(r.code).to.equal(0x0);
-    guid = r.guid
     })
     it('FixTransferSync (code ?)', async function(){
     params = {"coin": fix}
@@ -132,21 +130,20 @@ an: ["0", "ff35a13ebb2c0f710d5bdf3ddf5bd4fb", "83f301143151aee59b2735692e605a42"
   })
   it('ShowBalance (code 0x0)', async function(){
   params = {"coin": coin}
-  r = await raidajs.apiShowBalance(params)
+  r = await raidajs.apiShowBalance(coin)
   expect(r.code).to.equal(0x0);
   })
 
   //raida down
   it('Echo (code 0x0) with 3 raida down', async function(){
   params = {}
-  r = await raidajs.apiHealthCheck(params, callback3Rdown)
+  r = await raidajs.apiEcho(callback3Rdown)
   expect(r.code).to.equal(0x0);
-  guid = r.guid
   })
 
 it('ShowBalance (code 0x0) with 3 raida down', async function(){
 params = { "coin": coin}
-r = await raidajs.apiShowBalance(params, callback3Rdown)
+r = await raidajs.apiShowBalance(coin, callback3Rdown)
 expect(r.code).to.equal(0x0);
 })
 
@@ -154,7 +151,7 @@ expect(r.code).to.equal(0x0);
 
 it('ShowBalance (code 0x0) with fracked coin', async function(){
 params = { "coin": fracked}
-r = await raidajs.apiShowBalance(params)
+r = await raidajs.apiShowBalance(fracked)
 expect(r.code).to.equal(0x0);
 })
 
