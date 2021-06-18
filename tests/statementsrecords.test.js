@@ -145,6 +145,7 @@ describe('test statements and records error codes', () => {
     it('DeleteRecord should fail with fake coin (code 0x2001)', async function(){
   params = {"coin": coin, "guid": guid}
   r = await raidajs.apiDeleteRecord(params)
+
   expect(r.code).to.equal(0x2001);
     })
 
@@ -228,6 +229,11 @@ an: ["00000000000000000000000000000000", "00000000000000000000000000000000", "00
   expect(r.code).to.equal(0x0);
   test_guids[0] = r.guid
   })
+  it('showrecords (code 0x0) with 3 raida down', async function(){
+  params = {"coin": coin}
+  r = await raidajs.apiShowRecords(params, callback3Rdown)
+  expect(r.code).to.equal(0x0);
+  })
 
   it('deleterecord 1 with 3 raida down (code 0x0)', async function(){
   params = {"coin": coin, "guid": test_guids[0]}
@@ -241,22 +247,19 @@ an: ["00000000000000000000000000000000", "00000000000000000000000000000000", "00
   expect(r.code).to.equal(0x0);
   test_guids[1] = r.guid
 })
+it('showrecords (code 0x0) with fracked coin', async function(){
+params = {"coin": fracked}
+r = await raidajs.apiShowRecords(params)
+expect(r.code).to.equal(0x0);
+})
 
 it('deleterecord 2 (code 0x0) with fracked coin', async function(){
 params = {"coin": fracked, "guid": test_guids[1]}
 r = await raidajs.apiDeleteRecord(params)
 expect(r.code).to.equal(0x0);
 })
-it('showrecords (code 0x0) with 3 raida down', async function(){
-params = {"coin": coin}
-r = await raidajs.apiShowRecords(params, callback3Rdown)
-expect(r.code).to.equal(0x0);
-})
-it('showrecords (code 0x0) with fracked coin', async function(){
-params = {"coin": fracked}
-r = await raidajs.apiShowRecords(params)
-expect(r.code).to.equal(0x0);
-})
+
+
 
 
 
