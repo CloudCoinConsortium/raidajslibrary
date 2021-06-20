@@ -1021,6 +1021,7 @@ class RaidaJS {
 
     let rv = {
       status: 'done',
+      code: RaidaJS.ERR_NO_ERROR,
       totalNotes: coins.length,
       fixedNotes: 0,
       result : {},
@@ -3055,6 +3056,93 @@ class RaidaJS {
 
   }
 
+  // Multi Insert
+  async apiNFTMultiInsert(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTMultiInsert", rv)
+
+    if (!('coins' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+
+
+    if (!('data' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_DATA, "Data is missing")
+
+    let coins = params.coins
+    if (coins.length > this.options.maxCoinsPerIteraiton)
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+
+    for (let i = 0; i < coins.length; i++) {
+      let coin = coins[i]
+      if (!this._validateCoin(coin)) 
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
+    }
+
+    // Doing detect
+    let detect = await this.apiDetect(coins, callback)
+    if (detect.code != RaidaJS.ERR_NO_ERROR)
+        return this._getErrorCode(RaidaJS.ERR_DETECT_FAILED, "Failed to do multi_detect")
+
+    if (detect.counterfeitNotes > 0) {
+        return this._getErrorCode(RaidaJS.ERR_COUNTERFEIT_COIN, "There is at least one counterfeit coin in the Stack. Stop doing anything")
+    }
+
+    if (detect.errorNotes > 0) {
+        return this._getErrorCode(RaidaJS.ERR_NETWORK_ERROR_COIN, "There was an error during multi_detect. Stop doing anything")
+    }
+
+    if (detect.frackedNotes > 0) {
+      let fresult = await this.apiFixfracked(detect.result, callback)
+      if (fresult.code != RaidaJS.ERR_NO_ERROR)
+          return this._getErrorCode(RaidaJS.ERR_FAILED_TO_FIX, "Failed to fix coins")
+
+      for (let sn in detect.result) {
+        let cc = detect.result[sn]
+        if (cc.counterfeit > 2) {
+          return this._getErrorCode(RaidaJS.ERR_FAILED_TO_FIX, "Failed to fix coins. Coin " + cc.sn + " still has more than two countefeit responses")
+        }
+      }
+    }
+
+    let success = 0
+    let failed = 0
+
+    delete params.coins
+    for (let i = 0; i < coins.length; i++) {
+      let coin = coins[i]
+      params.coin = coin
+
+      let nftresult = await this.apiNFTInsert(params, callback)
+      if (nftresult.code != RaidaJS.ERR_NO_ERROR) {
+        failed++
+      } else {
+        success++
+      }
+    }
+
+    let code
+    let msg
+    if (failed > 0) {
+      if (success == 0) {
+          return this._getErrorCode(RaidaJS.ERR_FAILED_TO_CREATE_TOKENS, "Failed to create all tokens")
+      }
+
+      code = RaidaJS.ERR_HAS_ERROR
+      msg = "Not all tokens have been created"
+    } else {
+      code = RaidaJS.ERR_NO_ERROR
+      msg = "Tokens created"
+    }
+
+    let rv = {
+      'code' : code,
+      'text' : msg,
+      'tokensCreated': success,
+      'tokensFailed': failed,
+    }
+
+    return rv
+  }
+
   // Create NFT
   async apiNFTInsert(params, callback = null) {
     this.addBreadCrumbEntry("apiNFTInsert", rv)
@@ -3865,6 +3953,7 @@ class RaidaJS {
       // Return value
       let rv = {
         status: "done",
+        code: RaidaJS.ERR_NO_ERROR,
         totalNotes: coins.length,
         authenticNotes: 0,
         counterfeitNotes: 0,
@@ -5231,13 +5320,25 @@ RaidaJS.ERR_FAILED_TO_GET_TICKETS = 0x5002
 RaidaJS.ERR_DNS_RECORD_ALREADY_EXISTS = 0x5003
 RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE = 0x5004
 RaidaJS.ERR_RESPONSE_INVALID_HTTP_RESPONSE = 0x5005
-RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE = 0x506
+RaidaJS.ERR_RESPONSE_INVALID_HTTP_CONTENT_TYPE = 0x5006
 
 // Billpay
 RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
 
 // Modules
 RaidaJS.ERR_NO_CANVAS_MODULE = 0x7001
+
+// Detect Failed
+RaidaJS.ERR_DETECT_FAILED = 0x8001
+RaidaJS.ERR_COUNTERFEIT_COIN = 0x8002
+RaidaJS.ERR_NETWORK_ERROR_COIN = 0x8002
+RaidaJS.ERR_FAILED_TO_FIX = 0x8003
+
+// NFT
+RaidaJS.ERR_FAILED_TO_CREATE_TOKENS = 0x9001
+
+// Request partly succeced
+RaidaJS.ERR_HAS_ERROR = 0x9101
 
 // Export to the Window Object if we are in browser
 if (_isBrowser) {

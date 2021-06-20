@@ -75,6 +75,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiNFTInsert](README.md#apiNFTInsert)
 
+[apiNFTMultiInsert](README.md#apiNFTMultiInsert)
+
 [apiNFTRead](README.md#apiNFTRead)
 
 [apiNFTDelete](README.md#apiNFTDelete)
@@ -289,6 +291,15 @@ RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_FILE_FORMAT = 0x1020
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT = 0x1021
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_STATUS = 0x1022
 RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE = 0x1023
+RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA = 0x1024
+RaidaJS.ERR_PARAM_MISSING_DNS_NAME = 0x1025
+RaidaJS.ERR_PARAM_MISSING_CARD_NUMBER = 0x1026
+RaidaJS.ERR_PARAM_INVALID_CARD = 0x1027
+RaidaJS.ERR_PARAM_MISSING_CVV = 0x1028
+RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE = 0x1029
+RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE = 0x1030
+RaidaJS.ERR_PARAM_MISSING_EMAIL = 0x1031
+
 
 // Response Errors
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
@@ -303,6 +314,22 @@ RaidaJS.ERR_DNS_RECORD_NOT_FOUND = 0x5001
 
 // Billpay erros
 RaidaJS.ERR_BILLPAY_SENT_PARTIALLY = 0x6001
+
+// Modules
+RaidaJS.ERR_NO_CANVAS_MODULE = 0x7001
+
+// Detect Failed
+RaidaJS.ERR_DETECT_FAILED = 0x8001
+RaidaJS.ERR_COUNTERFEIT_COIN = 0x8002
+RaidaJS.ERR_NETWORK_ERROR_COIN = 0x8002
+RaidaJS.ERR_FAILED_TO_FIX = 0x8003
+
+// NFT
+RaidaJS.ERR_FAILED_TO_CREATE_TOKENS = 0x9001
+
+// Request partly succeced
+RaidaJS.ERR_HAS_ERROR = 0x9101
+
 ```
 
 
@@ -1559,6 +1586,52 @@ let c = r.apiNFTInsert(data, () => {}).then(response => {
   }
 }
 ```
+
+
+#### apiNFTMultiInsert
+
+The function is similar to apiNFTInsert but instead of accepting one coin it accepts a CloudCoin stack with any number of coins in it. The function will start a verification process against the CloudCoin stack. If some coins are fracked they will be fixed.
+
+Input:
+```js
+{
+  // ID CloudCoin (SN and AN must be passed) 
+  "coin" : {
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  },
+
+  // Base64 data
+  "data" : string,
+
+  // Base64 data for ID Proof Picture
+  "proofdata": string,
+
+  // Protocol version. Only 0 and 1 are supported
+  "protocol" : 0,
+
+  // Metadata
+  "metadata" : {}
+}
+```
+
+Output:
+
+```js
+{
+  // Code (RaidaJS.ERR_NO_ERROR if success or RaidaJS.ERR_HAS_ERROR when not 100% were created successfully)
+  code: integer,
+
+  // Number of tokens created successfully
+  tokensCreated: integer,
+
+  // Number of failed tokens
+  tokensFailed: integer
+}
+           
 
 
 #### apiNFTRead
