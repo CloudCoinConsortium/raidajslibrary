@@ -46,7 +46,7 @@ describe('account maintenance error codes', () => {
   guid = "0123456789ABCDEF0123456789ABCDEF"
   name = "jsautotest.skywallet.cc"
   usablesky = "sergiy.skywallet.cc"
-  cardnumber = 4014567890123456
+  cardnumber = "4014567890123456"
   expiration = "06/21"
   cvv = "2194"
   email = "chernyshovtesero@protonmail.com"
@@ -129,20 +129,20 @@ describe('account maintenance error codes', () => {
   r = await raidajs.apiGenerateCard(params)
   expect(r.code).to.equal(0x1029);
     })
-    it('GenerateCard should fail with invalid ccv (code 0x1025)', async function(){
+    it('GenerateCard should fail with invalid ccv (code 0x1027)', async function(){
   params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": usablesky, "cvv": "ajlknafa"}
   r = await raidajs.apiGenerateCard(params)
-  expect(r.code).to.equal(0x1025);
+  expect(r.code).to.equal(0x1027);
     })
     it('GenerateCard should fail with invalid expiration (code 0x1030)', async function(){
   params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": "expiration", "username": usablesky, "cvv": cvv}
   r = await raidajs.apiGenerateCard(params)
   expect(r.code).to.equal(0x1030);
     })
-    it('GenerateCard should fail with invalid cardnumber (code 0x1025)', async function(){
+    it('GenerateCard should fail with invalid cardnumber (code 0x1027)', async function(){
   params = {"coin": coin, "cardnumber" : "cardnumber", "expiration_date": expiration, "username": usablesky, "cvv": cvv}
   r = await raidajs.apiGenerateCard(params)
-  expect(r.code).to.equal(0x2001);
+  expect(r.code).to.equal(0x1027);
     })
     it('GenerateCard should fail with invalid template http (code 0x5005)', async function(){
   params = {"coin": coin, "cardnumber" : cardnumber, "expiration_date": expiration, "username": usablesky, "cvv": cvv, "url_card_template": ""}
@@ -215,10 +215,10 @@ describe('account maintenance error codes', () => {
   r = await raidajs.apiDeleteSkyWallet(params)
   expect(r.code).to.equal(0x5004);
     })
-    it('DeleteSkywallet should fail with fake coin (code 0x2001)', async function(){
+    it('DeleteSkywallet should fail with fake coin (code 0x5002)', async function(){
   params = {"coin": coin, "name" : usablesky}
   r = await raidajs.apiDeleteSkyWallet(params)
-  expect(r.code).to.equal(0x2001);
+  expect(r.code).to.equal(0x5002);
     })
 
 

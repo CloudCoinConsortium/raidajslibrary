@@ -7,7 +7,7 @@ function callback3Rdown (rID, url, data){
   }
 }
 
-describe('account maintenance error codes', () => {
+describe('balance and autosync error codes', () => {
 
   let raidajs
   let coin
@@ -73,7 +73,7 @@ describe('account maintenance error codes', () => {
 
 })
 
-describe('account maintenance', () => {
+describe('balance and autosync', () => {
 
   let raidajs
   let fracked
