@@ -1,6 +1,5 @@
 const LocalStorage = require('node-localstorage').LocalStorage
-//const RaidaJS = require('raidajs').default
-const RaidaJS = require('../lib/raidajs').default
+const RaidaJS = require('raidajs').default
 const expect = require('chai').expect
 
 function callback3Rdown (rID, url, data){
