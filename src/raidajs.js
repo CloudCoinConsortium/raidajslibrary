@@ -257,6 +257,7 @@ class RaidaJS {
     let rqs = this._launchRequests("echo", {}, 'GET', callback)
     let rv = {
       status: 'done',
+      code : RaidaJS.ERR_NO_ERROR,
       onlineServers : 0,
       totalServers: this._totalServers,
       details : []
@@ -340,8 +341,6 @@ class RaidaJS {
     let rqs = this._launchRequests("statements/delete", rqdata, 'GET', callback)
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
-        console.log("deleted")
-        console.log(serverResponse)
         if (serverResponse === "error" || serverResponse == "network") {
           e++
           return
@@ -361,7 +360,7 @@ class RaidaJS {
       if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to delete statement. Too many error responses from RAIDA")
 
-        return rv
+      return rv
     })
 
     return mainPromise    
@@ -381,6 +380,9 @@ class RaidaJS {
     let ts = 0
     if ('start_ts' in params) {
       ts = params['start_ts']
+      if (!Number.isInteger(ts))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_TIMESTAMP, "Invalid Timestamp")
+
       if (ts < 0 || ts > 1919445247) {
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_TIMESTAMP, "Invalid Timestamp")
       }
@@ -602,6 +604,9 @@ class RaidaJS {
       })
 
       let result = this._gradeCoin(a, f, e)
+//      if (result == this.__counterfeitResult)
+//        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "The coin is counterfeit")
+
       if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create statement. Too many error responses from RAIDA")
 
@@ -793,10 +798,11 @@ class RaidaJS {
 
     let rqs = this._launchRequests("view_receipt", rqdata, 'GET', callback)
     let rv = {
-      'status' : 'done',
-      'sns' : {},
-      'details' : [],
-      'total' : 0
+      status : 'done',
+      code: RaidaJS.ERR_NO_ERROR,
+      sns : {},
+      details : [],
+      total : 0
     }
     let mainPromise = rqs.then(response => {
       for (let i = 0; i < response.length; i++) {
@@ -1839,6 +1845,9 @@ class RaidaJS {
     }
 
     let gcRqs = await this._getCoins(coin, callback)
+    if ('code' in gcRqs && gcRqs.code == RaidaJS.ERR_COUNTERFEIT_COIN)
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+
     let sns = Object.keys(gcRqs.coins)
 
     if (!('amount' in params)) {
@@ -2119,8 +2128,6 @@ class RaidaJS {
     let v = this._getBillPayCachedObject(guid)
     if (v != null) {
       paydata = v
-      console.log("cached")
-      console.log(paydata)
     } else {
       if (!('paydata' in params))
         return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_MISSING_PAYDATA, "Paydata is missing")
@@ -2138,13 +2145,16 @@ class RaidaJS {
         let method = els[0].trim()
         let fformat = els[1].trim()
         if (method != "TransferToSkywallet")
-          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_INVALID_METHOD, "Invalid method. Line " + line)
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_METHOD, "Invalid method. Line " + line)
 
         if (fformat != "stack")
-          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_FILE_FORMAT, "Only stack format supported. Line " + line)
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_FILE_FORMAT, "Only stack format supported. Line " + line)
 
 
         let amount = els[2].trim()
+        if (!Number.isInteger(amount))
+          return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT, "Incorrect Amount. Line " + line)
+
         try {
           amount = parseInt(amount)
         } catch (e) { 
@@ -2209,8 +2219,6 @@ class RaidaJS {
       }
 
       let lrv = await this.apiTransfer(params, callback)
-      console.log("xdone " +to)
-      console.log(rv)
       if (lrv.status == "error") {
         recipient.status = "error"
         recipient.message = lrv.errorText
@@ -2345,8 +2353,8 @@ class RaidaJS {
       guid = this._generatePan()
     } else {
       guid = params.guid
-      if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
-        return this._getError("Invalid GUID format")
+      if (!this._validateGuid(guid))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
     }
 
     if ('from' in params) 
@@ -2357,6 +2365,9 @@ class RaidaJS {
     let tags = this._getObjectMemo(guid, memo, params.amount, from)
 
     let gcRqs = await this._getCoins(coin, callback)
+    if ('code' in gcRqs && gcRqs.code == RaidaJS.ERR_COUNTERFEIT_COIN)
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+
     let sns = Object.keys(gcRqs.coins)
     let nns = new Array(sns.length)
     nns.fill(this.options.defaultCoinNn)
@@ -2419,6 +2430,7 @@ class RaidaJS {
     
     // Assemble input data for each Raida Server
     response.changeCoinSent = changeRequired
+    response.code = RaidaJS.ERR_NO_ERROR
 
     let pm = new Promise((resolve, reject) => {
       setTimeout(() => {
@@ -2742,6 +2754,9 @@ class RaidaJS {
     }
 
     let d = await this._getCoins(coin, callback)
+    if ('code' in d && d.code == RaidaJS.ERR_COUNTERFEIT_COIN)
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+
     let coins = d.coins
     
     let a = []
@@ -2826,10 +2841,11 @@ class RaidaJS {
   // Shows Balance
   async apiShowBalance(coin, callback) {
     this.addBreadCrumbEntry("apiShowBalance", coin)
+    if (!coin)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
 
-    if (!this._validateCoin(coin)) {
-      return this._getError("Failed to validate params")
-    }
+    if (!this._validateCoin(coin)) 
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
@@ -2929,6 +2945,9 @@ class RaidaJS {
       if (!this._validResult(result)) 
         balance = -1
 
+      if (result == this.__counterfeitResult) {
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+      }
 
       rv.balance = balance
       rv.balances = balances
@@ -2948,8 +2967,6 @@ class RaidaJS {
 
             iters++
             if (iters >= thiz.options.maxCoinsPerIteraiton) {
-              console.log("calling fix_transferrr")
-              console.log(h)
               await thiz.apiFixTransferSync(response.coinsPerRaida)
 
               h = {}
@@ -3043,6 +3060,10 @@ class RaidaJS {
     }
 
     lrv = await this.apiShowCoins(coin, callback)
+    // Check if the coins is counterfeit
+    if ('code' in lrv && lrv.code == RaidaJS.ERR_COUNTERFEIT_COIN)
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
       rv.sns = lrv.coinsPerRaida
     }
@@ -3051,6 +3072,7 @@ class RaidaJS {
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
       rv.show_balances = lrv.balancesPerRaida
     }
+
 
     return rv
 
@@ -3602,23 +3624,35 @@ class RaidaJS {
     }
 
     let skipRaidas = []
+    let a, f, e
+    a = f = e = 0
     let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
       this._parseMainPromise(response, 0, rv, (response, rIdx) => {
         if (response == "network" || response == "error") {
           skipRaidas.push(rIdx)
+          e++
           return
         }
 
         if (!('status' in response)) {
           skipRaidas.push(rIdx)
+          e++
+          return
+        }
+
+        if (response.status === "fail") {
+          skipRaidas.push(rIdx)
+          f++
           return
         }
 
         if (response.status !== "pass") {
           skipRaidas.push(rIdx)
+          e++
           return
         }
 
+        a++
         let coins = response.message
         for (let i = 0; i < coins.length; i++) {
           let key = coins[i].sn
@@ -3635,6 +3669,13 @@ class RaidaJS {
           rv.coins[key].passed++
         }
       }) 
+
+      // Fail only if counterfeit. Other errors are fine
+      let result = this._gradeCoin(a, f, e)
+      if (result == this.__counterfeitResult)
+        return this._getErrorCode(RaidaJS.ERR_COUNTERFEIT_COIN, "Counterfeit coins")
+      //if (!this._validResult(result))
+      //  return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to get coins. Too many error responses from RAIDA")
 
       let nrv = { code: RaidaJS.ERR_NO_ERROR, coins: {} }
       nrv.coinsPerRaida = rv.coinsPerRaida
@@ -3654,7 +3695,8 @@ class RaidaJS {
           }
         }
       }
-    
+
+     
       return nrv
     })
 
@@ -4304,6 +4346,8 @@ class RaidaJS {
 
   // Validate GUID
   _validateGuid(guid) {
+    guid = "" + guid
+
     return guid.match(/^[a-fA-F0-9]{32}$/)
   }
 
