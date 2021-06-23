@@ -3078,12 +3078,123 @@ class RaidaJS {
 
   }
 
-  // Multi Insert
-  async apiNFTMultiInsert(params, callback = null) {
-    this.addBreadCrumbEntry("apiNFTMultiInsert", rv)
+  // Check in coins have NFT
+  async apiNFTExists(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTExists")
 
     if (!('coins' in params))
-      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coins are missing")
+
+    let coins = params.coins
+    if (coins.length > this.options.maxCoinsPerIteraiton)
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+
+    for (let i = 0; i < coins.length; i++) {
+      let coin = coins[i]
+      if (!this._validateCoin(coin)) 
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
+    }
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn: [],
+        an: []
+      })
+      for (let j = 0; j < coins.length; j++) {
+        let coin = coins[j]
+        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].an.push(coin.an[i])
+      }
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Data returned",
+      'results': {}
+    }
+
+    let a, f, e
+    a = f = e = 0
+
+
+    let results = {}
+    let rqs = this._launchRequests("nft/has_nft", rqdata, 'GET', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, serverResponse => {
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "fail") {
+          f++
+          return
+        }
+
+        if (serverResponse.status == "success") {
+         let message = serverResponse.message
+          let vals = message.split(",")
+          if (vals.length != coins.length) {
+            e++
+            return
+          } 
+
+          for (let c = 0; c < vals.length; c++) {
+            let cc = coins[c]
+            let sn = cc.sn
+            if (!(sn in results)) {
+              results[sn] = 0
+            }
+
+            if (vals[c] === "true") {
+              results[sn]++
+            }
+          }
+
+          a++
+          return
+        }
+
+        e++
+      })
+
+      console.log("DONE")
+      console.log(results)
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to get NFT tokens. Too many error responses from RAIDA")
+
+      
+      let fresults = {}
+      for (let sn in results) {
+        let total = results[sn]
+        if (total >= this.options.minPassedNumToBeAuthentic) {
+          fresults[sn] = true
+        } else {
+          fresults[sn] = false
+        }
+      }
+      console.log("DONE2")
+      console.log(fresults)
+
+      rv.results = fresults
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiNFTInsert", rv)
+
+    return mainPromise
+  }
+
+  // Multi Insert
+  async apiNFTMultiInsert(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTMultiInsert")
+
+    if (!('coins' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coins are missing")
 
 
     if (!('data' in params))
