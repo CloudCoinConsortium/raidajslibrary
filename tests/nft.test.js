@@ -100,27 +100,27 @@ expect(r.code).to.equal(0x2001);
   expect(r.code).to.equal(0x1001);
   })
   it('nftmultiinsert should fail with no coin data (code 0x1002)', async function(){
-  params = {"coin": {}, "data": data, "metadata" : metadata, "protocol" : 0}
+  params = {"coins": [{}], "data": data, "metadata" : metadata, "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1002);
   })
   it('nftmultiinsert should fail with no metadata (code 0x1014)', async function(){
-  params = {"coin": coin, "data": data,  "protocol" : 0}
+  params = {"coins": [coin], "data": data,  "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1014);
   })
   it('nftmultiinsert should fail with no filename in metadata (code 0x1014)', async function(){
-  params = {"coin": coin, "data": data, "metadata": {} ,  "protocol" : 0}
+  params = {"coins": [coin], "data": data, "metadata": {} ,  "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1014);
   })
   it('nftmultiinsert should fail with no data (code 0x1010)', async function(){
-  params = {"coin": coin, "metadata" : metadata,  "protocol" : 0}
+  params = {"coins": [coin], "metadata" : metadata,  "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1010);
   })
   it('nftmultiinsert should fail with empty data (code 0x1024)', async function(){
-  params = {"coin": coin, "data": "", "metadata" : metadata,  "protocol" : 0}
+  params = {"coins": [coin], "data": "", "metadata" : metadata,  "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1024);
   })
@@ -129,17 +129,17 @@ expect(r.code).to.equal(0x2001);
     let i
     for(i = 0; i < 6000000; i++)
       {bigdata = bigdata.concat("0")}
-  params = {"coin": coin,"data": bigdata, "metadata" : metadata,  "protocol" : 0}
+  params = {"coins": [coin],"data": bigdata, "metadata" : metadata,  "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1016);
   })
   it('nftmultiinsert should fail with unsupported protocol (code 0x1013)', async function(){
-  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 2}
+  params = {"coins": [coin], "data": data, "metadata" : metadata, "protocol" : 2}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x1013);
   })
   it('nftmultiinsert should fail with fake coin (code 0x2001)', async function(){
-  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+  params = {"coins": [coin], "data": data, "metadata" : metadata, "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x2001);
   })
@@ -171,10 +171,10 @@ expect(r.code).to.equal(0x2001);
   r = await raidajs.apiNFTExists(params)
   expect(r.code).to.equal(0x1002);
   })
-  it('nftinsert should fail with fake coin (code 0x2001)', async function(){
+  it('nftinsert should fail with fake coin (code 0x8002)', async function(){
 params = {"coins": [coin]}
 r = await raidajs.apiNFTExists(params)
-expect(r.code).to.equal(0x2001);
+expect(r.code).to.equal(0x8002);
   })
 
 })
@@ -221,7 +221,7 @@ metadata = { "filename": "test.jpg"}
   expect(r.code).to.equal(0x0);
   })
   it('nftmultiinsert (code 0x0)', async function(){
-  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+  params = {"coins": [coin], "data": data, "metadata" : metadata, "protocol" : 0}
   r = await raidajs.apiNFTMultiInsert(params)
   expect(r.code).to.equal(0x0);
   })
@@ -246,7 +246,7 @@ r = await raidajs.apiNFTInsert(params, callback3Rdown)
 expect(r.code).to.equal(0x0);
 })
 it('nftmultiinsert (code 0x0) with 3 raida down', async function(){
-params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+params = {"coins": [coin], "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTMultiInsert(params, callback3Rdown)
 expect(r.code).to.equal(0x0);
 })
@@ -271,7 +271,7 @@ r = await raidajs.apiNFTInsert(params)
 expect(r.code).to.equal(0x0);
 })
 it('nftmultiinsert (code 0x0) with fracked coin', async function(){
-params = {"coin": fracked, "data": data, "metadata" : metadata, "protocol" : 0}
+params = {"coins": [fracked], "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTMultiInsert(params)
 expect(r.code).to.equal(0x0);
 })
