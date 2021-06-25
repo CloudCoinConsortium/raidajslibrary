@@ -93,6 +93,58 @@ params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTInsert(params)
 expect(r.code).to.equal(0x2001);
   })
+
+  it('nftmultiinsert should fail with no coin (code 0x1001)', async function(){
+  params = { "data": data, "metadata" : metadata, "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1001);
+  })
+  it('nftmultiinsert should fail with no coin data (code 0x1002)', async function(){
+  params = {"coin": {}, "data": data, "metadata" : metadata, "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1002);
+  })
+  it('nftmultiinsert should fail with no metadata (code 0x1014)', async function(){
+  params = {"coin": coin, "data": data,  "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1014);
+  })
+  it('nftmultiinsert should fail with no filename in metadata (code 0x1014)', async function(){
+  params = {"coin": coin, "data": data, "metadata": {} ,  "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1014);
+  })
+  it('nftmultiinsert should fail with no data (code 0x1010)', async function(){
+  params = {"coin": coin, "metadata" : metadata,  "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1010);
+  })
+  it('nftmultiinsert should fail with empty data (code 0x1024)', async function(){
+  params = {"coin": coin, "data": "", "metadata" : metadata,  "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1024);
+  })
+  it('nftmultiinsert should fail with too much data (code 0x1016)', async function(){
+    let bigdata = "0"
+    let i
+    for(i = 0; i < 6000000; i++)
+      {bigdata = bigdata.concat("0")}
+  params = {"coin": coin,"data": bigdata, "metadata" : metadata,  "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1016);
+  })
+  it('nftmultiinsert should fail with unsupported protocol (code 0x1013)', async function(){
+  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 2}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x1013);
+  })
+  it('nftmultiinsert should fail with fake coin (code 0x2001)', async function(){
+  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x2001);
+  })
+
+
   it('nftread should fail with no coin (code 0x1001)', async function(){
   params = { "data": data, "metadata" : metadata, "protocol" : 0}
   r = await raidajs.apiNFTRead(params)
@@ -106,6 +158,22 @@ expect(r.code).to.equal(0x2001);
   it('nftread should fail with fake coin (code 0x2001)', async function(){
 params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTRead(params)
+expect(r.code).to.equal(0x2001);
+  })
+
+  it('nftexists should fail with no coin (code 0x1001)', async function(){
+  params = {"coins": []}
+  r = await raidajs.apiNFTExists(params)
+  expect(r.code).to.equal(0x1001);
+  })
+  it('nftexists should fail with no coin data (code 0x1002)', async function(){
+  params = {"coins": [{}]}
+  r = await raidajs.apiNFTExists(params)
+  expect(r.code).to.equal(0x1002);
+  })
+  it('nftinsert should fail with fake coin (code 0x2001)', async function(){
+params = {"coins": [coin]}
+r = await raidajs.apiNFTExists(params)
 expect(r.code).to.equal(0x2001);
   })
 
@@ -152,6 +220,11 @@ metadata = { "filename": "test.jpg"}
   r = await raidajs.apiNFTInsert(params)
   expect(r.code).to.equal(0x0);
   })
+  it('nftmultiinsert (code 0x0)', async function(){
+  params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+  r = await raidajs.apiNFTMultiInsert(params)
+  expect(r.code).to.equal(0x0);
+  })
   it('nftread (code 0x0)', async function(){
     coin.sn = 6379371
 params = {"coin": coin, "protocol" : 0}
@@ -159,12 +232,22 @@ r = await raidajs.apiNFTRead(params)
 expect(r.code).to.equal(0x0);
 expect(r.metadata.filename).to.include("test.jpg");
 expect(r.data).to.include(data)
-
+})
+it('nftexists (code 0x0)', async function(){
+coin.sn = 6379371
+params = {"coins": [coin]}
+r = await raidajs.apiNFTExists(params)
+expect(r.code).to.equal(0x0);
 })
 //3 raida down
 it('nftinsert (code 0x0) with 3 raida down', async function(){
 params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTInsert(params, callback3Rdown)
+expect(r.code).to.equal(0x0);
+})
+it('nftmultiinsert (code 0x0) with 3 raida down', async function(){
+params = {"coin": coin, "data": data, "metadata" : metadata, "protocol" : 0}
+r = await raidajs.apiNFTMultiInsert(params, callback3Rdown)
 expect(r.code).to.equal(0x0);
 })
 it('nftread (code 0x0) with 3 raida down', async function(){
@@ -174,7 +257,12 @@ r = await raidajs.apiNFTRead(params, callback3Rdown)
 expect(r.code).to.equal(0x0);
 expect(r.metadata.filename).to.include("test.jpg");
 expect(r.data).to.include(data)
-
+})
+it('nftexists (code 0x0) with 3 raida down', async function(){
+coin.sn = 6379371
+params = {"coins": [coin]}
+r = await raidajs.apiNFTExists(params, callback3Rdown)
+expect(r.code).to.equal(0x0);
 })
 //fracked coin
 it('nftinsert (code 0x0) with fracked coin', async function(){
@@ -182,13 +270,23 @@ params = {"coin": fracked, "data": data, "metadata" : metadata, "protocol" : 0}
 r = await raidajs.apiNFTInsert(params)
 expect(r.code).to.equal(0x0);
 })
+it('nftmultiinsert (code 0x0) with fracked coin', async function(){
+params = {"coin": fracked, "data": data, "metadata" : metadata, "protocol" : 0}
+r = await raidajs.apiNFTMultiInsert(params)
+expect(r.code).to.equal(0x0);
+})
 it('nftread (code 0x0) with fracked coin', async function(){
-  coin.sn = 6379371
+  fracked.sn = 6379371
 params = {"coin": fracked, "protocol" : 0}
 r = await raidajs.apiNFTRead(params)
 expect(r.code).to.equal(0x0);
 expect(r.metadata.filename).to.include("test.jpg");
 expect(r.data).to.include(data)
-
+})
+it('nftexists (code 0x0) with fracked coin', async function(){
+fracked.sn = 6379371
+params = {"coins": [fracked]}
+r = await raidajs.apiNFTExists(params)
+expect(r.code).to.equal(0x0);
 })
 })
