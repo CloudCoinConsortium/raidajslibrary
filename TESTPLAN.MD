@@ -49,7 +49,25 @@ Tests running with a few RAIDA down or slightly fracked coin should still return
 # Specific Tests
 
 # NFT
-## apiNFTInsert
+### apiNFTInsert
+### Tests:
+
+Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+---|---|---|---
+1 | No Coin Given | 0x1001|  Coming Soon
+2 | Empty Coin Parameter | 0x1002|  Coming Soon
+3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
+4 | Successful Operation | 0x0|  Coming Soon
+5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
+6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+7 | No Metadata Given | 0x1014 |  Coming Soon
+8 | No FileName Within Metadata | 0x1014 |  Coming Soon
+9 | No Data Given |  0x1010 |  Coming Soon
+10 | Empty Data Parameter | 0x1024 |  Coming Soon
+11 | Too Much Data | 0x1016 |  Coming Soon
+12 | Unsupported Protocol | 0x1013 | Coming Soon
+
+### apiNFTMultiInsert
 ### Tests:
 
 Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
@@ -77,6 +95,15 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 4 | Successful Operation | 0x0|  Coming Soon
 5 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
 6 | Test with Fracked Coin (3 Bad AN)| 0x0 |  Coming Soon
+
+### apiNFTExists
+### Tests:
+Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+---|---|---|---
+1 | No Coin Given | 0x1001|  Coming Soon
+2 | Empty Coin Parameter | 0x1002|  Coming Soon
+3 | Fake/Counterfeit Coin | 0x2001|  Coming Soon
+4 | Successful Operation | 0x0|  Coming Soon
 
 
 
