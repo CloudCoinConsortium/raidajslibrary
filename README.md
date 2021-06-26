@@ -79,6 +79,8 @@ The node.js repository and can be installed via npm install raidajs. It doesn't 
 
 [apiNFTRead](README.md#apiNFTRead)
 
+[apiNFTRead](README.md#apiNFTMetaRead)
+
 [apiNFTDelete](README.md#apiNFTDelete)
 
 [apiNFTExists](README.md#apiNFTExists)
@@ -1597,14 +1599,14 @@ The function is similar to apiNFTInsert but instead of accepting one coin it acc
 Input:
 ```js
 {
-  // ID CloudCoin (SN and AN must be passed) 
-  "coin" : {
+  // Array of CloudCoins 
+  "coins" : [{
     // Serial Number
     "sn" : interger,
 
     // Array of 25 Authenticity Numbers
     "an" : []
-  },
+  }],
 
   // Base64 data
   "data" : string,
@@ -1634,6 +1636,47 @@ Output:
   tokensFailed: integer
 }
 ```     
+
+#### apiNFTMetaRead
+
+The function reads metadata for each coin from the provided stack. The actual data is not downloaded from the RAIDA 
+
+Input:
+```js
+{
+  // Array of CloudCoins
+  "coins" : [{
+    // Serial Number
+    "sn" : interger,
+
+    // Array of 25 Authenticity Numbers
+    "an" : []
+  }],
+}
+```
+
+Output:
+
+```js
+{
+  // Code (RaidaJS.ERR_NO_ERROR if success or RaidaJS.ERR_HAS_ERROR when not 100% were created successfully)
+  code: integer,
+
+  // Object that holds the results for each coin from the provided stack. The keys are serial numbers
+  results: {},
+}
+```     
+
+Result Object:
+```js
+{
+  // Status: 'success' or 'fail'
+  status: string,
+
+  // NFT Metadata Object
+  metadata: object
+}
+```
 
 
 #### apiNFTRead

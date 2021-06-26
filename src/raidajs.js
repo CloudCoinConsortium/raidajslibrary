@@ -3189,6 +3189,121 @@ class RaidaJS {
     return mainPromise
   }
 
+  // Reads NFT Metadata
+  async apiNFTMetaRead(params, callback = null) {
+    this.addBreadCrumbEntry("apiNFTMetaRead")
+
+    if (!('coins' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coins are missing")
+
+    let coins = params.coins
+    if (coins.length > this.options.maxCoinsPerIteraiton)
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+
+    for (let i = 0; i < coins.length; i++) {
+      let coin = coins[i]
+      if (!this._validateCoin(coin)) 
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
+    }
+
+    let rqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn: [],
+        an: []
+      })
+      for (let j = 0; j < coins.length; j++) {
+        let coin = coins[j]
+        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].an.push(coin.an[i])
+      }
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Data returned",
+      'results': {}
+    }
+    for (let j = 0; j < coins.length; j++) {
+      let coin = coins[j]
+      rv.results[coin.sn] = {
+        'status' : 'unknown'
+      }
+    }
+
+    let a, f, e
+    a = f = e = 0
+    let mparts = []
+    for (let i = 0; i < this._totalServers; i++)
+        mparts[i] = null
+
+    let metas = {}
+    let rqs = this._launchRequests("nft/meta_read", rqdata, 'POST', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+          console.log("SR")
+        console.log(serverResponse)
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+
+        if (serverResponse.status == "success") {
+          if (!('message' in serverResponse))  {
+            e++
+            return
+          }
+
+          let rcoins = serverResponse.message
+          for (let rcc in rcoins) {
+            let rcoin = rcoins[rcc]
+            if (!(rcc in metas)) {
+              metas[rcc] = {
+                'status' : rcoin.status,
+                'mparts' : []
+              }
+            }
+
+            metas[rcc]['mparts'][rIdx] = {
+              'stripe' : rcoin.stripe,
+              'mirror1' : rcoin.mirror,
+              'mirror2' : rcoin.mirror2
+            }
+          }
+
+          a++
+        }
+
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to download NFT token. Too many error responses from RAIDA")
+
+      let rets = {}
+      for (let rcc in metas) {
+        let mparts = metas[rcc]['mparts']
+        let odata = this._getNFTObjectFromString(mparts)
+        if (odata == null) {
+          console.log("failed mparts for " + rcc)
+          rv.results[rcc].status = "error"
+        } else {
+          console.log("ok mparts for " + rcc)
+          rv.results[rcc].status = "success"
+          rv.results[rcc].metadata = odata.metadata
+        }
+      }
+
+      return rv
+
+    })
+
+    return mainPromise
+  }
+
   // Multi Insert
   async apiNFTMultiInsert(params, callback = null) {
     this.addBreadCrumbEntry("apiNFTMultiInsert")
@@ -3494,7 +3609,6 @@ class RaidaJS {
         }
 
         if (serverResponse.status == "success") {
-          console.log("SUCCESS")
           if (!('stripe' in serverResponse) || !('mirror' in serverResponse) || !('mirror2' in serverResponse))  {
             e++
             return
@@ -3534,7 +3648,7 @@ class RaidaJS {
 
     })
 
-    this.addBreadCrumbReturn("apiNFTInsert", rv)
+    this.addBreadCrumbReturn("apiNFTRead", rv)
 
     return mainPromise
   }
@@ -4388,6 +4502,7 @@ class RaidaJS {
           this.addSentryError("Invalid response from RAIDA", i, error)
         } else {
           console.error("Failed to get a respose from RAIDA" + i)
+          console.log(error)
           this.addSentryError("Failed to get any response from RAIDA", i, error)
         }
 
@@ -4595,7 +4710,6 @@ class RaidaJS {
     if (proofdata != null)
       finalStr += this.options.nftMetadataSeparator + proofdata
 
-    console.log(finalStr)
     let fdata = this._splitMessage(finalStr)
 
     return fdata

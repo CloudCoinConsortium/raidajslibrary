@@ -1,6 +1,6 @@
 {
   "name": "raidajs",
-  "version": "0.3.46",
+  "version": "0.3.47",
   "description": "RAIDA JavaScript Library",
   "main": "lib/raidajs.js",
   "scripts": {
