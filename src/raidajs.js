@@ -66,6 +66,11 @@ class RaidaJS {
 
     if (this.options.sentryDSN)
       this.initSentry()
+
+
+    this.perCallTimeouts = {
+      'nft/insert' : 30000
+    }
   }
 
   
@@ -3175,8 +3180,6 @@ class RaidaJS {
           fresults[sn] = false
         }
       }
-      console.log("DONE2")
-      console.log(fresults)
 
       rv.results = fresults
 
@@ -4474,6 +4477,10 @@ class RaidaJS {
       let pm
       let options = {
         timeout : this.options.timeout
+      }
+
+      if (url in this.perCallTimeouts) {
+        options.timeout = this.perCallTimeouts[url]
       }
 
       let rparams
