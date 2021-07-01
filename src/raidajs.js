@@ -3328,6 +3328,46 @@ class RaidaJS {
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
     }
 
+    let size = 0
+    if (!('metadata' in params))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_METADATA, "MetaData is missing")
+
+    let metadata = params.metadata
+    if (!('filename' in metadata))
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_METADATA, "Filename is missing")
+
+    let filename = metadata.filename
+    let proofmimetype = "image/jpeg"
+    let mimetype = "application/octet-stream"
+    if ('mimetype' in metadata)
+      mimetype = metadata.mimetype
+
+    let protocol = 0
+    if ('protocol' in params)
+      protocol = params.protocol
+
+    if (protocol != 0 && protocol != 1)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_UNSUPPORTED_NFT_PROTOCOL, "Unsupported NFT Protocol")
+
+    size += params.data.length
+    if (size == 0) {
+      return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_EMPTY_PAYDATA, "Data is empty")
+    }
+    let proofdata = null
+    if (protocol == 1) {
+      if (!('proofdata' in params))
+        return this._getErrorCode(RaidaJS.ERR_PARAM_NFT_MISSING_ID_PROOF, "ID Proof Picture is missing")
+
+      if ('proofmimetype' in metadata)
+        proofmimetype = metadata.proofmimetype
+
+      proofdata = params.proofdata
+      size += proofdata.length
+    }
+
+    if (size > this.options.maxNFTSize)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_NFT_SIZE_IS_TOO_BIG, "The size of picture and ID proof is too big")
+
     // Doing detect
     let detect = await this.apiDetect(coins, callback)
     if (detect.code != RaidaJS.ERR_NO_ERROR)
@@ -3354,6 +3394,120 @@ class RaidaJS {
       }
     }
 
+    let title = ""
+    let description = ""
+    if ('title' in metadata)
+      title = metadata.title
+
+    if ('description' in metadata)
+      description = metadata.description
+
+    let obj = {
+      'filename' : filename,
+      'mimetype' : mimetype,
+      'proofmimetype' : proofmimetype,
+      'title' : title,
+      'description' : description
+    }
+
+    let rqdata = []
+    let tags = this._getNFTStringForObject(obj, params.data, proofdata)
+
+
+
+    for (let i = 0; i < this._totalServers; i++) {
+      rqdata.push({
+        sn : [],
+        an : [],
+        protocol: protocol,
+        stripe : tags[i]['stripe'],
+        mirror : tags[i]['mirror1'],
+        mirror2 : tags[i]['mirror2']
+      })
+
+      for (let j = 0; j < coins.length; j++) {
+        let coin = coins[j]
+        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].an.push(coin.an[i])
+      }
+    }
+
+    let rv = {
+      'code' : RaidaJS.ERR_NO_ERROR,
+      'text' : "Created successfully"
+    }
+
+    let a, f, e
+    a = f = e = 0
+   
+    let rmaps = []
+    let rqs = this._launchRequests("nft/insert_many", rqdata, 'POST', callback)
+    let mainPromise = rqs.then(response => {
+      this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
+        rmaps[rIdx] = false
+        if (serverResponse === "error" || serverResponse == "network") {
+          e++
+          return
+        }
+        if (serverResponse.status == "success") {
+          a++
+          rmaps[rIdx] = true
+        }
+        if (serverResponse.status == "fail") {
+          f++
+        }
+      })
+
+      for (let i = 0; i < this._totalServers; i++) {
+        let cidx0 = i
+        let cidx1 = i + 3
+        let cidx2 = i + 6
+
+        if (cidx1 >= this._totalServers)
+          cidx1 -= this._totalServers
+
+        if (cidx2 >= this._totalServers)
+          cidx2 -= this._totalServers
+
+        let v0 = rmaps[cidx0]
+        let v1 = rmaps[cidx1]
+        let v2 = rmaps[cidx2]
+  
+        console.log("c="+cidx0+", " + cidx1 + "," + cidx2)
+        console.log("c="+v0+", " + v1 + "," + v2)
+
+        if (!v0 && !v1 && !v2)
+          return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "At least three crucial RAIDA servers failed to accept request: " + cidx0 + ", " + cidx1 + ", " + cidx2)
+      }
+
+      let result = this._gradeCoin(a, f, e)
+      if (!this._validResult(result))
+        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create NFT token. Too many error responses from RAIDA")
+
+
+      return rv
+
+    })
+
+    this.addBreadCrumbReturn("apiNFTInsert", rv)
+
+    return mainPromise
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
     let success = 0
     let failed = 0
 
@@ -3392,6 +3546,9 @@ class RaidaJS {
     }
 
     return rv
+
+
+    */
   }
 
   // Create NFT
