@@ -42,7 +42,7 @@ Test Number |  Title
 5 | Test with 3 RAIDA Down
 6 | Test with Fracked Coin (3 Bad AN)
 ## Results Expected:
-Expect appropriate error codes to show up in r.code. r.code should always be 0x0 if testing a sucessful run.
+Expect appropriate error codes to show up in r.code. r.code should always be 0x0 if testing a successful run.
 
 Tests running with a few RAIDA down or slightly fracked coin should still return a 0x0 code.
 
@@ -52,7 +52,7 @@ Tests running with a few RAIDA down or slightly fracked coin should still return
 ### apiNFTInsert
 ### Tests:
 
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -70,7 +70,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 ### apiNFTMultiInsert
 ### Tests:
 
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -87,7 +87,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiNFTRead
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -98,7 +98,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiNFTExists
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -110,7 +110,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Statements and Records
 ### apiCreateRecord
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -129,7 +129,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiShowRecords
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -143,7 +143,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiDeleteRecord
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -161,7 +161,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Bill Pay
 ### apiBillPay
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -181,7 +181,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiBillPayList
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -196,7 +196,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Account Maintenance
 ### apiHealthCheck
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -207,7 +207,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiFixFracked
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -219,7 +219,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiRegisterSkyWallet
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -235,7 +235,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiGenerateCard
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -254,7 +254,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiRecoverID
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -269,7 +269,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiDeleteSkyWallet
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -286,7 +286,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Accounts
 ### apiResolveSkywallet
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -296,7 +296,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiRestoreCard
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -308,7 +308,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiGetFreeCoin
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -321,7 +321,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Balance and AutoSync
 ### apiEcho
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | Successful Operation | 0x0|  Coming Soon
 2 | Test with 3 RAIDA Down| 0x0 |  Coming Soon
@@ -330,7 +330,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiShowBalance
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -342,7 +342,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiFixTransferGeneric
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -356,7 +356,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Transfer
 ### apiTransfer
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -374,7 +374,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiViewReceipt
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -393,7 +393,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 # Everything else (Incomplete)
 ### apiDetect
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -405,7 +405,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiSend
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -417,7 +417,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiReceive
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -429,7 +429,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### embedImage
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -441,7 +441,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### extractStack
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -453,7 +453,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiGetTicket
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -465,7 +465,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiShowCoins
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -477,7 +477,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiShowCoinsAsArray
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -489,7 +489,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### GetCCByUserNameAndPassword
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -501,7 +501,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiCreatCCForRegistration
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -513,7 +513,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiGetCCByCardData
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
@@ -525,7 +525,7 @@ Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
 
 ### apiPay
 ### Tests:
-Test Number |  Title | Expected Return Code | Expected Reponse (phase 2)
+Test Number |  Title | Expected Return Code | Expected Response (phase 2)
 ---|---|---|---
 1 | No Coin Given | 0x1001|  Coming Soon
 2 | Empty Coin Parameter | 0x1002|  Coming Soon
