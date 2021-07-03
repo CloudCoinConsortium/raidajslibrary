@@ -3394,6 +3394,76 @@ class RaidaJS {
       }
     }
 
+    // Preflight Checks
+    let pfrqdata = []
+    for (let i = 0; i < this._totalServers; i++) {
+      pfrqdata.push({
+        sn : [],
+        an : []
+      })
+
+      for (let j = 0; j < coins.length; j++) {
+        let coin = coins[j]
+        pfrqdata[i].sn.push(coin.sn)
+        pfrqdata[i].an.push(coin.an[i])
+      }
+    }
+
+    let pa, pf, pe
+    pa = pf = pe = 0
+    let prmaps = []
+    let messages = []
+    let pfrqs = await this._launchRequests("nft/pfcheck_nft", pfrqdata, 'POST', callback)
+    let prv = {}
+    
+    this._parseMainPromise(pfrqs, 0, prv, (serverResponse, rIdx) => {
+      prmaps[rIdx] = false
+      messages[rIdx] = "fail"
+      if (serverResponse === "error" || serverResponse == "network") {
+        pe++
+        return
+      }
+      if (serverResponse.status == "success") {
+        pa++
+        prmaps[rIdx] = true
+        messages[rIdx] = "success"
+      }
+      if (serverResponse.status == "fail") {
+        pf++
+        if ('message' in serverResponse)
+          messages[rIdx] = serverResponse.message
+      }
+    })
+
+    for (let i = 0; i < this._totalServers; i++) {
+      let cidx0 = i
+      let cidx1 = i + 3
+      let cidx2 = i + 6
+
+      if (cidx1 >= this._totalServers)
+        cidx1 -= this._totalServers
+
+      if (cidx2 >= this._totalServers)
+        cidx2 -= this._totalServers
+
+      let v0 = prmaps[cidx0]
+      let v1 = prmaps[cidx1]
+      let v2 = prmaps[cidx2]
+
+      if (!v0 && !v1 && !v2) {
+        let e = this._getErrorCode(RaidaJS.ERR_PREFLIGHT_CHECK_FAILED, "At least three crucial RAIDA servers failed while doing PreflightChecks: " + cidx0 + ", " + cidx1 + ", " + cidx2)
+        e.details = messages
+        return e
+      }
+    }
+
+    let presult = this._gradeCoin(pa, pf, pe)
+    if (!this._validResult(presult)) {
+      let e = this._getErrorCode(RaidaJS.ERR_PREFLIGHT_CHECK_FAILED, "Failed to do PreflightCheck. Too many error responses from RAIDA")
+      e.details = messages
+      return e
+    }
+    
     let title = ""
     let description = ""
     if ('title' in metadata)
@@ -3473,9 +3543,6 @@ class RaidaJS {
         let v1 = rmaps[cidx1]
         let v2 = rmaps[cidx2]
   
-        console.log("c="+cidx0+", " + cidx1 + "," + cidx2)
-        console.log("c="+v0+", " + v1 + "," + v2)
-
         if (!v0 && !v1 && !v2)
           return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "At least three crucial RAIDA servers failed to accept request: " + cidx0 + ", " + cidx1 + ", " + cidx2)
       }
@@ -5772,6 +5839,9 @@ RaidaJS.ERR_FAILED_TO_CREATE_TOKENS = 0x9001
 
 // Request partly succeced
 RaidaJS.ERR_HAS_ERROR = 0x9101
+
+// Preflight Check Failed
+RaidaJS.ERR_PREFLIGHT_CHECK_FAILED = 0x9201
 
 // Export to the Window Object if we are in browser
 if (_isBrowser) {
