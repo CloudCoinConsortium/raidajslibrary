@@ -1750,7 +1750,7 @@ class RaidaJS {
         rqdata[i].nns.push(coin.nn)
         rqdata[i].ans.push(coin.an[i])
         rqdata[i].pans.push(coin.pan[i])
-        rqdata[i].denomination.push(this.getDenomination(coin.sn))
+        rqdata[i].dn.push(this.getDenomination(coin.sn))
       }
     }
 
