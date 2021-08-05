@@ -333,7 +333,7 @@ RaidaJS.ERR_FAILED_TO_CREATE_TOKENS = 0x9001
 
 // Request partly succeced
 RaidaJS.ERR_HAS_ERROR = 0x9101
-
+RaidaJS.ERR_MERCHANT_ERROR = 0x9202
 ```
 
 

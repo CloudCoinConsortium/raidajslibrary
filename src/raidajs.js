@@ -732,7 +732,6 @@ class RaidaJS {
     }
 
     name = params['name']
-        console.log("waited3")
 
     let tdata = await this._getDefaultTicket(params['coin'], callback)
     if (tdata == null) {
@@ -912,8 +911,6 @@ class RaidaJS {
 
     rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
     let resultData = await this._getGenericBriefMainPromise(rqs, coins)
-    console.log("mdata")
-    console.log(resultData)
     if (resultData.status != "done") {
       rv.notfixed = coins.length
       return rv
@@ -923,7 +920,6 @@ class RaidaJS {
       return rv
     }
 
-    console.log(resultData)
     let sns = []
     let pans = []
     let tickets = []
@@ -962,8 +958,6 @@ class RaidaJS {
 
     let a, f, e
     a = f = e = 0
-    console.log("Doing sfix")
-    console.log(rqdata)
     let rqs = this._launchRequests("super_fix", rqdata, 'GET', callback, [rIdx])
     let sfixResultData = await this._getGenericBriefMainPromise(rqs, coins)
     if (sfixResultData.status != "done") {
@@ -2017,12 +2011,12 @@ class RaidaJS {
     this.addBreadCrumbEntry("apiPay", params)
 
     if (!('sender_name' in params))
-      return this._getError("Sender Name is required")
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_SENDER, "Sender Name is required")
 
     let sender_address = params.sender_name
 
     if (!('to' in params))
-      return this._getError("To is required")
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_RECIPIENT, "To is required")
 
     let from = sender_address
     if ('from' in params) 
@@ -2035,7 +2029,7 @@ class RaidaJS {
       memo = params.memo
 
     if (!('amount' in params)) 
-      return this._getError("Invalid params. Amount is not defined")
+      return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_AMOUNT, "Invalid params. Amount is not defined")
 
     let guid = ""
     if (!('guid' in params)) {
@@ -2044,7 +2038,7 @@ class RaidaJS {
     } else {
       guid = params.guid
       if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
-        return this._getError("Invalid GUID format")
+        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Invalid GUID format")
     }
 
 
@@ -2052,21 +2046,32 @@ class RaidaJS {
     let merchant_address = params.to
     let reportUrl = await this._resolveDNS(merchant_address, "TXT")
     if (reportUrl == null) {
-      return this._getError("Receiver doesn't have TXT record in DNS name")
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "Receiver doesn't have TXT record in DNS name")
     }
 
     let senderSn = await this._resolveDNS(sender_address)
     if (senderSn == null) {
-      return this._getError("Failed to resolve Sender")
+      return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve Sender")
     }
 
     params.sn = senderSn
 
     reportUrl = reportUrl.replaceAll("\"", "")
+    let reportUrls = []
+    let needMultiple = false
+    if (reportUrl.indexOf('%') > -1) {
+      needMultiple = true
+      for (let j = 0; j < this._totalServers; j++) {
+        reportUrls[j] = reportUrl.replaceAll("%n", "" + j)
+      }
+
+      reportUrl = reportUrls[0]
+    }
+
     try {
       let url = new URL(reportUrl)
     } catch (e) {
-      return this._getError("Ivalid URL in TXT record")
+      return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "Ivalid URL in TXT record")
     }
  
     let meta = ""
@@ -2093,17 +2098,45 @@ class RaidaJS {
       }
       options.params = mParams
 
+      if (needMultiple) {
+        let pms = []
+        let success = 0
+        for (let j = 0; j < reportUrls.length; j++) {
+          let lURL = reportUrls[j]
+          let pm = rAx.get(lURL, options).then(response2 => {
+            if (!response2 || response2.status != 200) {
+              return
+            }
 
-      let rv2 = rAx.get(reportUrl, options).then(response2 => {
-        if (!response2 || response2.status != 200) {
-          return this._getError("Coins sent, but the Merchant was not notified. HTTP code returned from the Merchant: " + response2.status + ". Remember your GUID and contact the Merchant")
+            success++
+          })
+
+          pms.push(pm)
         }
 
-        // Original response from apiTransfer
-        return response
-      })
+        let aspm = allSettled(pms).then(sresponse => {
+          if (success < 13) {
+            return this._getErrorCode(RaidaJS.ERR_MERCHANT_ERROR, "Coins sent, but a lot of the Merchants were not notified. They returned invalid HTTP codes")
+          }
 
-      return rv2
+          // Transfer response
+          return response
+        })
+
+        return aspm
+
+      } else {
+        let rv2 = rAx.get(reportUrl, options).then(response2 => {
+          if (!response2 || response2.status != 200) {
+            return this._getErrorCode(RaidaJS.ERR_MERCHANT_ERROR, "Coins sent, but the Merchant was not notified. HTTP code returned from the Merchant: " + response2.status + ". Remember your GUID and contact the Merchant")
+          }
+
+          // Original response from apiTransfer
+          return response
+        })
+
+        return rv2
+      } 
     })
 
     return rv
@@ -2294,7 +2327,6 @@ class RaidaJS {
     obj[guid] = paydata
 
     v = JSON.stringify(obj)
-    console.log(v)
 
     localStorage.setItem(key, v)
   }
@@ -3163,9 +3195,6 @@ class RaidaJS {
         e++
       })
 
-      console.log("DONE")
-      console.log(results)
-
       let result = this._gradeCoin(a, f, e)
       if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to get NFT tokens. Too many error responses from RAIDA")
@@ -3244,8 +3273,6 @@ class RaidaJS {
     let rqs = this._launchRequests("nft/meta_read", rqdata, 'POST', callback)
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
-          console.log("SR")
-        console.log(serverResponse)
         if (serverResponse === "error" || serverResponse == "network") {
           e++
           return
@@ -3828,8 +3855,6 @@ class RaidaJS {
     let rqs = this._launchRequests("nft/read", rqdata, 'GET', callback)
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, (serverResponse, rIdx) => {
-          console.log("SR")
-        console.log(serverResponse)
         if (serverResponse === "error" || serverResponse == "network") {
           e++
           return
@@ -5804,6 +5829,8 @@ RaidaJS.ERR_PARAM_MISSING_CVV = 0x1028
 RaidaJS.ERR_PARAM_MISSING_EXPIRATION_DATE = 0x1029
 RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE = 0x1030
 RaidaJS.ERR_PARAM_MISSING_EMAIL = 0x1031
+RaidaJS.ERR_PARAM_MISSING_SENDER = 0x1032
+RaidaJS.ERR_PARAM_MISSING_RECIPIENT = 0x1033
 
 // Response
 RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED = 0x2001
@@ -5842,6 +5869,7 @@ RaidaJS.ERR_HAS_ERROR = 0x9101
 
 // Preflight Check Failed
 RaidaJS.ERR_PREFLIGHT_CHECK_FAILED = 0x9201
+RaidaJS.ERR_MERCHANT_ERROR = 0x9202
 
 // Export to the Window Object if we are in browser
 if (_isBrowser) {
