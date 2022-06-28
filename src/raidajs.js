@@ -4,14 +4,14 @@ import CryptoJS from 'crypto-js'
 
 
 import * as Sentry from "@sentry/browser";
-import { Integrations } from "@sentry/tracing";
+import {Integrations} from "@sentry/tracing";
 
 import {version} from '../package.json';
 
 import allSettled from 'promise.allsettled'
 
 let _isBrowser = false
-if (typeof(process.browser) !== 'undefined' && process.browser) {
+if (typeof (process.browser) !== 'undefined' && process.browser) {
   _isBrowser = true
 }
 
@@ -19,8 +19,8 @@ class RaidaJS {
   // Contrustor
   constructor(options) {
     this.options = {
-      domain : "cloudcoin.global",
-      prefix : "raida",
+      domain: "cloudcoin.global",
+      prefix: "raida",
       protocol: "https",
       timeout: 10000, // ms
       defaultCoinNn: 1,
@@ -44,7 +44,8 @@ class RaidaJS {
       billpayKey: "billpay",
       urlCardTemplate: "https://cloudcoinconsortium.com/img/card.png",
       sentryDSN: null
-    , ...options}
+      , ...options
+    }
 
     this._raidaServers = []
     this._totalServers = 25
@@ -69,11 +70,11 @@ class RaidaJS {
 
 
     this.perCallTimeouts = {
-      'nft/insert' : 30000
+      'nft/insert': 30000
     }
   }
 
-  
+
 
   // Init Sentry
   initSentry() {
@@ -90,7 +91,7 @@ class RaidaJS {
       environment: "production",
       maxBreadcrumbs: 2000,
       autoSessionTracking: true,
-      beforeBreadcrumb (breadcrumb, hint) {
+      beforeBreadcrumb(breadcrumb, hint) {
         if (breadcrumb.category === 'console')
           return null
 
@@ -108,14 +109,14 @@ class RaidaJS {
     })
 
     let rqId = this.requestId
-    Sentry.configureScope(function(scope) {
+    Sentry.configureScope(function (scope) {
       scope.setTag("raida", "empty")
       scope.setTag("requestID", rqId)
     })
 
-  
+
     Sentry.setContext("Request", {
-      "raidaJSRequestID" : rqId
+      "raidaJSRequestID": rqId
     })
 
 
@@ -140,7 +141,7 @@ class RaidaJS {
       message: msg,
       level: 'info',
       type: 'user',
-      data: {'rjsdata' : JSON.stringify(data) }
+      data: {'rjsdata': JSON.stringify(data)}
     });
   }
 
@@ -153,7 +154,7 @@ class RaidaJS {
       message: msg,
       level: 'info',
       type: 'user',
-      data: {'rjsdata' : JSON.stringify(data) }
+      data: {'rjsdata': JSON.stringify(data)}
     });
   }
 
@@ -166,7 +167,7 @@ class RaidaJS {
       message: msg,
       level: 'info',
       type: 'user',
-      data: {'rjsdata' : JSON.stringify(data) }
+      data: {'rjsdata': JSON.stringify(data)}
     });
   }
 
@@ -188,7 +189,7 @@ class RaidaJS {
       return
 
     this.addBreadCrumbError("Reporting Error. RequestID " + this.requestId)
-    Sentry.withScope(function(scope) {
+    Sentry.withScope(function (scope) {
       scope.setLevel("error")
       scope.setTag("raida", raida)
       scope.setExtra("raidaServer", raida)
@@ -219,7 +220,7 @@ class RaidaJS {
 
     return 0
   }
-  
+
   // RAIDA to query for SkyWallet creation
   setDefaultRAIDA(raidaNum) {
     this.options.defaultRaidaForQuery = raidaNum
@@ -262,12 +263,12 @@ class RaidaJS {
     let rqs = this._launchRequests("echo", {}, 'GET', callback)
     let rv = {
       status: 'done',
-      code : RaidaJS.ERR_NO_ERROR,
-      onlineServers : 0,
+      code: RaidaJS.ERR_NO_ERROR,
+      onlineServers: 0,
       totalServers: this._totalServers,
-      details : []
+      details: []
     }
-    
+
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, serverResponse => {
         if (serverResponse === "error")
@@ -282,7 +283,7 @@ class RaidaJS {
 
       return rv
     })
-    
+
     return mainPromise
   }
 
@@ -294,7 +295,7 @@ class RaidaJS {
       console.error("Invalid input data")
       return null
     }
-    
+
     let rqdata = this._formRequestData(params)
 
     // Launch Requests
@@ -330,15 +331,15 @@ class RaidaJS {
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'sn' : coin.sn,
-        'an' : coin.an[i],
+        'sn': coin.sn,
+        'an': coin.an[i],
         'statement_id': params.guid
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Deleted successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Deleted successfully"
     }
 
     let a, e, f
@@ -368,7 +369,7 @@ class RaidaJS {
       return rv
     })
 
-    return mainPromise    
+    return mainPromise
 
   }
 
@@ -396,17 +397,17 @@ class RaidaJS {
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'sn' : coin.sn,
-        'an' : coin.an[i],
-        'return' : 'all',
+        'sn': coin.sn,
+        'an': coin.an[i],
+        'return': 'all',
         'start_date': ts
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Records returned",
-      'records' : []
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Records returned",
+      'records': []
     }
 
     let e, a, f
@@ -441,10 +442,10 @@ class RaidaJS {
           let mparts = []
           for (let r = 0; r < data.length; r++) {
             let ldata = data[r]
-            if (typeof(ldata) == 'undefined')
+            if (typeof (ldata) == 'undefined')
               continue
 
-            if (!('stripe' in ldata) || !('mirror' in ldata) || !('mirror2' in ldata))  {
+            if (!('stripe' in ldata) || !('mirror' in ldata) || !('mirror2' in ldata)) {
               continue
             }
 
@@ -562,32 +563,32 @@ class RaidaJS {
     let rqdata = []
     let amount = params.amount
     let tags = this._getStripesMirrorsForObject({
-      'guid' : guid,
-      'memo' : memo,
-      'amount' : amount,
-      'initiator_id' : iid,
-      'initiator_image_url' : iimage_url,
-      'initiator_description_url' : idescription_url,
-      'initiator_type' : itype
+      'guid': guid,
+      'memo': memo,
+      'amount': amount,
+      'initiator_id': iid,
+      'initiator_image_url': iimage_url,
+      'initiator_description_url': idescription_url,
+      'initiator_type': itype
     })
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'account_sn' : coin.sn,
-        'account_an' : coin.an[i],
+        'account_sn': coin.sn,
+        'account_an': coin.an[i],
         'transaction_id': guid,
         'version': 0,
-        'compression' : 0,
-        'raid' : '110',
-        'stripe' : tags[i]['stripe'],
-        'mirror' : tags[i]['mirror1'],
-        'mirror2' : tags[i]['mirror2']
+        'compression': 0,
+        'raid': '110',
+        'stripe': tags[i]['stripe'],
+        'mirror': tags[i]['mirror1'],
+        'mirror2': tags[i]['mirror2']
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'guid' : guid,
-      'text' : "Created successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'guid': guid,
+      'text': "Created successfully"
     }
 
     let passed = 0
@@ -609,8 +610,8 @@ class RaidaJS {
       })
 
       let result = this._gradeCoin(a, f, e)
-//      if (result == this.__counterfeitResult)
-//        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "The coin is counterfeit")
+      //      if (result == this.__counterfeitResult)
+      //        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "The coin is counterfeit")
 
       if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to create statement. Too many error responses from RAIDA")
@@ -660,7 +661,7 @@ class RaidaJS {
 
     let tdata = await this._getDefaultTicket(params['coin'], callback)
     if (tdata == null) {
-       return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
+      return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
     }
 
     if (callback != null)
@@ -672,14 +673,14 @@ class RaidaJS {
 
     console.log("got delete ticket " + ticket)
 
-    let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns_delete.php?"
+    let url = "https://" + this.options.ddnsServer + "/service/ddns/ddns_delete.php?"
     url += "sn=" + coin.sn + "&username=" + name + "&ticket=" + ticket + "&raidanumber=" + rquery
     let response = await this._axInstance.get(url)
     if (response.status != 200)
       return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong code: " + response.status)
 
     let data = response.data
-    if (!('status' in data)) 
+    if (!('status' in data))
       return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong data. No status found")
 
     if (data.status != 'success') {
@@ -695,8 +696,8 @@ class RaidaJS {
     this.addBreadCrumbReturn("apiDeleteSkyWallet", "done")
     return {
       // Legacy
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Registered Successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Registered Successfully"
     }
 
   }
@@ -735,7 +736,7 @@ class RaidaJS {
 
     let tdata = await this._getDefaultTicket(params['coin'], callback)
     if (tdata == null) {
-        return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
+      return this._getErrorCode(RaidaJS.ERR_FAILED_TO_GET_TICKETS, "Failed to get ticket from RAIDA" + this.options.defaultRaidaForQuery + " and backup raida " + this.options.defaultRaidaForBackupQuery)
     }
 
     let ticket = tdata[0]
@@ -746,14 +747,14 @@ class RaidaJS {
     if (callback != null)
       callback(0, "register_dns")
 
-    let url =  "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
+    let url = "https://" + this.options.ddnsServer + "/service/ddns/ddns.php?"
     url += "sn=" + coin.sn + "&username=" + name + "&ticket=" + ticket + "&raidanumber=" + rquery
     let response = await this._axInstance.get(url)
     if (response.status != 200)
       return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong code: " + response.status)
 
     let data = response.data
-    if (!('status' in data)) 
+    if (!('status' in data))
       return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "DNSService returned wrong data. No status found")
 
     if (data.status != 'success') {
@@ -769,10 +770,10 @@ class RaidaJS {
     this.addBreadCrumbReturn("apiRegisterSkyWallet", "done")
     return {
       // Legacy
-      'status' : 'done',
+      'status': 'done',
 
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Registered Successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Registered Successfully"
     }
   }
 
@@ -788,10 +789,10 @@ class RaidaJS {
     if (params.account < 1 || params.account > 16777216)
       return this._getError("Invalid Account")
 
-      
+
     if (!params.tag.match(/^[a-fA-F0-9]{32}$/))
       return this._getError("Invalid Tag UUID")
-    
+
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
@@ -802,25 +803,25 @@ class RaidaJS {
 
     let rqs = this._launchRequests("view_receipt", rqdata, 'GET', callback)
     let rv = {
-      status : 'done',
+      status: 'done',
       code: RaidaJS.ERR_NO_ERROR,
-      sns : {},
-      details : [],
-      total : 0
+      sns: {},
+      details: [],
+      total: 0
     }
     let mainPromise = rqs.then(response => {
       for (let i = 0; i < response.length; i++) {
-        if (typeof(response[i].value) == 'undefined')
+        if (typeof (response[i].value) == 'undefined')
           continue
 
-        if (typeof(response[i].value.data) != 'object')
+        if (typeof (response[i].value.data) != 'object')
           continue
 
         response[i].value.data.status = "pass"
       }
 
       this._parseMainPromise(response, 0, rv, serverResponse => {
-        if (typeof(serverResponse) != 'object')
+        if (typeof (serverResponse) != 'object')
           return
 
         if ('serial_numbers' in serverResponse) {
@@ -843,7 +844,7 @@ class RaidaJS {
         let a = rv.sns[item]
         let f = this._totalServers - a
         let result = this._gradeCoin(a, f, 0)
-        if (this._validResult(result)) 
+        if (this._validResult(result))
           return true
 
         return false
@@ -855,7 +856,7 @@ class RaidaJS {
       return rv
 
     })
-    
+
     return mainPromise
   }
 
@@ -881,8 +882,8 @@ class RaidaJS {
 
     let rqs = this._launchRequests("get_ticket", rqdata, 'GET', callback)
     let rv = {
-      'status' : 'done',
-      'tickets' : []
+      'status': 'done',
+      'tickets': []
     }
     let mainPromise = rqs.then(response => {
       this._parseMainPromise(response, 0, rv, serverResponse => {
@@ -895,7 +896,7 @@ class RaidaJS {
 
       return rv
     })
-    
+
     return mainPromise
   }
 
@@ -906,7 +907,7 @@ class RaidaJS {
       rqdata[i]['b'] = 't'
 
     let rv = {
-      'fixedcoins' : []
+      'fixedcoins': []
     }
 
     rqs = this._launchRequests("multi_detect", rqdata, 'POST', callback)
@@ -950,9 +951,9 @@ class RaidaJS {
     rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata[i] = {
-        'sn' : sns,
-        'pan' : pans,
-        'r' : tickets
+        'sn': sns,
+        'pan': pans,
+        'r': tickets
       }
     }
 
@@ -1029,7 +1030,7 @@ class RaidaJS {
       code: RaidaJS.ERR_NO_ERROR,
       totalNotes: coins.length,
       fixedNotes: 0,
-      result : {},
+      result: {},
     }
 
     // Coins for Superfix. Very slow.
@@ -1070,7 +1071,7 @@ class RaidaJS {
 
         ctfix.push(coins[j])
       }
-  
+
       if (ctfix.length != 0) {
         await this._realFix(0, i, ctfix, callback)
       }
@@ -1101,7 +1102,7 @@ class RaidaJS {
           a++;
         else if (coins[i].pownArray[j] == 'f')
           c++;
-        else 
+        else
           e++;
 
         coins[i].pownstring += coins[i].pownArray[j]
@@ -1129,7 +1130,7 @@ class RaidaJS {
           a++;
         else if (superfixCoins[i].pownArray[j] == 'f')
           c++;
-        else 
+        else
           e++;
 
         superfixCoins[i].pownstring += superfixCoins[i].pownArray[j]
@@ -1185,16 +1186,16 @@ class RaidaJS {
 
     let rv = {
       status: 'done',
-      'cc' : {
+      'cc': {
         nn: 1,
         sn: sn,
         an: ans
       }
     }
-    
+
     this.addBreadCrumbReturn("apiGetCCByCardData", rv)
     return rv
-    
+
   }
 
   // Greates a CloudCoin by Username, Password and Email
@@ -1224,7 +1225,7 @@ class RaidaJS {
       finalStr += cs
     }
 
-     // Generating rand and pin from the password
+    // Generating rand and pin from the password
     const rand = finalStr.slice(0, 12);
     const pin = finalStr.slice(12, 16);
     const pans = [];
@@ -1241,11 +1242,11 @@ class RaidaJS {
 
     const grv = {
       "status": "done",
-      "pans" : pans, 
-      "rand" : rand, 
-      "cvv" : pin
+      "pans": pans,
+      "rand": rand,
+      "cvv": pin
     };
-  
+
     this.addBreadCrumbReturn("apiCreateCCForRegistration", grv)
 
     return grv;
@@ -1289,14 +1290,14 @@ class RaidaJS {
     }
 
     let cc = {
-      'sn' : sn,
-      'nn' : 1,
-      'an' : pans
+      'sn': sn,
+      'nn': 1,
+      'an': pans
     }
 
     let rvFinal = {
-      'status' : 'done',
-      'cc' : cc
+      'status': 'done',
+      'cc': cc
     }
 
     this.addBreadCrumbReturn("apiGetCCByUsernameAndPassword", rvFinal)
@@ -1320,18 +1321,18 @@ class RaidaJS {
     }).catch(error => {
       isError = true
     })
-    
+
     if (isError)
       return this._getError("Failed to load image")
 
-    if (response.status != 200) 
+    if (response.status != 200)
       return this._getError("Server returned non-200 HTTP code: " + response.status)
 
     let arrayBufferData = response.data
 
     let imgData = new Uint8Array(arrayBufferData)
     let idx = this._basePngChecks(imgData)
-    if (typeof(idx) == 'string')
+    if (typeof (idx) == 'string')
       return this._getError(idx)
 
     let fu8
@@ -1341,8 +1342,8 @@ class RaidaJS {
     let length
     while (true) {
       length = this._getUint32(fu8, i)
-      let signature = String.fromCharCode(fu8[i + 4]) +  String.fromCharCode(fu8[i + 5]) 
-        + String.fromCharCode(fu8[i + 6]) +  String.fromCharCode(fu8[i + 7])
+      let signature = String.fromCharCode(fu8[i + 4]) + String.fromCharCode(fu8[i + 5])
+        + String.fromCharCode(fu8[i + 6]) + String.fromCharCode(fu8[i + 7])
 
       if (length == 0) {
         i += 12
@@ -1377,15 +1378,15 @@ class RaidaJS {
     for (let i = 0; i < data.length; i++)
       sdata += String.fromCharCode(data[i])
 
-    let o 
+    let o
     try {
       o = JSON.parse(sdata)
-    } catch(e) {
+    } catch (e) {
       return this._getError("Failed to parse CloudCoin JSON")
     }
 
     let rv = {
-      'status' : 'done',
+      'status': 'done',
       ...o
     }
 
@@ -1403,7 +1404,7 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
 
     params.sn = sn
-    let rv = await this.apiCreateCCForRegistration(params) 
+    let rv = await this.apiCreateCCForRegistration(params)
     if (rv.status != "done")
       return rv
 
@@ -1439,10 +1440,10 @@ class RaidaJS {
     let ed = month + '/' + year
 
     let data = {
-      'cardnumber' : cardNumber,
+      'cardnumber': cardNumber,
       'cvv': rv.cvv,
-      'username' : username,
-      'expiration_date' : ed
+      'username': username,
+      'expiration_date': ed
     }
 
     let res = await this.apiGenerateCard(data, callback)
@@ -1450,8 +1451,8 @@ class RaidaJS {
       return res
 
     rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'cardnumber' : cardNumber,
+      'code': RaidaJS.ERR_NO_ERROR,
+      'cardnumber': cardNumber,
       'cvv': rv.cvv,
       'expiration_date': ed,
       'data': ''
@@ -1492,8 +1493,8 @@ class RaidaJS {
     if (!/^\d{1,2}\/\d{2}/.test(ed))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_EXPIRATION_DATE, "Invalid Expiration Date")
 
-     
-    let cardData = await this.apiGetCCByCardData(params) 
+
+    let cardData = await this.apiGetCCByCardData(params)
     if (cardData.status != 'done')
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_CARD, "Failed to Generate CloudCoin")
 
@@ -1531,30 +1532,30 @@ class RaidaJS {
       coins: [cc],
       template: ddata
     }
-    
+
     let bdata = await this.embedInImage(esparams)
     if ('status' in params && params.status == 'error')
       return this._getErrorCode(RaidaJS.ERR_FAILED_TO_EMBED_STACK, "Failed to embed stack")
 
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : 'Card Generated',
-      'data' : bdata
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': 'Card Generated',
+      'data': bdata
     }
 
     return rv
 
   }
-  
+
   async apiDrawCardData(data, username, cardnumber, cvv, ed, ip) {
     let c
     try {
-      c  = await require('canvas')
+      c = await require('canvas')
       if (!c)
         return this._getErrorCode(RaidaJS.ERR_NO_CANVAS_MODULE, "Canvas module not found")
-    } catch(e) {
-        return this._getErrorCode(RaidaJS.ERR_NO_CANVAS_MODULE, "Canvas module not found")
+    } catch (e) {
+      return this._getErrorCode(RaidaJS.ERR_NO_CANVAS_MODULE, "Canvas module not found")
     }
 
     let canvas = c.createCanvas(700, 906)
@@ -1580,12 +1581,12 @@ class RaidaJS {
       context.fillStyle = "#000000";
       context.lineStyle = "#000000";
       context.font = "35px sans-serif";
-      context.fillText( "CVV (Keep Secret): " + cvv, 64, 675);
+      context.fillText("CVV (Keep Secret): " + cvv, 64, 675);
       context.fillStyle = "#FFFFFF";
       context.lineStyle = "#FFFFFF";
       context.font = "18px sans-serif";
-      context.fillText( "IP " + ip, 174, 736);
-     
+      context.fillText("IP " + ip, 174, 736);
+
       return canvas.toDataURL()
     })
 
@@ -1617,7 +1618,7 @@ class RaidaJS {
       }
       delete params['coins'][i]['pan']
     }
-    let data = { "cloudcoin" : params['coins'] }
+    let data = {"cloudcoin": params['coins']}
     data = JSON.stringify(data)
 
     let isError = false
@@ -1627,18 +1628,18 @@ class RaidaJS {
     }).catch(error => {
       isError = true
     })
-    
+
     if (isError)
       return this._getError("Failed to load image")
 
-    if (response.status != 200) 
+    if (response.status != 200)
       return this._getError("Server returned non-200 HTTP code: " + response.status)
 
     let arrayBufferData = response.data
 
     let imgData = new Uint8Array(arrayBufferData)
     let idx = this._basePngChecks(imgData)
-    if (typeof(idx) == 'string')
+    if (typeof (idx) == 'string')
       return this._getError(idx)
 
     let fu8, lu8, myu8
@@ -1674,6 +1675,17 @@ class RaidaJS {
     return this._base64ArrayBuffer(combined)
   }
 
+
+  checkTo(sn) {
+    if (sn == 11 || sn == 2)
+      return true
+
+    if (sn > 102000)
+      return true
+
+    return false
+  }
+
   // Send
   async apiSend(params, callback = null) {
     this.addBreadCrumbEntry("apiSend", params)
@@ -1696,14 +1708,18 @@ class RaidaJS {
     // To address
     let to = params['to'] + ""
     if (to.match(/^\d+$/) && (to > 0 || to < 16777216)) {
-      
+
     } else {
       to = await this._resolveDNS(params['to'])
       if (to == null) {
         return this._getError("Failed to resolve DNS name: " + params.to)
       }
     }
-    
+
+    if (!this.checkTo(to)) {
+      return this._getError("Invalid Destination SkyWallet Address")
+    }
+
     let amount = 0
     for (let i in params.coins) {
       let cc = params.coins[i]
@@ -1722,7 +1738,7 @@ class RaidaJS {
         sns: [],
         nns: [],
         ans: [],
-        pans: [], 
+        pans: [],
         dn: [],
         to_sn: to,
         tag: tags[i]
@@ -1740,7 +1756,7 @@ class RaidaJS {
           return this._getError("Invalid coin. Idx " + j)
         }
 
-        rqdata[i].sns.push(coin.sn)         
+        rqdata[i].sns.push(coin.sn)
         rqdata[i].nns.push(coin.nn)
         rqdata[i].ans.push(coin.an[i])
         rqdata[i].pans.push(coin.pan[i])
@@ -1758,7 +1774,7 @@ class RaidaJS {
       for (let sn in result.result) {
         let cr = result.result[sn]
         if (cr.result == this.__errorResult) {
-          console.log("adding to send again " +sn)
+          console.log("adding to send again " + sn)
           sns.push(sn)
         }
       }
@@ -1767,13 +1783,13 @@ class RaidaJS {
       if (sns.length > 0) {
         console.log("Need to call sendagain")
         let nrqdata = []
-        for (let i = 0; i < this._totalServers; i++) { 
+        for (let i = 0; i < this._totalServers; i++) {
           nrqdata.push({
-            b : 't',
+            b: 't',
             sns: [],
             nns: [],
             ans: [],
-            pans: [], 
+            pans: [],
             dn: [],
             to_sn: to,
             tag: tags[i]
@@ -1784,7 +1800,7 @@ class RaidaJS {
             if (!sns.includes(coin.sn))
               continue
 
-            nrqdata[i].sns.push(coin.sn)         
+            nrqdata[i].sns.push(coin.sn)
             nrqdata[i].nns.push(coin.nn)
             nrqdata[i].ans.push(coin.an[i])
             nrqdata[i].pans.push(coin.pan[i])
@@ -1794,8 +1810,8 @@ class RaidaJS {
 
         let rqs = this._launchRequests("sendagain", nrqdata, 'POST', callback)
         let coins = new Array(sns.length)
-        sns.forEach((value, idx) => { 
-          coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
+        sns.forEach((value, idx) => {
+          coins[idx] = {sn: value, nn: this.options.defaultCoinNn}
         })
 
         let response = this._getGenericBriefMainPromise(rqs, coins).then(response => {
@@ -1835,7 +1851,7 @@ class RaidaJS {
     this.addBreadCrumbEntry("apiReceive", params)
 
     let coin = this._getCoinFromParams(params)
-    if (coin == null) 
+    if (coin == null)
       return this._getError("Failed to parse coin from params")
 
     let changeMakerId = this.options.changeMakerId
@@ -1845,7 +1861,7 @@ class RaidaJS {
 
     let gcRqs = await this._getCoins(coin, callback)
     if ('code' in gcRqs && gcRqs.code == RaidaJS.ERR_COUNTERFEIT_COIN)
-        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
 
     let sns = Object.keys(gcRqs.coins)
 
@@ -1865,7 +1881,7 @@ class RaidaJS {
     if (changeCoin !== 0) {
       let csns = await this.apiBreakInBank(rvalues.extra, coin, callback)
       if (csns.length == 0) {
-        return  this._getError("Failed to break in bank")
+        return this._getError("Failed to break in bank")
       }
 
       coinsToReceive = coinsToReceive.concat(csns)
@@ -1875,7 +1891,7 @@ class RaidaJS {
       coinsToReceive = rvalues.coins
       changeCoin = rvalues.extra
       if (changeCoin !== 0) {
-        return  this._getError("Failed to pick coins after break in bank")
+        return this._getError("Failed to pick coins after break in bank")
       }
 
       changeRequired = true
@@ -1904,10 +1920,10 @@ class RaidaJS {
 
       // Launch Requests
       let rqs = this._launchRequests("receive", rqdata, 'POST', callback)
-  
+
       let coins = new Array(coinsToReceive.length)
-      coinsToReceive.forEach((value, idx) => { 
-        coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
+      coinsToReceive.forEach((value, idx) => {
+        coins[idx] = {sn: value, nn: this.options.defaultCoinNn}
       })
 
       response = await this._getGenericMainPromise(rqs, coins)
@@ -1915,10 +1931,10 @@ class RaidaJS {
       response.changeRequired = false
       for (let k in response.result) {
         response.result[k]['an'] = [...response.result[k].message]
-        delete(response.result[k]['message'])
+        delete (response.result[k]['message'])
       }
 
-      this.addBreadCrumbReturn("apiReceive", response)     
+      this.addBreadCrumbReturn("apiReceive", response)
       return response
     } else if (changeCoin === 0) {
       return this._getError("No coins to receive")
@@ -1927,7 +1943,7 @@ class RaidaJS {
         totalNotes: 0, authenticNotes: 0, counterfeitNotes: 0, errorNotes: 0, frackedNotes: 0, result: {}
       }
 
-      this.addBreadCrumbReturn("apiReceive", response)     
+      this.addBreadCrumbReturn("apiReceive", response)
       return response
     }
 
@@ -1936,12 +1952,12 @@ class RaidaJS {
 
   // BreakInBank
   async apiBreakInBank(extraSn, idcc, callback) {
-    this.addBreadCrumbEntry("apiBreakInBank", {'extraSn' : extraSn, 'idcc' : idcc})
+    this.addBreadCrumbEntry("apiBreakInBank", {'extraSn': extraSn, 'idcc': idcc})
 
     let csns = []
 
-    let scResponse = await this.showChange({ 
-      nn: this.options.defaultCoinNn, 
+    let scResponse = await this.showChange({
+      nn: this.options.defaultCoinNn,
       sn: this.options.changeMakerId,
       denomination: this.getDenomination(extraSn)
     }, callback)
@@ -1978,7 +1994,7 @@ class RaidaJS {
         id_sn: idcc.sn,
         id_an: idcc.an[i],
         id_dn: this.getDenomination(idcc.sn),
-        nn:  this.options.defaultCoinNn,
+        nn: this.options.defaultCoinNn,
         sn: extraSn,
         dn: this.getDenomination(extraSn),
         change_server: this.options.changeMakerId,
@@ -2019,16 +2035,16 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_RECIPIENT, "To is required")
 
     let from = sender_address
-    if ('from' in params) 
+    if ('from' in params)
       from = params.from
-    else 
+    else
       params.from = from
 
     let memo = ""
     if ('memo' in params)
       memo = params.memo
 
-    if (!('amount' in params)) 
+    if (!('amount' in params))
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_AMOUNT, "Invalid params. Amount is not defined")
 
     let guid = ""
@@ -2037,7 +2053,7 @@ class RaidaJS {
       params.guid = guid
     } else {
       guid = params.guid
-      if (!/^([A-Fa-f0-9]{32})$/.test(guid)) 
+      if (!/^([A-Fa-f0-9]{32})$/.test(guid))
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Invalid GUID format")
     }
 
@@ -2073,7 +2089,7 @@ class RaidaJS {
     } catch (e) {
       return this._getErrorCode(RaidaJS.ERR_DNS_SERVER_INCORRECT_RESPONSE, "Ivalid URL in TXT record")
     }
- 
+
     let meta = ""
     meta += "from = \"" + from + "\"\n"
     meta += "message = \"" + memo + "\"\n"
@@ -2088,13 +2104,13 @@ class RaidaJS {
       response.guid = guid
       let rAx = axios.create()
       let mParams = {
-        'merchant_skywallet' : merchant_address,
+        'merchant_skywallet': merchant_address,
         'sender_skywallet': sender_address,
-        'meta' : meta,
-        'guid' : guid
+        'meta': meta,
+        'guid': guid
       }
       let options = {
-        timeout : this.options.timeout
+        timeout: this.options.timeout
       }
       options.params = mParams
 
@@ -2136,7 +2152,7 @@ class RaidaJS {
         })
 
         return rv2
-      } 
+      }
     })
 
     return rv
@@ -2151,7 +2167,7 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
 
     let coin = params['coin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let guid = this._generatePan()
@@ -2195,7 +2211,7 @@ class RaidaJS {
 
         try {
           amount = parseInt(amount)
-        } catch (e) { 
+        } catch (e) {
           return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_INVALID_AMOUNT, "Incorrect Amount. Line " + line)
         }
 
@@ -2219,9 +2235,9 @@ class RaidaJS {
           return this._getErrorCode(RaidaJS.ERR_PARAM_BILLPAY_PAYDATA_DUPLICATED_VALUE, "Duplicated value for " + to + ". Line " + line)
 
         paydata[to] = {
-          'amount' : amount,
-          'state' : state,
-          'memo' : memo
+          'amount': amount,
+          'state': state,
+          'memo': memo
         }
       }
     }
@@ -2238,8 +2254,8 @@ class RaidaJS {
     for (let to in paydata) {
       let item = paydata[to]
       let recipient = {
-        "address" : to,
-        "status" : "ready"
+        "address": to,
+        "status": "ready"
       }
       let state = item.state
       if (state == "skip" || state == "sent") {
@@ -2249,11 +2265,11 @@ class RaidaJS {
       }
 
       let params = {
-        'sn' : coin.sn,
-        'an' : coin.an,
-        'to' : to,
-        'amount' : item.amount,
-        'memo' : item.memo
+        'sn': coin.sn,
+        'an': coin.an,
+        'to': to,
+        'amount': item.amount,
+        'memo': item.memo
       }
 
       let lrv = await this.apiTransfer(params, callback)
@@ -2279,11 +2295,11 @@ class RaidaJS {
   }
 
   apiBillPayList(params) {
-    if (!('guid' in params)) 
+    if (!('guid' in params))
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_GUID, "GUID is required")
 
     let guid = params.guid
-    if (!this._validateGuid(guid)) 
+    if (!this._validateGuid(guid))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
 
     let obj = this._getBillPayCachedObject(guid)
@@ -2314,13 +2330,13 @@ class RaidaJS {
   _saveBillPayCachedObject(guid, paydata) {
     let key = this.options.billpayKey
     let v = localStorage.getItem(key)
-    if (v == null) 
+    if (v == null)
       return
 
     let obj = null
     try {
       obj = JSON.parse(v)
-    } catch(e) {
+    } catch (e) {
       return null
     }
 
@@ -2344,7 +2360,7 @@ class RaidaJS {
     let obj = null
     try {
       obj = JSON.parse(v)
-    } catch(e) {
+    } catch (e) {
       return null
     }
 
@@ -2361,9 +2377,9 @@ class RaidaJS {
     this._rarr = {}
 
     let coin = this._getCoinFromParams(params)
-    if (coin == null) 
+    if (coin == null)
       return this._getError("Failed to parse coin from params")
-      
+
 
     if (!'to' in params) {
       return this._getError("Invalid params. To is not defined")
@@ -2372,6 +2388,9 @@ class RaidaJS {
     let to = await this._resolveDNS(params['to'])
     if (to == null) {
       return this._getError("Failed to resolve DNS name: " + params.to)
+    }
+    if (!this.checkTo(to)) {
+      return this._getError("Invalid Destination SkyWallet Address")
     }
 
 
@@ -2394,7 +2413,7 @@ class RaidaJS {
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_GUID, "Failed to validate GUID")
     }
 
-    if ('from' in params) 
+    if ('from' in params)
       from = params.from
     else
       from = "SN " + coin.sn
@@ -2403,27 +2422,27 @@ class RaidaJS {
 
     let gcRqs = await this._getCoins(coin, callback)
     if ('code' in gcRqs && gcRqs.code == RaidaJS.ERR_COUNTERFEIT_COIN)
-        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
 
     let sns = Object.keys(gcRqs.coins)
     let nns = new Array(sns.length)
     nns.fill(this.options.defaultCoinNn)
     if (params.amount > this._calcAmount(sns)) {
-      return  this._getError("Not enough cloudcoins")
+      return this._getError("Not enough cloudcoins")
     }
 
     let rvalues = this._pickCoinsAmountFromArrayWithExtra(sns, params.amount)
     let coinsToSend = rvalues.coins
     let changeCoin = rvalues.extra
     if (coinsToSend.length > this.options.maxCoins) {
-      return  this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
+      return this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
     }
 
     let changeRequired
     if (changeCoin !== 0) {
       let csns = await this.apiBreakInBank(rvalues.extra, coin, callback)
       if (csns.length == 0) {
-        return  this._getError("Failed to break in bank")
+        return this._getError("Failed to break in bank")
       }
 
       coinsToSend = coinsToSend.concat(csns)
@@ -2431,10 +2450,10 @@ class RaidaJS {
       coinsToSend = rvalues.coins
       changeCoin = rvalues.extra
       if (changeCoin !== 0) {
-        return  this._getError("Failed to pick coins after break in bank")
+        return this._getError("Failed to pick coins after break in bank")
       }
       if (coinsToSend.length > this.options.maxCoins) {
-        return  this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
+        return this._getError("You can't transfer more than " + this.options.maxCoins + " notes at a time")
       }
 
       changeRequired = true
@@ -2451,20 +2470,20 @@ class RaidaJS {
     for (; b < iterations; b++) {
       let from = b * batch
       let tol = from + batch
-      localCoinsToSend = coinsToSend.slice(from,tol)
+      localCoinsToSend = coinsToSend.slice(from, tol)
       let lr = await this._doTransfer(coin, to, tags, localCoinsToSend, callback, b)
-      response = this._mergeResponse(response, lr)  
+      response = this._mergeResponse(response, lr)
     }
 
     let from = b * batch
     if (from < coinsToSend.length) {
       let tol = coinsToSend.length
-      localCoinsToSend = coinsToSend.slice(from,tol)
+      localCoinsToSend = coinsToSend.slice(from, tol)
       let lr = await this._doTransfer(coin, to, tags, localCoinsToSend, callback, iterations)
-      response = this._mergeResponse(response, lr)  
+      response = this._mergeResponse(response, lr)
 
     }
-    
+
     // Assemble input data for each Raida Server
     response.changeCoinSent = changeRequired
     response.code = RaidaJS.ERR_NO_ERROR
@@ -2475,7 +2494,7 @@ class RaidaJS {
       }, 500)
     })
 
-    this.addBreadCrumbReturn("apiTransfer", response)     
+    this.addBreadCrumbReturn("apiTransfer", response)
     return response
   }
 
@@ -2493,8 +2512,8 @@ class RaidaJS {
     for (let raidaIdx in this._rarr) {
       let sns = this._rarr[raidaIdx]
       rqdata[raidaIdx] = {
-        'corner' : corner,
-        'sn' : sns
+        'corner': corner,
+        'sn': sns
       }
 
       servers.push(raidaIdx)
@@ -2502,13 +2521,13 @@ class RaidaJS {
 
     let pm = this._launchRequests("sync/fix_transfer", rqdata, 'GET', () => {}, servers)
 
-    return pm  
+    return pm
 
   }
 
   // Merges responses from RAIDA servers
   _mergeResponse(response, addon) {
-    if (Object.keys(response).length == 0) 
+    if (Object.keys(response).length == 0)
       return addon
 
     if (addon.status != 'done')
@@ -2523,7 +2542,7 @@ class RaidaJS {
     for (let k in addon.result) {
       response.result[k] = addon.result[k]
     }
-  //  response.result = Object.assign(response.result, addon.result)
+    //  response.result = Object.assign(response.result, addon.result)
 
     return response
 
@@ -2536,7 +2555,7 @@ class RaidaJS {
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        b : 't',
+        b: 't',
         sns: coinsToSend,
         an: coin.an[i],
         pan: coin.pan[i],
@@ -2550,14 +2569,14 @@ class RaidaJS {
 
     // Launch Requests
     let rqs = this._launchRequests("transfer", rqdata, 'POST', callback, null, iteration)
-  
+
     let coins = new Array(coinsToSend.length)
-    coinsToSend.forEach((value, idx) => { 
-      coins[idx] = { sn: value, nn: this.options.defaultCoinNn }
+    coinsToSend.forEach((value, idx) => {
+      coins[idx] = {sn: value, nn: this.options.defaultCoinNn}
     })
 
     let response = await this._getGenericBriefMainPromise(rqs, coins)
-    this.addBreadCrumbReturn("_doTransfer", response)     
+    this.addBreadCrumbReturn("_doTransfer", response)
 
     return response
   }
@@ -2565,7 +2584,7 @@ class RaidaJS {
   async showChange(params, callback = null) {
     this.addBreadCrumbEntry("showChange", params)
 
-    let { sn, nn, denomination } = params
+    let {sn, nn, denomination} = params
     let rqdata = []
     let seed = this._generatePan().substring(0, 8)
     for (let i = 0; i < this._totalServers; i++) {
@@ -2577,17 +2596,17 @@ class RaidaJS {
       })
     }
 
-    let nrv = { d1 : {}, d5 : {}, d25 : {}, d100 : {}}
+    let nrv = {d1: {}, d5: {}, d25: {}, d100: {}}
     let rqs = this._launchRequests("show_change", rqdata, 'GET', callback).then(response => {
       this._parseMainPromise(response, 0, nrv, response => {
         if (response.status !== "pass") {
           return
         }
 
-        if (!('d1' in response) || !('d5' in response) || !('d25' in response) || !('d100' in response)) 
+        if (!('d1' in response) || !('d5' in response) || !('d25' in response) || !('d100' in response))
           return
 
-        let { d1, d5, d25, d100 } = response
+        let {d1, d5, d25, d100} = response
         for (let i = 0; i < d1.length; i++) {
           if (!(d1[i] in nrv.d1)) nrv.d1[d1[i]] = 0
           nrv.d1[d1[i]]++
@@ -2609,7 +2628,7 @@ class RaidaJS {
         }
       })
 
-      let mnrv = { d1 : {}, d5 : {}, d25 : {}, d100 : {}}
+      let mnrv = {d1: {}, d5: {}, d25: {}, d100: {}}
       for (let sn in nrv.d1) {
         let a = nrv.d1[sn]
         let f = this._totalServers - a
@@ -2646,7 +2665,7 @@ class RaidaJS {
         }
       }
 
-      this.addBreadCrumbReturn("showChange", mnrv)     
+      this.addBreadCrumbReturn("showChange", mnrv)
       return mnrv
     })
 
@@ -2655,18 +2674,18 @@ class RaidaJS {
 
   async apiFixTransferSync(coinsPerRaida, callback) {
     this.addBreadCrumbEntry("apiFixTransferSync", coinsPerRaida)
-    return this.apiFixTransferGeneric(coinsPerRaida, true, callback) 
+    return this.apiFixTransferGeneric(coinsPerRaida, true, callback)
   }
 
   async apiFixTransfer(coinsPerRaida, callback) {
     this.addBreadCrumbEntry("apiFixTransfer", coinsPerRaida)
-    return this.apiFixTransferGeneric(coinsPerRaida, false, callback) 
+    return this.apiFixTransferGeneric(coinsPerRaida, false, callback)
   }
 
   async apiFixTransferGeneric(coinsPerRaida, sync, callback) {
     this.addBreadCrumbEntry("apiFixTransferGeneric", coinsPerRaida)
 
-    if (typeof(coinsPerRaida) != "object")
+    if (typeof (coinsPerRaida) != "object")
       return this._getError("Failed to validate input args")
 
     let rqdata = []
@@ -2715,13 +2734,13 @@ class RaidaJS {
           let rIdx = raidas[r]
           if (!(rIdx in rqdata)) {
             rqdata[rIdx] = {
-              sn : []
+              sn: []
             }
 
             if (sync) {
               rqdata[rIdx]['sync'] = "true"
             }
-          
+
           }
 
           // Will not add more than
@@ -2735,7 +2754,7 @@ class RaidaJS {
 
     let servers = Object.keys(rqdata)
     let rv = {
-      "status":"done"
+      "status": "done"
     }
     let rqs = this._launchRequests("sync/fix_transfer", rqdata, 'GET', callback, servers).then(response => {
       /*
@@ -2792,10 +2811,10 @@ class RaidaJS {
 
     let d = await this._getCoins(coin, callback)
     if ('code' in d && d.code == RaidaJS.ERR_COUNTERFEIT_COIN)
-        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
 
     let coins = d.coins
-    
+
     let a = []
     for (let sn in coins) {
       a.push({
@@ -2815,7 +2834,7 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "PayCoin in missing")
 
     let coin = params['paycoin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate paycoin")
 
     if (!('skywallet_name' in params))
@@ -2881,7 +2900,7 @@ class RaidaJS {
     if (!coin)
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
 
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rqdata = []
@@ -2966,7 +2985,7 @@ class RaidaJS {
         needFix = true
       }
 
-      
+
       let max = 0
       let balance = -1
       for (let k in balances) {
@@ -2979,7 +2998,7 @@ class RaidaJS {
       let a = max
       let f = this._totalServers - a
       let result = this._gradeCoin(a, f, 0)
-      if (!this._validResult(result)) 
+      if (!this._validResult(result))
         balance = -1
 
       if (result == this.__counterfeitResult) {
@@ -2992,9 +3011,9 @@ class RaidaJS {
 
       let thiz = this
       if (Object.keys(balances).length > 1) {
-        let fnpm = async function() {
+        let fnpm = async function () {
           let response = await thiz.apiShowCoins(coin, callback)
-          if (!('code' in response) || response.code != RaidaJS.ERR_NO_ERROR) 
+          if (!('code' in response) || response.code != RaidaJS.ERR_NO_ERROR)
             return rv
 
           let h = {}
@@ -3048,7 +3067,7 @@ class RaidaJS {
         return fpm
       }
 
-      this.addBreadCrumbReturn("apiShowBalance", rv)     
+      this.addBreadCrumbReturn("apiShowBalance", rv)
 
       return rv
 
@@ -3064,8 +3083,8 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_DNS_RECORD_NOT_FOUND, "Failed to resolve SkyWallet")
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'sn' : sn
+      'code': RaidaJS.ERR_NO_ERROR,
+      'sn': sn
     }
 
     return rv
@@ -3078,14 +3097,14 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin in missing")
 
     let coin = params['coin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "HealthCheck Completed",
-      'balances' : [],
-      'balance' : -1,
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "HealthCheck Completed",
+      'balances': [],
+      'balance': -1,
       'show_balances': [],
       'sns': []
     }
@@ -3099,7 +3118,7 @@ class RaidaJS {
     lrv = await this.apiShowCoins(coin, callback)
     // Check if the coins is counterfeit
     if ('code' in lrv && lrv.code == RaidaJS.ERR_COUNTERFEIT_COIN)
-        return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
+      return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "The coin is counterfeit")
 
     if (('code' in lrv) && lrv.code == RaidaJS.ERR_NO_ERROR) {
       rv.sns = lrv.coinsPerRaida
@@ -3124,11 +3143,11 @@ class RaidaJS {
 
     let coins = params.coins
     if (coins.length > this.options.maxCoinsPerIteraiton)
-        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
 
     for (let i = 0; i < coins.length; i++) {
       let coin = coins[i]
-      if (!this._validateCoin(coin)) 
+      if (!this._validateCoin(coin))
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
     }
 
@@ -3140,14 +3159,14 @@ class RaidaJS {
       })
       for (let j = 0; j < coins.length; j++) {
         let coin = coins[j]
-        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].sn.push(coin.sn)
         rqdata[i].an.push(coin.an[i])
       }
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Data returned",
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Data returned",
       'results': {}
     }
 
@@ -3169,12 +3188,12 @@ class RaidaJS {
         }
 
         if (serverResponse.status == "success") {
-         let message = serverResponse.message
+          let message = serverResponse.message
           let vals = message.split(",")
           if (vals.length != coins.length) {
             e++
             return
-          } 
+          }
 
           for (let c = 0; c < vals.length; c++) {
             let cc = coins[c]
@@ -3199,7 +3218,7 @@ class RaidaJS {
       if (!this._validResult(result))
         return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to get NFT tokens. Too many error responses from RAIDA")
 
-      
+
       let fresults = {}
       for (let sn in results) {
         let total = results[sn]
@@ -3230,11 +3249,11 @@ class RaidaJS {
 
     let coins = params.coins
     if (coins.length > this.options.maxCoinsPerIteraiton)
-        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
 
     for (let i = 0; i < coins.length; i++) {
       let coin = coins[i]
-      if (!this._validateCoin(coin)) 
+      if (!this._validateCoin(coin))
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
     }
 
@@ -3246,20 +3265,20 @@ class RaidaJS {
       })
       for (let j = 0; j < coins.length; j++) {
         let coin = coins[j]
-        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].sn.push(coin.sn)
         rqdata[i].an.push(coin.an[i])
       }
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Data returned",
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Data returned",
       'results': {}
     }
     for (let j = 0; j < coins.length; j++) {
       let coin = coins[j]
       rv.results[coin.sn] = {
-        'status' : 'unknown'
+        'status': 'unknown'
       }
     }
 
@@ -3267,7 +3286,7 @@ class RaidaJS {
     a = f = e = 0
     let mparts = []
     for (let i = 0; i < this._totalServers; i++)
-        mparts[i] = null
+      mparts[i] = null
 
     let metas = {}
     let rqs = this._launchRequests("nft/meta_read", rqdata, 'POST', callback)
@@ -3279,7 +3298,7 @@ class RaidaJS {
         }
 
         if (serverResponse.status == "success") {
-          if (!('message' in serverResponse))  {
+          if (!('message' in serverResponse)) {
             e++
             return
           }
@@ -3289,15 +3308,15 @@ class RaidaJS {
             let rcoin = rcoins[rcc]
             if (!(rcc in metas)) {
               metas[rcc] = {
-                'status' : rcoin.status,
-                'mparts' : []
+                'status': rcoin.status,
+                'mparts': []
               }
             }
 
             metas[rcc]['mparts'][rIdx] = {
-              'stripe' : rcoin.stripe,
-              'mirror1' : rcoin.mirror,
-              'mirror2' : rcoin.mirror2
+              'stripe': rcoin.stripe,
+              'mirror1': rcoin.mirror,
+              'mirror2': rcoin.mirror2
             }
           }
 
@@ -3347,11 +3366,11 @@ class RaidaJS {
 
     let coins = params.coins
     if (coins.length > this.options.maxCoinsPerIteraiton)
-        return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
+      return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Too many coins in stack. Max number of coins is: " + this.options.maxCoinsPerIteraiton)
 
     for (let i = 0; i < coins.length; i++) {
       let coin = coins[i]
-      if (!this._validateCoin(coin)) 
+      if (!this._validateCoin(coin))
         return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coins")
     }
 
@@ -3398,20 +3417,20 @@ class RaidaJS {
     // Doing detect
     let detect = await this.apiDetect(coins, callback)
     if (detect.code != RaidaJS.ERR_NO_ERROR)
-        return this._getErrorCode(RaidaJS.ERR_DETECT_FAILED, "Failed to do multi_detect")
+      return this._getErrorCode(RaidaJS.ERR_DETECT_FAILED, "Failed to do multi_detect")
 
     if (detect.counterfeitNotes > 0) {
-        return this._getErrorCode(RaidaJS.ERR_COUNTERFEIT_COIN, "There is at least one counterfeit coin in the Stack. Stop doing anything")
+      return this._getErrorCode(RaidaJS.ERR_COUNTERFEIT_COIN, "There is at least one counterfeit coin in the Stack. Stop doing anything")
     }
 
     if (detect.errorNotes > 0) {
-        return this._getErrorCode(RaidaJS.ERR_NETWORK_ERROR_COIN, "There was an error during multi_detect. Stop doing anything")
+      return this._getErrorCode(RaidaJS.ERR_NETWORK_ERROR_COIN, "There was an error during multi_detect. Stop doing anything")
     }
 
     if (detect.frackedNotes > 0) {
       let fresult = await this.apiFixfracked(detect.result, callback)
       if (fresult.code != RaidaJS.ERR_NO_ERROR)
-          return this._getErrorCode(RaidaJS.ERR_FAILED_TO_FIX, "Failed to fix coins")
+        return this._getErrorCode(RaidaJS.ERR_FAILED_TO_FIX, "Failed to fix coins")
 
       for (let sn in detect.result) {
         let cc = detect.result[sn]
@@ -3425,8 +3444,8 @@ class RaidaJS {
     let pfrqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       pfrqdata.push({
-        sn : [],
-        an : []
+        sn: [],
+        an: []
       })
 
       for (let j = 0; j < coins.length; j++) {
@@ -3442,7 +3461,7 @@ class RaidaJS {
     let messages = []
     let pfrqs = await this._launchRequests("nft/pfcheck_nft", pfrqdata, 'POST', callback)
     let prv = {}
-    
+
     this._parseMainPromise(pfrqs, 0, prv, (serverResponse, rIdx) => {
       prmaps[rIdx] = false
       messages[rIdx] = "fail"
@@ -3490,7 +3509,7 @@ class RaidaJS {
       e.details = messages
       return e
     }
-    
+
     let title = ""
     let description = ""
     if ('title' in metadata)
@@ -3500,11 +3519,11 @@ class RaidaJS {
       description = metadata.description
 
     let obj = {
-      'filename' : filename,
-      'mimetype' : mimetype,
-      'proofmimetype' : proofmimetype,
-      'title' : title,
-      'description' : description
+      'filename': filename,
+      'mimetype': mimetype,
+      'proofmimetype': proofmimetype,
+      'title': title,
+      'description': description
     }
 
     let rqdata = []
@@ -3514,29 +3533,29 @@ class RaidaJS {
 
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        sn : [],
-        an : [],
+        sn: [],
+        an: [],
         protocol: protocol,
-        stripe : tags[i]['stripe'],
-        mirror : tags[i]['mirror1'],
-        mirror2 : tags[i]['mirror2']
+        stripe: tags[i]['stripe'],
+        mirror: tags[i]['mirror1'],
+        mirror2: tags[i]['mirror2']
       })
 
       for (let j = 0; j < coins.length; j++) {
         let coin = coins[j]
-        rqdata[i].sn.push(coin.sn)         
+        rqdata[i].sn.push(coin.sn)
         rqdata[i].an.push(coin.an[i])
       }
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Created successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Created successfully"
     }
 
     let a, f, e
     a = f = e = 0
-   
+
     let rmaps = []
     let rqs = this._launchRequests("nft/insert_many", rqdata, 'POST', callback)
     let mainPromise = rqs.then(response => {
@@ -3569,7 +3588,7 @@ class RaidaJS {
         let v0 = rmaps[cidx0]
         let v1 = rmaps[cidx1]
         let v2 = rmaps[cidx2]
-  
+
         if (!v0 && !v1 && !v2)
           return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "At least three crucial RAIDA servers failed to accept request: " + cidx0 + ", " + cidx1 + ", " + cidx2)
       }
@@ -3601,48 +3620,48 @@ class RaidaJS {
 
 
 
-/*
-    let success = 0
-    let failed = 0
-
-    delete params.coins
-    for (let i = 0; i < coins.length; i++) {
-      let coin = coins[i]
-      params.coin = coin
-
-      let nftresult = await this.apiNFTInsert(params, callback)
-      if (nftresult.code != RaidaJS.ERR_NO_ERROR) {
-        failed++
-      } else {
-        success++
-      }
-    }
-
-    let code
-    let msg
-    if (failed > 0) {
-      if (success == 0) {
-          return this._getErrorCode(RaidaJS.ERR_FAILED_TO_CREATE_TOKENS, "Failed to create all tokens")
-      }
-
-      code = RaidaJS.ERR_HAS_ERROR
-      msg = "Not all tokens have been created"
-    } else {
-      code = RaidaJS.ERR_NO_ERROR
-      msg = "Tokens created"
-    }
-
-    let rv = {
-      'code' : code,
-      'text' : msg,
-      'tokensCreated': success,
-      'tokensFailed': failed,
-    }
-
-    return rv
-
-
-    */
+    /*
+        let success = 0
+        let failed = 0
+    
+        delete params.coins
+        for (let i = 0; i < coins.length; i++) {
+          let coin = coins[i]
+          params.coin = coin
+    
+          let nftresult = await this.apiNFTInsert(params, callback)
+          if (nftresult.code != RaidaJS.ERR_NO_ERROR) {
+            failed++
+          } else {
+            success++
+          }
+        }
+    
+        let code
+        let msg
+        if (failed > 0) {
+          if (success == 0) {
+              return this._getErrorCode(RaidaJS.ERR_FAILED_TO_CREATE_TOKENS, "Failed to create all tokens")
+          }
+    
+          code = RaidaJS.ERR_HAS_ERROR
+          msg = "Not all tokens have been created"
+        } else {
+          code = RaidaJS.ERR_NO_ERROR
+          msg = "Tokens created"
+        }
+    
+        let rv = {
+          'code' : code,
+          'text' : msg,
+          'tokensCreated': success,
+          'tokensFailed': failed,
+        }
+    
+        return rv
+    
+    
+        */
   }
 
   // Create NFT
@@ -3671,7 +3690,7 @@ class RaidaJS {
       mimetype = metadata.mimetype
 
     let coin = params['coin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let protocol = 0
@@ -3709,29 +3728,29 @@ class RaidaJS {
       description = metadata.description
 
     let obj = {
-      'filename' : filename,
-      'mimetype' : mimetype,
-      'proofmimetype' : proofmimetype,
-      'title' : title,
-      'description' : description
+      'filename': filename,
+      'mimetype': mimetype,
+      'proofmimetype': proofmimetype,
+      'title': title,
+      'description': description
     }
 
     let rqdata = []
-    let tags = this._getNFTStringForObject(obj, params.data, proofdata) 
+    let tags = this._getNFTStringForObject(obj, params.data, proofdata)
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'sn' : coin.sn,
-        'an' : coin.an[i],
+        'sn': coin.sn,
+        'an': coin.an[i],
         'protocol': protocol,
-        'stripe' : tags[i]['stripe'],
-        'mirror' : tags[i]['mirror1'],
-        'mirror2' : tags[i]['mirror2']
+        'stripe': tags[i]['stripe'],
+        'mirror': tags[i]['mirror1'],
+        'mirror2': tags[i]['mirror2']
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Created successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Created successfully"
     }
 
     let a, f, e
@@ -3774,20 +3793,20 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
 
     let coin = params['coin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'sn' : coin.sn,
-        'an' : coin.an[i]
+        'sn': coin.sn,
+        'an': coin.an[i]
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "Deleted successfully"
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "Deleted successfully"
     }
 
     let a, f, e
@@ -3827,30 +3846,30 @@ class RaidaJS {
       return this._getErrorCode(RaidaJS.ERR_PARAM_MISSING_COIN, "Coin is missing")
 
     let coin = params['coin']
-    if (!this._validateCoin(coin)) 
+    if (!this._validateCoin(coin))
       return this._getErrorCode(RaidaJS.ERR_PARAM_INVALID_COIN, "Failed to validate coin")
 
     let rqdata = []
     for (let i = 0; i < this._totalServers; i++) {
       rqdata.push({
-        'sn' : coin.sn,
-        'an' : coin.an[i],
+        'sn': coin.sn,
+        'an': coin.an[i],
       })
     }
 
     let rv = {
-      'code' : RaidaJS.ERR_NO_ERROR,
-      'text' : "NFT downloaded successfully",
-      'data' : null,
-      'protocol' : 0,
-      'metadata' : {}
+      'code': RaidaJS.ERR_NO_ERROR,
+      'text': "NFT downloaded successfully",
+      'data': null,
+      'protocol': 0,
+      'metadata': {}
     }
 
     let a, f, e
     a = f = e = 0
     let mparts = []
     for (let i = 0; i < this._totalServers; i++)
-        mparts[i] = null
+      mparts[i] = null
 
     let rqs = this._launchRequests("nft/read", rqdata, 'GET', callback)
     let mainPromise = rqs.then(response => {
@@ -3861,15 +3880,15 @@ class RaidaJS {
         }
 
         if (serverResponse.status == "success") {
-          if (!('stripe' in serverResponse) || !('mirror' in serverResponse) || !('mirror2' in serverResponse))  {
+          if (!('stripe' in serverResponse) || !('mirror' in serverResponse) || !('mirror2' in serverResponse)) {
             e++
             return
           }
 
           mparts[rIdx] = {
-            'stripe' : serverResponse.stripe,
-            'mirror1' : serverResponse.mirror,
-            'mirror2' : serverResponse.mirror2,
+            'stripe': serverResponse.stripe,
+            'mirror1': serverResponse.mirror,
+            'mirror2': serverResponse.mirror2,
           }
 
           a++
@@ -3913,7 +3932,7 @@ class RaidaJS {
     if (r == null) {
       r = await this._resolveGoogleDNS(hostname, type)
     }
-   
+
     return r
   }
 
@@ -3957,7 +3976,7 @@ class RaidaJS {
     }
 
     let reply = data.Answer[0]
-    if (type == null || type == "A") {  
+    if (type == null || type == "A") {
       if (reply.type !== 1) {
         console.error("Wrong response from CloudFlare DNS:" + data.Status)
         return null
@@ -3985,8 +4004,8 @@ class RaidaJS {
     if (!('data' in response)) {
       console.error("Invalid response from Google DNS")
       return null
-    } 
-    
+    }
+
     let data = response.data
     if (!('Status' in data)) {
       console.error("Invalid data from Google DNS")
@@ -3997,7 +4016,7 @@ class RaidaJS {
       console.error("Failed to resolve DNS name. Wrong response from Google DNS:" + data.Status)
       return null
     }
-      
+
     if (!('Answer' in data)) {
       console.error("Invalid data from Google DNS")
       return null
@@ -4005,7 +4024,7 @@ class RaidaJS {
 
 
     let reply = data.Answer[0]
-    if (type == null || type == "A") {  
+    if (type == null || type == "A") {
       if (reply.type !== 1) {
         console.error("Wrong response from Google DNS:" + data.Status)
         return null
@@ -4037,23 +4056,23 @@ class RaidaJS {
         content: "1"
       })
     }
-    let rv = { 
+    let rv = {
       code: RaidaJS.ERR_NO_ERROR,
       balancesPerRaida: []
     }
 
     let rqs = this._launchRequests("show", rqdata, 'GET', callback).then(response => {
       this._parseMainPromise(response, 0, rv, (response, rIdx) => {
-        if (response == "network" || response == "error") 
+        if (response == "network" || response == "error")
           return
 
-        if (!('status' in response)) 
+        if (!('status' in response))
           return
-        
 
-        if (response.status !== "pass") 
+
+        if (response.status !== "pass")
           return
-        
+
 
         if (!('contents' in response))
           return
@@ -4068,12 +4087,12 @@ class RaidaJS {
           let amount = 0
           try {
             amount = parseInt(item.amount)
-          } catch (e) { }
+          } catch (e) {}
 
 
           rv.balancesPerRaida[rIdx] += amount
         }
-      }) 
+      })
 
       return rv
     })
@@ -4094,7 +4113,7 @@ class RaidaJS {
         denomination: this.getDenomination(coin.sn),
       })
     }
-    let rv = { 
+    let rv = {
       code: RaidaJS.ERR_NO_ERROR,
       coins: {},
       coinsPerRaida: {}
@@ -4145,7 +4164,7 @@ class RaidaJS {
           rv.coinsPerRaida[key][rIdx] = "yes"
           rv.coins[key].passed++
         }
-      }) 
+      })
 
       // Fail only if counterfeit. Other errors are fine
       let result = this._gradeCoin(a, f, e)
@@ -4154,7 +4173,7 @@ class RaidaJS {
       //if (!this._validResult(result))
       //  return this._getErrorCode(RaidaJS.ERR_RESPONSE_TOO_FEW_PASSED, "Failed to get coins. Too many error responses from RAIDA")
 
-      let nrv = { code: RaidaJS.ERR_NO_ERROR, coins: {} }
+      let nrv = {code: RaidaJS.ERR_NO_ERROR, coins: {}}
       nrv.coinsPerRaida = rv.coinsPerRaida
       for (let f = 0; f < skipRaidas.length; f++) {
         let frIdx = skipRaidas[f]
@@ -4173,7 +4192,7 @@ class RaidaJS {
         }
       }
 
-     
+
       return nrv
     })
 
@@ -4196,7 +4215,7 @@ class RaidaJS {
       })
 
       rqdata = {
-        nn : coins[0].nn,
+        nn: coins[0].nn,
         fromserver1: triad[0],
         fromserver2: triad[1],
         fromserver3: triad[2],
@@ -4229,7 +4248,7 @@ class RaidaJS {
         console.log("no tickets. continue")
         return
       }
-    
+
       // exec fix fracked
       rqs = this._launchRequests("multi_fix", rqdata, 'POST', callback, [raidaIdx])
       resultData = await this._getGenericMainPromise(rqs, coins, (a, c, e) => {
@@ -4249,9 +4268,9 @@ class RaidaJS {
           continue
 
         let coinResult = resultData[sn].result
-        if (coinResult !=  this.__authenticResult)
+        if (coinResult != this.__authenticResult)
           continue
-        
+
         coins[i].an[raidaIdx] = coins[i].pan[raidaIdx] = resultData[sn].an[raidaIdx]
         coins[i].pownArray[raidaIdx] = 'p'
 
@@ -4272,7 +4291,7 @@ class RaidaJS {
         sns: [],
         nns: [],
         ans: [],
-        pans: [], 
+        pans: [],
         denomination: []
       })
       for (let j = 0; j < params.length; j++) {
@@ -4289,7 +4308,7 @@ class RaidaJS {
           return null
         }
 
-        rqdata[i].sns.push(coin.sn)         
+        rqdata[i].sns.push(coin.sn)
         rqdata[i].nns.push(coin.nn)
         rqdata[i].ans.push(coin.an[i])
         rqdata[i].pans.push(coin.pan[i])
@@ -4311,11 +4330,11 @@ class RaidaJS {
         counterfeitNotes: 0,
         errorNotes: 0,
         frackedNotes: 0,
-        result : [],
-        details : [],
+        result: [],
+        details: [],
         tickets: []
       }
-  
+
       // Return value
       let rcoins = {}
 
@@ -4334,7 +4353,7 @@ class RaidaJS {
           message: new Array(this._totalServers)
         }
 
-        if (typeof(coins[i].pan) != 'undefined')
+        if (typeof (coins[i].pan) != 'undefined')
           rcoins[sn].an = coins[i].pan
       }
 
@@ -4380,9 +4399,9 @@ class RaidaJS {
           }
           return
         }
-        
+
         if (sr.status == 'allfail') {
-          this._addCoinsToRarr(raidaIdx, coins) 
+          this._addCoinsToRarr(raidaIdx, coins)
           for (let i = 0; i < coins.length; i++) {
             let sn = coins[i].sn
             rcoins[sn].counterfeit++
@@ -4403,7 +4422,7 @@ class RaidaJS {
             }
             return
           }
-      
+
           for (let x = 0; x < vals.length; x++) {
             let vs = vals[x]
             let sn = coins[x].sn
@@ -4411,7 +4430,7 @@ class RaidaJS {
               rcoins[sn].authentic++
               rcoins[sn].pownstring += "p"
             } else if (vs == 'fail') {
-              this._addCoinToRarr(raidaIdx, coins[x]) 
+              this._addCoinToRarr(raidaIdx, coins[x])
               rcoins[sn].counterfeit++
               rcoins[sn].pownstring += "f"
             } else {
@@ -4420,17 +4439,17 @@ class RaidaJS {
             }
           }
 
-/*
-          for (let i = 0; i < coins.length; i++) {
-            let sn = coins[i].sn
-            rcoins[sn].counterfeit = this._totalServers
-            rcoins[sn].pownstring = "f".repeat(this._totalServers)
-          }*/
+          /*
+                    for (let i = 0; i < coins.length; i++) {
+                      let sn = coins[i].sn
+                      rcoins[sn].counterfeit = this._totalServers
+                      rcoins[sn].pownstring = "f".repeat(this._totalServers)
+                    }*/
           return
         }
 
         // General error
-        for (let i = 0; i < coins.length; i++) {  
+        for (let i = 0; i < coins.length; i++) {
           let sn = coins[i].sn
           rcoins[sn].errors++
           rcoins[sn].pownstring += "e"
@@ -4443,7 +4462,7 @@ class RaidaJS {
       // Detect the result of each coin
       Object.keys(rcoins).map(sn => {
         rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic, rcoins[sn].counterfeit, rcoins[sn].errors, this)
-        switch(rcoins[sn].result) {
+        switch (rcoins[sn].result) {
           case this.__authenticResult:
             rv.authenticNotes++
             break
@@ -4478,10 +4497,10 @@ class RaidaJS {
         counterfeitNotes: 0,
         errorNotes: 0,
         frackedNotes: 0,
-        result : [],
-        details : []
+        result: [],
+        details: []
       }
-  
+
       // Return value
       let rcoins = {}
 
@@ -4501,7 +4520,7 @@ class RaidaJS {
           message: new Array(this._totalServers)
         }
 
-        if (typeof(coins[i].pan) != 'undefined')
+        if (typeof (coins[i].pan) != 'undefined')
           rcoins[sn].an = coins[i].pan
       }
 
@@ -4533,11 +4552,11 @@ class RaidaJS {
             rcoins[sn].pownstring += "e"
             continue
           }
-          
+
           if (sr.status == 'pass') {
             rcoins[sn].authentic++;
             rcoins[sn].pownstring += "p"
-            if ('message' in sr) 
+            if ('message' in sr)
               rcoins[sn].message[raidaIdx] = sr.message
           } else if (sr.status == 'fail') {
             rcoins[sn].counterfeit++;
@@ -4561,14 +4580,14 @@ class RaidaJS {
       // Detect the result of each coin
       Object.keys(rcoins).map(sn => {
         if (gradeFunction == null) {
-          rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic, 
+          rcoins[sn].result = this._gradeCoin(rcoins[sn].authentic,
             rcoins[sn].counterfeit, rcoins[sn].errors, this)
         } else {
-          rcoins[sn].result = gradeFunction(rcoins[sn].authentic, 
+          rcoins[sn].result = gradeFunction(rcoins[sn].authentic,
             rcoins[sn].counterfeit, rcoins[sn].errors, this)
         }
 
-        switch(rcoins[sn].result) {
+        switch (rcoins[sn].result) {
           case this.__authenticResult:
             rv.authenticNotes++
             break
@@ -4596,7 +4615,7 @@ class RaidaJS {
     if (a + f + e != this._totalServers)
       return this.__errorResult
 
-    
+
     if (a >= this.options.minPassedNumToBeAuthentic) {
       if (f > 0) {
         return this.__frackedResult
@@ -4609,7 +4628,7 @@ class RaidaJS {
       return this.__errorResult
     }
   }
-    
+
   _getCoinFromParams(params) {
     let coin = {
       sn: 0,
@@ -4617,7 +4636,7 @@ class RaidaJS {
       an: []
     }
 
-    if (typeof(params) !== 'object') {
+    if (typeof (params) !== 'object') {
       console.error("Invalid input data")
       return null
     }
@@ -4661,8 +4680,8 @@ class RaidaJS {
 
       serverResponse = response[i].value.data
       if (arrayLength == 0) {
-        if (typeof(serverResponse) != 'object' || !('status' in serverResponse)) {
-          console.error("Invalid response from RAIDA: " + i +". No status")
+        if (typeof (serverResponse) != 'object' || !('status' in serverResponse)) {
+          console.error("Invalid response from RAIDA: " + i + ". No status")
           this.addSentryError("Invalid Response. No Status", i, serverResponse)
           this._addDetails(rv)
           callback("error", i)
@@ -4679,7 +4698,7 @@ class RaidaJS {
 
         if (serverResponse.length != arrayLength) {
           console.error("Invalid length returned from RAIDA: " + i
-            + ". Expected: " + arrayLength +", got " + serverResponse.length)
+            + ". Expected: " + arrayLength + ", got " + serverResponse.length)
           this.addSentryError("Invalid length returned from RAIDA. Expected " + arrayLength + ", got " + serverResponse.length, i, serverResponse)
           this._addDetails(rv)
           callback("error", i)
@@ -4687,7 +4706,7 @@ class RaidaJS {
         }
       }
 
-      callback(serverResponse, i) 
+      callback(serverResponse, i)
       this._addDetails(rv, serverResponse)
     }
   }
@@ -4725,7 +4744,7 @@ class RaidaJS {
 
       let pm
       let options = {
-        timeout : this.options.timeout
+        timeout: this.options.timeout
       }
 
       if (url in this.perCallTimeouts) {
@@ -4733,7 +4752,7 @@ class RaidaJS {
       }
 
       let rparams
-      if (typeof(params) === 'object' && Array.isArray(params)) {
+      if (typeof (params) === 'object' && Array.isArray(params)) {
         rparams = params[raidaIdx]
       }
       else
@@ -4748,7 +4767,7 @@ class RaidaJS {
       }
 
       pm.then(response => {
-        if (callback != null) 
+        if (callback != null)
           callback(raidaIdx, url, data)
 
         return response.data
@@ -4767,14 +4786,14 @@ class RaidaJS {
 
       pms.push(pm)
     }
-    
+
     return allSettled(pms)
   }
 
   _initAxios() {
     this._axInstance = axios.create({
       headers: {
-        'Content-Type' : 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded'
       }
     })
     this._axInstance.defaults.timeout = this.options.timeout
@@ -4783,13 +4802,13 @@ class RaidaJS {
   // Generate the array of RAIDA server URLs
   _generateServers() {
     for (let i = 0; i < this._totalServers; i++)
-      this._raidaServers[i] = this.options.protocol + "://" + this.options.prefix 
-        + i + "." +this.options.domain
+      this._raidaServers[i] = this.options.protocol + "://" + this.options.prefix
+        + i + "." + this.options.domain
   }
 
   // Check if the coin is valid
   _validateCoin(coin) {
-    if (typeof(coin) !== 'object')
+    if (typeof (coin) !== 'object')
       return false;
 
     if (!('sn' in coin))
@@ -4798,13 +4817,13 @@ class RaidaJS {
     if (!('an' in coin))
       return false;
 
-    if (typeof(coin.an) != 'object' || !Array.isArray(coin.an)) 
+    if (typeof (coin.an) != 'object' || !Array.isArray(coin.an))
       return false
 
     if ('pan' in coin) {
-      if (typeof(coin.pan) != 'object' || !Array.isArray(coin.pan)) 
+      if (typeof (coin.pan) != 'object' || !Array.isArray(coin.pan))
         return false
-      
+
       if (coin.pan.length != coin.an.length)
         return false
     } else {
@@ -4850,7 +4869,7 @@ class RaidaJS {
     // Determine the chunk size
     for (let i = 0; i < this._totalServers; i++) {
       if (mparts[i] == null)
-              continue
+        continue
 
       cs = mparts[i]['stripe'].length
       break
@@ -4862,7 +4881,7 @@ class RaidaJS {
 
     let collected = []
     for (let i = 0; i < this._totalServers; i++) {
-      if (mparts[i] == null || typeof(mparts[i]) == 'undefined')
+      if (mparts[i] == null || typeof (mparts[i]) == 'undefined')
         continue
 
       if (!mparts[i]['stripe'] || !mparts[i]['mirror1'] || !mparts[i]['mirror2'])
@@ -4899,7 +4918,7 @@ class RaidaJS {
 
     // Check if the message is full
     for (let i = 0; i < msg.length; i++) {
-      if (typeof(msg[i]) == 'undefined') {
+      if (typeof (msg[i]) == 'undefined') {
         return null
       }
     }
@@ -4919,7 +4938,7 @@ class RaidaJS {
       return null
 
     try {
-      data = this._b64DecodeUnicode(data) 
+      data = this._b64DecodeUnicode(data)
     } catch (e) {
       console.log("Failed to decode strange message: " + data)
       return null
@@ -4943,13 +4962,13 @@ class RaidaJS {
     let str = "[general]\n"
 
     let date = Math.floor(Date.now() / 1000)
-    
+
     str += "date=" + date + "\n"
     for (let key in obj) {
       str += key + "=" + obj[key] + "\n"
     }
 
-    str = this._b64EncodeUnicode(str) 
+    str = this._b64EncodeUnicode(str)
     let data = this._splitMessage(str)
 
     return data
@@ -4961,8 +4980,8 @@ class RaidaJS {
       str += key + "=" + obj[key] + "\n"
     }
 
-    let mstr = this._b64EncodeUnicode(str) 
-    let finalStr = mstr + this.options.nftMetadataSeparator + data  
+    let mstr = this._b64EncodeUnicode(str)
+    let finalStr = mstr + this.options.nftMetadataSeparator + data
     if (proofdata != null)
       finalStr += this.options.nftMetadataSeparator + proofdata
 
@@ -4978,12 +4997,12 @@ class RaidaJS {
       return null
 
     let vals = data.split(this.options.nftMetadataSeparator)
-    if (vals.length != 2 && vals.length != 3) 
+    if (vals.length != 2 && vals.length != 3)
       return null
 
     let metadata
     try {
-      metadata = this._b64DecodeUnicode(vals[0]) 
+      metadata = this._b64DecodeUnicode(vals[0])
     } catch (e) {
       console.log("Failed to decode strange message: " + vals[0])
       return null
@@ -5000,9 +5019,9 @@ class RaidaJS {
       return null
     }
 
-    let rv =  {
-      'metadata' : data['general'],
-      'data' : vals[1]
+    let rv = {
+      'metadata': data['general'],
+      'data': vals[1]
     }
 
     if (vals.length == 3) {
@@ -5016,14 +5035,14 @@ class RaidaJS {
     let str = "[general]\n"
 
     let date = Math.floor(Date.now() / 1000)
-    
+
     str += "date=" + date + "\n"
     str += "guid=" + guid + "\n"
     str += "from=" + from + "\n"
     str += "amount=" + amount + "\n"
     str += "description=" + memo + "\n"
 
-    str = this._b64EncodeUnicode(str) 
+    str = this._b64EncodeUnicode(str)
     let data = this._splitMessage(str)
 
     return data
@@ -5056,9 +5075,9 @@ class RaidaJS {
     let nrmessage = []
     for (let i = 0; i < this._totalServers; i++) {
       nrmessage[i] = {
-        'stripe' : "",
-        'mirror1' : "",
-        'mirror2' : ""
+        'stripe': "",
+        'mirror1': "",
+        'mirror2': ""
       }
     }
 
@@ -5114,9 +5133,9 @@ class RaidaJS {
 
   _b64DecodeUnicode(str) {
     let output
-  
+
     if (_isBrowser) {
-      output = decodeURIComponent(atob(str).split('').map(function(c) {
+      output = decodeURIComponent(atob(str).split('').map(function (c) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
       }).join(''));
     } else {
@@ -5149,7 +5168,7 @@ class RaidaJS {
     }
 
     let trustedServers = Array(this._totalServers)
-    let trustedTriads =  Array(this._totalServers)
+    let trustedTriads = Array(this._totalServers)
     for (let i = 0; i < this._totalServers; i++) {
       trustedServers[i] = []
 
@@ -5163,10 +5182,10 @@ class RaidaJS {
       trustedServers[i][7] = this._getNeighbour(i, sideSize + 1)
 
       trustedTriads[i] = Array(4)
-      trustedTriads[i][0] = [ trustedServers[i][0], trustedServers[i][1], trustedServers[i][3], trustedServers[i][7] ]
-      trustedTriads[i][1] = [ trustedServers[i][1], trustedServers[i][2], trustedServers[i][4], trustedServers[i][5] ]
-      trustedTriads[i][2] = [ trustedServers[i][3], trustedServers[i][5], trustedServers[i][6], trustedServers[i][2] ]
-      trustedTriads[i][3] = [ trustedServers[i][4], trustedServers[i][6], trustedServers[i][7], trustedServers[i][0] ]
+      trustedTriads[i][0] = [trustedServers[i][0], trustedServers[i][1], trustedServers[i][3], trustedServers[i][7]]
+      trustedTriads[i][1] = [trustedServers[i][1], trustedServers[i][2], trustedServers[i][4], trustedServers[i][5]]
+      trustedTriads[i][2] = [trustedServers[i][3], trustedServers[i][5], trustedServers[i][6], trustedServers[i][2]]
+      trustedTriads[i][3] = [trustedServers[i][4], trustedServers[i][6], trustedServers[i][7], trustedServers[i][0]]
     }
 
     this._trustedTriads = trustedTriads
@@ -5210,7 +5229,7 @@ class RaidaJS {
     for (let i = 0; i < 5; i++)
       rsns[i + 4] = sns[i]
 
-    return rsns 
+    return rsns
   }
 
   _get100E(sb, ss, sss) {
@@ -5234,7 +5253,7 @@ class RaidaJS {
     sns = this._getA(sss, 5)
     if (sns == null)
       return null
-    
+
     for (let i = 0; i < 5; i++)
       rsns[i + 7] = sns[i]
 
@@ -5306,7 +5325,7 @@ class RaidaJS {
 
   _getExpCoins(amount, totals, loose) {
     let savedAmount = amount;
-   
+
     if (amount > totals[6]) {
       console.error("Not enough coins")
       return null;
@@ -5314,7 +5333,7 @@ class RaidaJS {
 
     if (amount < 0)
       return null;
-        
+
     let exp_1, exp_5, exp_25, exp_100, exp_250
     exp_1 = exp_5 = exp_25 = exp_100 = exp_250 = 0
     for (let i = 0; i < 2; i++) {
@@ -5343,28 +5362,28 @@ class RaidaJS {
         exp_1 = (amount < (totals[0])) ? amount : (totals[0])
         amount -= (exp_1);
       }
-        
+
       if (amount == 0)
         break;
-        
+
       if (i == 1 || exp_250 == 0) {
         if (loose)
           break;
-      
+
         return null;
       }
-            
+
       exp_250--
       amount = savedAmount - exp_250 * 250
     }
-       
+
     let rv = new Array(5)
     rv[0] = exp_1
     rv[1] = exp_5
     rv[2] = exp_25
     rv[3] = exp_100
     rv[4] = exp_250
-        
+
     return rv
   }
 
@@ -5374,10 +5393,10 @@ class RaidaJS {
     let collected, rest
     let denomination
     let coinsPicked = []
-        
+
     totals = this._countCoinsFromArray(coins)
     exps = this._getExpCoins(amount, totals, true)
-        
+
     collected = rest = 0
     for (let i = 0; i < coins.length; i++) {
       denomination = this.getDenomination(coins[i]);
@@ -5385,7 +5404,7 @@ class RaidaJS {
         if (exps[0]-- > 0) {
           coinsPicked.push(coins[i])
           collected += denomination
-        } 
+        }
       } else if (denomination == 5) {
         if (exps[1]-- > 0) {
           coinsPicked.push(coins[i])
@@ -5395,18 +5414,18 @@ class RaidaJS {
         if (exps[2]-- > 0) {
           coinsPicked.push(coins[i])
           collected += denomination
-        } 
+        }
       } else if (denomination == 100) {
         if (exps[3]-- > 0) {
           coinsPicked.push(coins[i])
           collected += denomination
-        } 
+        }
       } else if (denomination == 250) {
         if (exps[4]-- > 0) {
           coinsPicked.push(coins[i])
           collected += denomination
-        } 
-      } 
+        }
+      }
     }
     let isAdded;
     rest = amount - collected;
@@ -5419,10 +5438,10 @@ class RaidaJS {
     for (let i = 0; i < coins.length; i++) {
       denomination = this.getDenomination(coins[i])
       extraSN = coins[i]
-        
+
       if (rest > denomination)
         continue;
-        
+
       isAdded = false;
       for (let j = 0; j < coinsPicked.length; j++) {
         if (coinsPicked[j] == coins[i]) {
@@ -5430,11 +5449,11 @@ class RaidaJS {
           break
         }
       }
-        
+
       if (isAdded) {
         continue;
       }
-        
+
       break;
     }
 
@@ -5448,7 +5467,7 @@ class RaidaJS {
     if (!cvv.match(/^\d+$/))
       return false
 
-    if (!cardnumber.startsWith("401")) 
+    if (!cardnumber.startsWith("401"))
       return false
 
     let total = 0;
@@ -5469,7 +5488,7 @@ class RaidaJS {
     if (calcRemainder == 10)
       calcRemainder = 0
 
-    if (calcRemainder != remainder) 
+    if (calcRemainder != remainder)
       return false
 
     return true
@@ -5492,8 +5511,8 @@ class RaidaJS {
   _getError(msg) {
     this.addBreadCrumbError("Returning Error To Client: " + msg)
     return {
-      'status' : 'error',
-      'errorText' : msg
+      'status': 'error',
+      'errorText': msg
     }
   }
 
@@ -5502,11 +5521,11 @@ class RaidaJS {
     this.addBreadCrumbError("Returning Error Code To Client: " + code + ": " + msg)
     return {
       // Legacy
-      'status' : 'error',
+      'status': 'error',
       'errorText': msg,
 
-      'code' : code,
-      'text' : msg
+      'code': code,
+      'text': msg
     }
   }
 
@@ -5553,7 +5572,7 @@ class RaidaJS {
   }
 
   _base64ArrayBuffer(bytes) {
-    let base64  = ''
+    let base64 = ''
     let encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 
     let byteLength = bytes.length
@@ -5569,10 +5588,10 @@ class RaidaJS {
       chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2]
 
       // Use bitmasks to extract 6-bit segments from the triplet
-      a = (chunk & 16515072) >> 18 
-      b = (chunk & 258048) >> 12 
-      c = (chunk & 4032) >>  6 
-      d = chunk & 63    
+      a = (chunk & 16515072) >> 18
+      b = (chunk & 258048) >> 12
+      c = (chunk & 4032) >> 6
+      d = chunk & 63
 
       // Convert the raw binary segments to the appropriate ASCII encoding
       base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d]
@@ -5581,31 +5600,31 @@ class RaidaJS {
     // Deal with the remaining bytes and padding
     if (byteRemainder == 1) {
       chunk = bytes[mainLength]
-      a = (chunk & 252) >> 2 
+      a = (chunk & 252) >> 2
 
       // Set the 4 least significant bits to zero
-      b = (chunk & 3) << 4 
+      b = (chunk & 3) << 4
       base64 += encodings[a] + encodings[b] + '=='
     } else if (byteRemainder == 2) {
       chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1]
 
-      a = (chunk & 64512) >> 10 
+      a = (chunk & 64512) >> 10
       b = (chunk & 1008) >> 4
 
       // Set the 2 least significant bits to zero
-      c = (chunk & 15) << 2 
+      c = (chunk & 15) << 2
       base64 += encodings[a] + encodings[b] + encodings[c] + '='
     }
-    
+
     return base64
   }
 
   _basePngChecks(imgData) {
-    if (imgData[0] != 0x89 && imgData[1] != 0x50 && imgData[2] != 0x4e && imgData[3] != 0x47 
+    if (imgData[0] != 0x89 && imgData[1] != 0x50 && imgData[2] != 0x4e && imgData[3] != 0x47
       && imgData[4] != 0x0d && imgData[5] != 0x0a && imgData[6] != 0x1a && imgData[7] != 0x0a) {
       return "Invalid PNG signature"
     }
-    
+
     let chunkLength = this._getUint32(imgData, 8)
     let headerSig = this._getUint32(imgData, 12)
     if (headerSig != 0x49484452) {
@@ -5628,7 +5647,7 @@ class RaidaJS {
   }
 
   // Parse INI string and return Object
-  _parseINIString(data){
+  _parseINIString(data) {
     var regex = {
       section: /^\s*\[\s*([^\]]*)\s*\]\s*$/,
       param: /^\s*([^=]+?)\s*=\s*(.*?)\s*$/,
@@ -5639,21 +5658,21 @@ class RaidaJS {
     var lines = data.split(/[\r\n]+/)
     var section = null
 
-    lines.forEach(function(line) {
-      if (regex.comment.test(line)){
+    lines.forEach(function (line) {
+      if (regex.comment.test(line)) {
         return;
-      } else if(regex.param.test(line)){
+      } else if (regex.param.test(line)) {
         var match = line.match(regex.param);
-        if(section){
+        if (section) {
           value[section][match[1]] = match[2];
-        }else{
+        } else {
           value[match[1]] = match[2];
         }
-      } else if (regex.section.test(line)){
+      } else if (regex.section.test(line)) {
         var match = line.match(regex.section);
         value[match[1]] = {};
         section = match[1];
-      } else if (line.length == 0 && section){
+      } else if (line.length == 0 && section) {
         section = null;
       }
     })
@@ -5666,13 +5685,13 @@ class RaidaJS {
     let hashData = {}
     for (let raidaIdx = 0; raidaIdx < serverResponses.length; raidaIdx++) {
       let serverResponse = serverResponses[raidaIdx]
-        if (!serverResponse)
-          continue
+      if (!serverResponse)
+        continue
 
       if (level == 1) {
         let item = serverResponse.data
         let key = item[targetKey]
-        if (typeof(key) == 'undefined')
+        if (typeof (key) == 'undefined')
           continue
 
         if (!(key in hashData))
@@ -5682,7 +5701,7 @@ class RaidaJS {
       } else if (level == 2) {
         for (let j = 0; j < serverResponse.data.length; j++) {
           let item = serverResponse.data[j]
-          if (typeof(item) == 'undefined')
+          if (typeof (item) == 'undefined')
             continue
 
           let key = item[targetKey]
@@ -5706,7 +5725,7 @@ class RaidaJS {
         unavailable++
       }
     }
-    
+
     // Check if we need to call fix_groups
     let hashData = this._collectHdata(serverResponses, key, 2)
     let drqdata = []
@@ -5754,7 +5773,7 @@ class RaidaJS {
         unavailable++
       }
     }
-    
+
     // Check if we need to call fix_groups
     let hashData = this._collectHdata(serverResponses, key, 2)
     let drqdata = []
